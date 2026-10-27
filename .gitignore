@@ -34,3 +34,10 @@ next-env.d.ts
 # Documents
 *.pdf
 *.docx
+
+# Agent & Planning Documents
+AGENTS.md
+**/AGENTS.md
+IMPLEMENTATION.md
+**/IMPLEMENTATION.md
+Developer-brief.txt

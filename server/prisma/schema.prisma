@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------
+// Enums
+// ----------------------------------------------------
+
+enum GlobalRole {
+  PLATFORM_ADMIN
+  SCHOOL_STAFF
+  ATHLETE
+  PARENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum SchoolStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+}
+
+enum SchoolRole {
+  SCHOOL_ADMIN
+  COACH_RECRUITER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  REVOKED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  TRANSCRIPT
+  ELIGIBILITY
+  COMBINE_REPORT
+  PHYSICAL
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RecruitingStatus {
+  EVALUATING
+  CONTACTED
+  OFFERED
+  COMMITTED
+  PASSED
+}
+
+enum SubscriptionPlan {
+  ANNUAL_1500
+  MONTHLY_250
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  OVERDUE
+  WAIVED
+}
+
+enum SubscriptionState {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+  PENDING
+}
+
+// ----------------------------------------------------
+// Core Entities
+// ----------------------------------------------------
+
+model School {
+  id                String       @id @default(uuid())
+  schoolId          String?      @unique // Permanent unique ID assigned on approval (e.g. SCH-10492)
+  name              String
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  contactEmail      String
+  contactPhone      String?
+  status            SchoolStatus @default(PENDING)
+  approvedAt        DateTime?
+  approvedById      String?
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  memberships       SchoolMembership[]
+  subscription      Subscription?
+  recruitingRecords RecruitingRecord[]
+  savedProspects    SavedProspect[]
+
+  @@index([status])
+  @@index([schoolId])
+}
+
+model User {
+  id                String       @id @default(uuid())
+  email             String       @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  phone             String?
+  globalRole        GlobalRole
+  status            UserStatus   @default(ACTIVE)
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  memberships       SchoolMembership[]
+  athleteProfile    AthleteProfile?
+  savedProspects    SavedProspect[]
+  reviewedDocuments Document[]   @relation("DocumentReviewer")
+
+  @@index([email])
+  @@index([globalRole])
+}
+
+model SchoolMembership {
+  id          String           @id @default(uuid())
+  userId      String
+  schoolId    String
+  role        SchoolRole
+  title       String?          // e.g. "Head Coach - Boys Basketball", "Athletic Director"
+  status      MembershipStatus @default(ACTIVE)
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school      School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, schoolId])
+  @@index([schoolId, role])
+}
+
+model AthleteProfile {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  sports               String[]           // Array of varsity sports
+  graduationYear       Int
+  primarySport         String
+  positions            String[]           // Array of positions/events
+  heightInches         Int?
+  weightLbs            Int?
+  gpa                  Float?
+  actScore             Int?
+  satScore             Int?
+  highSchoolName       String?
+  city                 String?
+  state                String?
+  highlightLinks       String[]           // Video links (Hudl, YouTube, Vimeo)
+  athleticStats        Json?              // Sport-specific stats & combine metrics
+  completionPercentage Int                @default(0) // 0-100%
+  verificationStatus   VerificationStatus @default(UNVERIFIED)
+  verifiedAt           DateTime?
+  verifiedById         String?
+
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents            Document[]
+  savedProspects       SavedProspect[]
+  recruitingRecords    RecruitingRecord[]
+
+  @@index([verificationStatus])
+  @@index([primarySport, graduationYear])
+}
+
+model Document {
+  id                 String         @id @default(uuid())
+  athleteProfileId   String
+  type               DocumentType
+  title              String
+  privateStorageRef  String         // Private S3/GCS object key, NEVER public URLs
+  fileSizeBytes      Int
+  mimeType           String
+  status             DocumentStatus @default(PENDING)
+  reviewerId         String?
+  reviewerNotes      String?
+  reviewedAt         DateTime?
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  athleteProfile     AthleteProfile @relation(fields: [athleteProfileId], references: [id], onDelete: Cascade)
+  reviewer           User?          @relation("DocumentReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([athleteProfileId, status])
+  @@index([status])
+}
+
+model SavedProspect {
+  id               String         @id @default(uuid())
+  schoolId         String
+  coachUserId      String
+  athleteProfileId String
+  notes            String?
+  savedAt          DateTime       @default(now())
+
+  school           School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  coach            User           @relation(fields: [coachUserId], references: [id], onDelete: Cascade)
+  athleteProfile   AthleteProfile @relation(fields: [athleteProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, coachUserId, athleteProfileId])
+  @@index([schoolId])
+}
+
+model RecruitingRecord {
+  id               String           @id @default(uuid())
+  schoolId         String
+  athleteProfileId String
+  contactLogs      Json             @default("[]") // Array of { id, date, type, notes, coachName }
+  offers           Json             @default("[]") // Array of { id, date, type, details, status }
+  commitments      Json?            // { committedDate, details }
+  status           RecruitingStatus @default(EVALUATING)
+  privateNotes     String?          // School-private evaluation notes, NEVER leaked cross-school
+  lastContactAt    DateTime?
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  school           School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  athleteProfile   AthleteProfile   @relation(fields: [athleteProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, athleteProfileId])
+  @@index([schoolId, status])
+}
+
+model Subscription {
+  id             String            @id @default(uuid())
+  schoolId       String            @unique
+  plan           SubscriptionPlan
+  paymentStatus  PaymentStatus     @default(PENDING)
+  state          SubscriptionState @default(PENDING)
+  startDate      DateTime?
+  expirationDate DateTime?
+  notes          String?           // Manual billing log entries from Platform Admin
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  school         School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, state])
+}

@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
-import Link from "./site-link";
 import "./globals.css";
-import { Navigation } from "./ui";
-export const metadata: Metadata = { title: {default: "The Recruiting Standard | Build your next chapter", template: "%s | The Recruiting Standard"}, description: "A clearer path from athletic potential to the right school. Connect student-athletes and school programs." };
-export default function RootLayout({children}:{children:React.ReactNode}) {return <html lang="en"><body><Navigation/><main>{children}</main><footer><div className="footer-top"><Link className="brand" href="/"><span className="brand-icon">R<span>↗</span></span><span>THE RECRUITING<br/>STANDARD<span className="brand-dot">®</span></span></Link><p>Potential deserves a pathway.<br/>Let’s build yours.</p><Link className="button lime" href="/school-registration">Register your school ↗</Link></div><div className="footer-bottom"><span>© 2026 The Recruiting Standard</span><div><Link href="/about">About</Link><Link href="/contact">Contact</Link><Link href="/privacy-policy">Privacy Policy</Link><Link href="/terms">Terms</Link></div><span>MADE FOR THE NEXT GENERATION.</span></div></footer></body></html>}
+
+export const metadata: Metadata = {
+  title: {
+    default: "The Recruiting Standard | Build your next chapter",
+    template: "%s | The Recruiting Standard",
+  },
+  description:
+    "A clearer path from athletic potential to the right school. Connect student-athletes and school programs.",
+};
+
+// Navigation and Footer live in app/(public)/layout.tsx.
+// This root layout is intentionally minimal — just the html/body shell.
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
