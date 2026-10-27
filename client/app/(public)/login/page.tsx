@@ -6,7 +6,7 @@ import InquiryForm from "@/components/shared/InquiryForm";
 export const metadata: Metadata = {
   title: "Portal Login",
   description:
-    "Log in to The Recruiting Standard portal for Platform Admins, School Admins, Coaches, Athletes, and Parents.",
+    "Log in to the MVP 4.18 portal for Platform Admins, School Admins, Coaches, Athletes, and Parents.",
 };
 
 const portalRoles = [

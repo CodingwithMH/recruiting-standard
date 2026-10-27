@@ -7,7 +7,7 @@ import AboutValues from "@/components/about/AboutValues";
 export const metadata: Metadata = {
   title: "About Our Platform",
   description:
-    "Learn about The Recruiting Standard's mission, verification standards, and institutional commitment.",
+    "Learn about MVP 4.18's mission, verification standards, and institutional commitment.",
 };
 
 const governanceCards = [
@@ -53,7 +53,7 @@ export default function AboutPage() {
             Potential deserves a pathway.
           </h1>
           <p className="text-base sm:text-lg text-[#65748a] leading-relaxed max-w-2xl">
-            We believe the right connection can open an entirely new chapter. The Recruiting Standard
+            We believe the right connection can open an entirely new chapter. MVP 4.18
             is built to bring clarity, verified accuracy, and institutional integrity to school
             athletic recruiting.
           </p>
@@ -142,11 +142,11 @@ export default function AboutPage() {
                 </ul>
               </div>
 
-              {/* Card 2: The Recruiting Standard */}
+              {/* Card 2: MVP 4.18 */}
               <div className="bg-[#102341] text-white rounded-2xl p-6 shadow-sm border border-[#102341] relative">
                 <div className="flex items-center gap-2 text-[#bed8ff] mb-3">
                   <CheckCircle2 className="w-4 h-4 text-[#bed8ff]" />
-                  <span className="text-[10px] font-bold tracking-wider uppercase font-mono">The Recruiting Standard</span>
+                  <span className="text-[10px] font-bold tracking-wider uppercase font-mono">MVP 4.18</span>
                 </div>
                 <h3 className="text-base font-semibold text-white mb-3">Verified Network</h3>
                 <ul className="space-y-2.5 text-xs text-slate-300 leading-relaxed">

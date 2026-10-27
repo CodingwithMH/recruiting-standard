@@ -6,7 +6,7 @@ import HowItWorks from "@/components/features/HowItWorks";
 export const metadata: Metadata = {
   title: "Features & Architecture",
   description:
-    "Explore the complete feature suite of The Recruiting Standard: verified multi-sport athlete profiles, approved-athlete search, and isolated recruiting records.",
+    "Explore the complete feature suite of MVP 4.18: verified multi-sport athlete profiles, approved-athlete search, and isolated recruiting records.",
 };
 
 const featureDeepDives = [
@@ -128,7 +128,7 @@ export default function FeaturesPage() {
               Engineered for recruiting excellence.
             </h2>
             <p className="text-sm sm:text-base text-[#65748a] leading-relaxed">
-              Every feature in The Recruiting Standard addresses specific pain points in the athletic
+              Every feature in MVP 4.18 addresses specific pain points in the athletic
               recruitment lifecycle.
             </p>
           </div>

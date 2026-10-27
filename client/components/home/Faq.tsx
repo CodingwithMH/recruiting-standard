@@ -3,7 +3,7 @@ import SiteLink from "@/components/ui/SiteLink";
 
 const faqs = [
   {
-    q: "Who is The Recruiting Standard for?",
+    q: "Who is MVP 4.18 for?",
     a: "The platform is designed for schools, coaches, and student-athletes looking for a more focused way to connect around athletic and academic opportunities.",
   },
   {

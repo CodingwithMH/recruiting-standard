@@ -6,14 +6,21 @@ export default function Footer() {
     <footer className="bg-[#102341] text-white py-16 px-[6%]">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pb-12 border-b border-white/10">
-          <SiteLink className="flex items-center gap-2.5 text-xs font-extrabold tracking-wider text-white" href="/">
+          <SiteLink
+            className="flex items-center gap-2.5 text-white"
+            href="/"
+            aria-label="MVP 4.18 - The Recruiting Standard home"
+          >
             <span className="text-3xl font-black tracking-tighter text-white">
-              R<span className="text-[#bed8ff] text-lg">↗</span>
+              MVP<span className="text-[#bed8ff] text-lg">↗</span>
             </span>
             <span className="leading-tight">
-              THE RECRUITING
-              <br />
-              STANDARD<span className="text-[#bed8ff] text-[10px] ml-0.5">®</span>
+              <span className="block text-sm font-black tracking-wider text-white">
+                MVP 4.18
+              </span>
+              <span className="block text-[10px] font-bold tracking-wider uppercase text-[#bed8ff]">
+                The Recruiting Standard
+              </span>
             </span>
           </SiteLink>
 
@@ -32,7 +39,7 @@ export default function Footer() {
         </div>
 
         <div className="pt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 text-xs text-slate-400">
-          <span>© 2026 The Recruiting Standard. All rights reserved.</span>
+          <span>© 2026 MVP 4.18. All rights reserved.</span>
           <div className="flex flex-wrap gap-6 text-slate-300 font-medium">
             <SiteLink href="/about" className="hover:text-white transition-colors">
               About

@@ -4,7 +4,7 @@ import SiteLink from "@/components/ui/SiteLink";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How The Recruiting Standard handles your information.",
+  description: "How MVP 4.18 handles your information.",
 };
 
 const sections = [

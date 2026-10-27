@@ -131,7 +131,7 @@ export default function PricingPage() {
             </h2>
             <p className="text-sm text-[#65748a] leading-relaxed mb-4">
               School districts and athletic departments require formal procurement processes. That is
-              why The Recruiting Standard operates with structured manual invoicing.
+              why MVP 4.18 operates with structured manual invoicing.
             </p>
             <p className="text-sm text-[#65748a] leading-relaxed">
               Upon registration approval, an official invoice is generated and tied directly to your

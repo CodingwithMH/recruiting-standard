@@ -4,13 +4,13 @@ import SiteLink from "@/components/ui/SiteLink";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
-  description: "The Recruiting Standard terms of use.",
+  description: "MVP 4.18 terms of use.",
 };
 
 const sections = [
   {
     title: "Using the platform",
-    body: "The Recruiting Standard is intended to help schools and student-athletes discover and communicate with each other. This preview is for demonstration and does not provide live accounts.",
+    body: "MVP 4.18 is intended to help schools and student-athletes discover and communicate with each other. This preview is for demonstration and does not provide live accounts.",
   },
   {
     title: "Account responsibilities",

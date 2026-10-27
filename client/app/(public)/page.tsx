@@ -14,9 +14,9 @@ import Cta from "@/components/home/Cta";
 
 // Root page — title uses the default from root layout metadata.
 export const metadata: Metadata = {
-  title: "The Recruiting Standard | Build your next chapter",
+  title: "MVP 4.18 | The Recruiting Standard",
   description:
-    "A clearer path from athletic potential to the right school. Connect student-athletes and school programs with verified profiles and isolated records.",
+    "MVP 4.18 — The Recruiting Standard. A clearer path from athletic potential to the right school. Connect student-athletes and school programs with verified profiles and isolated records.",
 };
 
 export default function Home() {

@@ -6,7 +6,7 @@ import InquiryForm from "@/components/shared/InquiryForm";
 export const metadata: Metadata = {
   title: "Contact & Support",
   description:
-    "Have questions about institutional school access, athlete document verification, or platform pricing? Reach out to The Recruiting Standard team.",
+    "Have questions about institutional school access, athlete document verification, or platform pricing? Reach out to the MVP 4.18 team.",
 };
 
 const departments = [

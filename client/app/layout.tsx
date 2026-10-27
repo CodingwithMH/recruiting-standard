@@ -3,11 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "The Recruiting Standard | Build your next chapter",
-    template: "%s | The Recruiting Standard",
+    default: "MVP 4.18 | The Recruiting Standard",
+    template: "%s | MVP 4.18",
   },
   description:
-    "A clearer path from athletic potential to the right school. Connect student-athletes and school programs.",
+    "MVP 4.18 — The Recruiting Standard. A clearer path from athletic potential to the right school. Connect student-athletes and school programs.",
 };
 
 // Navigation and Footer live in app/(public)/layout.tsx.

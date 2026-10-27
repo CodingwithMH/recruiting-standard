@@ -20,14 +20,21 @@ export default function Navigation() {
   return (
     <header className="h-20 sm:h-24 px-[6%] flex items-center justify-between border-b border-slate-200/80 bg-white sticky top-0 z-50">
       {/* Brand */}
-      <SiteLink href="/" className="flex items-center gap-2.5 text-xs font-extrabold tracking-wider text-[#102341]" aria-label="The Recruiting Standard home">
+      <SiteLink
+        href="/"
+        className="flex items-center gap-2.5 text-[#102341]"
+        aria-label="MVP 4.18 - The Recruiting Standard home"
+      >
         <span className="text-2xl sm:text-3xl font-black tracking-tighter text-[#102341]">
-          R<span className="text-blue-600 text-lg">↗</span>
+          MVP<span className="text-blue-600 text-lg">↗</span>
         </span>
         <span className="leading-tight">
-          THE RECRUITING
-          <br />
-          STANDARD<span className="text-blue-600 text-[10px] ml-0.5">®</span>
+          <span className="block text-xs sm:text-sm font-black tracking-wider text-[#102341]">
+            MVP 4.18
+          </span>
+          <span className="block text-[9px] sm:text-[10px] font-bold tracking-wider uppercase text-slate-500">
+            THE RECRUITING STANDARD
+          </span>
         </span>
       </SiteLink>
 
