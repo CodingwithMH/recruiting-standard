@@ -63,7 +63,7 @@ app.use("/api/v1", apiRouter);
 // Root fallback handler
 app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({
-    service: "The Recruiting Standard Backend API",
+    service: "MVP 4.18 Backend API",
     status: "healthy",
     docs: "/api/v1/health",
     timestamp: new Date().toISOString(),

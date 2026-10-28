@@ -1,7 +1,7 @@
 {
   "name": "recruiting-standard-server",
   "version": "1.0.0",
-  "description": "Backend API for The Recruiting Standard institutional recruiting platform",
+  "description": "Backend API for MVP 4.18 institutional recruiting platform",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

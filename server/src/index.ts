@@ -29,7 +29,7 @@ async function startServer() {
     const server = app.listen(env.PORT, () => {
       logger.info(
         "APP",
-        `🚀 ${c.bold(c.brightWhite("The Recruiting Standard API Server"))} running on port ${c.bold(c.brightGreen(env.PORT))}`
+        `🚀 ${c.bold(c.brightWhite("MVP 4.18 API Server"))} running on port ${c.bold(c.brightGreen(env.PORT))}`
       );
       logger.info("APP", `   ${c.cyan("Environment")} : ${c.brightYellow(env.NODE_ENV)}`);
       logger.info("APP", `   ${c.cyan("CORS Origin")} : ${c.white(env.CLIENT_ORIGIN)}`);

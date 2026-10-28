@@ -14,8 +14,8 @@ router.get("/", async (_req: Request, res: Response) => {
 
   res.status(200).json({
     success: true,
-    message: "The Recruiting Standard API is operational",
-    service: "recruiting-standard-server",
+    message: "MVP 4.18 API is operational",
+    service: "mvp-418-server",
     timestamp: new Date().toISOString(),
     database: dbStatus,
     version: "1.0.0",
