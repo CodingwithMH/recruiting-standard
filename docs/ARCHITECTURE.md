@@ -28,12 +28,17 @@ recruiting-standard/
 │   │   ├── routes/             # Health checks, API v1 endpoints
 │   │   └── utils/              # Structured logger
 │   └── prisma/
-│       └── schema.prisma       # 8 core domain models & PostgreSQL schema
+│       ├── schema.prisma       # 8 core domain models & PostgreSQL schema
+│       └── migrations/         # Committed, immutable schema migrations
 │
 ├── docs/
-│   └── ARCHITECTURE.md         # This technical specification document
+│   ├── ARCHITECTURE.md         # This technical specification document
+│   ├── ENVIRONMENTS.md         # Dev/staging/production & CI/CD foundation
+│   └── DESIGN.md               # Public website design direction & page structure
+├── render.yaml                 # Render API service blueprint
 └── .github/workflows/
-    └── ci.yml                  # Continuous integration & test pipeline
+    ├── ci.yml                  # Continuous integration & test pipeline
+    └── deploy.yml              # Migration + staging/production deployment
 ```
 
 ---
@@ -48,6 +53,7 @@ The platform adopts a **logical multi-tenancy model with strict programmatic ten
 - A pending school has **zero access** to the recruiting portal.
 - Upon Platform Admin verification and approval:
   - The school is assigned a permanent, unique, immutable identifier (e.g. `SCH-10492`).
+  - Allocation is implemented in `server/src/services/school.service.ts` using `server/src/utils/schoolId.ts`; the `School.schoolId` unique constraint guarantees collision safety and the ID is never regenerated.
   - This `SchoolID` is permanently sovereign: it is never modified, re-issued, or reused, even if a school changes athletic directors or suspends its account.
   - All institutional recruitment history is permanently anchored to this identifier.
 
@@ -228,4 +234,19 @@ All 8 core public marketing and intake routes are indexed and mapped via dynamic
 
 Dynamic Sitemap endpoint: `/sitemap.xml`  
 Crawler directivies: `/robots.txt` (Excludes private `/portal/`, `/admin/`, and `/api/` paths)
+
+The full design direction — palette, typography, layout system, component conventions, accessibility requirements, and page-by-page structure — is documented in `docs/DESIGN.md`.
+
+---
+
+## 8. Related Milestone 1 Documents
+
+| Document | Contents |
+|---|---|
+| `docs/ENVIRONMENTS.md` | Development/staging/production model, environment variable matrix, secrets, migration policy, CI/CD workflows, provider summary |
+| `docs/DESIGN.md` | Public website design direction, design system, accessibility, page structure |
+| `server/prisma/migrations/` | Committed initial migration for all core models |
+| `server/Dockerfile` / `render.yaml` | API container and hosting blueprint |
+| `client/vercel.json` | Public website hosting configuration |
+| `.github/workflows/ci.yml` / `deploy.yml` | CI validation and CD deployment pipelines |
 

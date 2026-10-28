@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { KeyRound, Building2, GraduationCap, Users, ArrowLeft } from "lucide-react";
+import { Building2, GraduationCap, Users, ArrowLeft } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import InquiryForm from "@/components/shared/InquiryForm";
 

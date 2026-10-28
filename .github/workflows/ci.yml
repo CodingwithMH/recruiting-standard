@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   validate-server:
@@ -26,6 +26,12 @@ jobs:
 
       - name: Generate Prisma Client
         run: npm --prefix server run prisma:generate
+
+      - name: Validate Prisma schema
+        working-directory: server
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci
+        run: npx prisma validate --schema prisma/schema.prisma
 
       - name: Run server tests
         run: npm --prefix server test
@@ -55,4 +61,3 @@ jobs:
 
       - name: Build client Next.js
         run: npm --prefix client run build
-

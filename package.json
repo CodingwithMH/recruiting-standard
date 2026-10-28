@@ -12,7 +12,11 @@
     "test:server": "npm --prefix server test",
     "test": "npm run test:server",
     "lint:client": "npm --prefix client run lint",
-    "lint": "npm run lint:client"
+    "lint": "npm run lint:client",
+    "prisma:generate": "npm --prefix server run prisma:generate",
+    "prisma:migrate": "npm --prefix server run prisma:migrate",
+    "prisma:deploy": "npm --prefix server run prisma:deploy",
+    "db:seed": "npm --prefix server run seed"
   }
 }
 
