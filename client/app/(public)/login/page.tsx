@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Building2, GraduationCap, Users, ArrowLeft } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
-import InquiryForm from "@/components/shared/InquiryForm";
+import LoginForm from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = {
   title: "Portal Login",
@@ -76,7 +76,7 @@ export default function LoginPage() {
         </div>
 
         <div className="lg:col-span-6">
-          <InquiryForm type="login" />
+          <LoginForm />
         </div>
       </div>
     </section>

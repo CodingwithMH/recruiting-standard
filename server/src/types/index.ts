@@ -1,15 +1,21 @@
 import { Request } from "express";
 
+export type GlobalRole = "PLATFORM_ADMIN" | "SCHOOL_STAFF" | "ATHLETE" | "PARENT";
+export type SchoolRole = "SCHOOL_ADMIN" | "COACH_RECRUITER";
+export type SchoolStatus = "PENDING" | "APPROVED" | "SUSPENDED";
+
 export interface AuthenticatedUser {
   userId: string;
   email: string;
-  globalRole: "PLATFORM_ADMIN" | "SCHOOL_STAFF" | "ATHLETE" | "PARENT";
+  globalRole: GlobalRole;
   schoolId?: string;
-  schoolRole?: "SCHOOL_ADMIN" | "COACH_RECRUITER";
+  schoolRole?: SchoolRole;
+  schoolStatus?: SchoolStatus;
 }
 
 export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
+  schoolId?: string;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -17,5 +23,6 @@ export interface ApiResponse<T = unknown> {
   message?: string;
   data?: T;
   error?: string;
+  details?: Record<string, string[]>;
   timestamp: string;
 }

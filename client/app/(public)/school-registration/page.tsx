@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { FileSpreadsheet, ShieldAlert, Award, CheckCircle2, ArrowLeft } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
-import InquiryForm from "@/components/shared/InquiryForm";
+import RegistrationForm from "@/components/school-registration/RegistrationForm";
 
 export const metadata: Metadata = {
   title: "Register Your School Program",
@@ -131,7 +131,7 @@ export default function SchoolRegistrationPage() {
           </div>
 
           <div className="lg:col-span-7">
-            <InquiryForm type="school" />
+            <RegistrationForm />
           </div>
         </div>
       </section>

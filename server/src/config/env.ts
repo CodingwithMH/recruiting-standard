@@ -15,14 +15,14 @@ const envSchema = z.object({
   // Private document storage (S3-compatible). Optional in local development.
   STORAGE_BUCKET: z.string().optional(),
   STORAGE_REGION: z.string().optional(),
-  STORAGE_ENDPOINT: z.string().url().optional(),
+  STORAGE_ENDPOINT: z.string().url().optional().or(z.literal("")),
   STORAGE_ACCESS_KEY_ID: z.string().optional(),
   STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
   STORAGE_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(900),
 
   // Transactional email. Optional in local development.
   SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().int().positive().optional(),
+  SMTP_PORT: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.number().int().positive().optional()),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().email().default("notifications@therecruitingstandard.com"),
