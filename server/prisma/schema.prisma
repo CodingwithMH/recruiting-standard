@@ -28,6 +28,7 @@ enum SchoolStatus {
   PENDING
   APPROVED
   SUSPENDED
+  REJECTED
 }
 
 enum SchoolRole {
@@ -129,6 +130,7 @@ model User {
   phone             String?
   globalRole        GlobalRole
   status            UserStatus   @default(ACTIVE)
+  tokenVersion      Int          @default(0)
 
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
@@ -137,9 +139,24 @@ model User {
   athleteProfile    AthleteProfile?
   savedProspects    SavedProspect[]
   reviewedDocuments Document[]   @relation("DocumentReviewer")
+  passwordResetTokens PasswordResetToken[]
 
   @@index([email])
   @@index([globalRole])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model SchoolMembership {

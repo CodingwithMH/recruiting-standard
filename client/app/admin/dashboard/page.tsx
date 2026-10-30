@@ -3,14 +3,11 @@
 import { useEffect, useState } from "react";
 import {
   ShieldAlert,
-  Building2,
   FileCheck,
   CreditCard,
-  ArrowUpRight,
   Clock,
-  Sparkles,
 } from "lucide-react";
-import SiteLink from "@/components/ui/SiteLink";
+import SchoolApprovalQueue from "@/components/admin/SchoolApprovalQueue";
 import { getStoredUser } from "@/lib/auth";
 import type { UserProfile } from "@/lib/api";
 
@@ -18,6 +15,7 @@ export default function AdminDashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUser(getStoredUser());
   }, []);
 
@@ -50,6 +48,8 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      <SchoolApprovalQueue />
+
       {/* Admin Action Queues */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Queue 1: School Approval Queue */}
@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
           </div>
           <div className="pt-2">
             <span className="text-xs font-bold text-blue-600 inline-flex items-center gap-1">
-              Active in Step 2.5 (Ready to Wire) ↗
+              Live in the queue above ↗
             </span>
           </div>
         </div>

@@ -27,6 +27,7 @@ export default function PortalLayout({
       return;
     }
     const current = getStoredUser();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUser(current);
     setLoading(false);
   }, [router]);
@@ -52,6 +53,41 @@ export default function PortalLayout({
   const primaryMembership = user?.memberships?.[0];
   const schoolName = primaryMembership?.school.name || "School Portal";
   const schoolId = primaryMembership?.school.schoolId;
+  const schoolStatus = primaryMembership?.school.status;
+  const isSchoolBlocked =
+    user?.globalRole === "SCHOOL_STAFF" &&
+    !!schoolStatus &&
+    schoolStatus !== "APPROVED";
+
+  if (isSchoolBlocked) {
+    return (
+      <div className="min-h-screen bg-[#f4f7fc] flex items-center justify-center p-6">
+        <div className="bg-white max-w-md w-full rounded-2xl border border-amber-200 p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold text-[#102341]">
+            Portal Access Unavailable
+          </h1>
+          <p className="text-xs text-[#65748a] leading-relaxed">
+            {schoolStatus === "PENDING" &&
+              "Your school registration is awaiting Platform Admin approval."}
+            {schoolStatus === "SUSPENDED" &&
+              "Your school's portal access has been suspended. Please contact institutional support."}
+            {schoolStatus === "REJECTED" &&
+              "Your school registration was not approved. Please contact institutional support."}
+          </p>
+          <button
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1b3556] text-white text-xs font-bold cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f4f7fc] flex flex-col">
@@ -85,6 +121,16 @@ export default function PortalLayout({
               {primaryMembership?.role?.replace("_", " ") || user?.globalRole}
             </span>
           </div>
+
+          {primaryMembership && (
+            <SiteLink
+              href="/portal/school"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-[#102341] transition-colors text-xs font-semibold"
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">School Settings</span>
+            </SiteLink>
+          )}
 
           <button
             onClick={handleSignOut}

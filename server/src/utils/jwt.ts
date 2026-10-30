@@ -7,6 +7,7 @@ export interface JwtPayload {
   globalRole: "PLATFORM_ADMIN" | "SCHOOL_STAFF" | "ATHLETE" | "PARENT";
   schoolId?: string;
   schoolRole?: "SCHOOL_ADMIN" | "COACH_RECRUITER";
+  tokenVersion?: number;
 }
 
 /**

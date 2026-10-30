@@ -1,5 +1,6 @@
 import { Response, NextFunction } from "express";
 import { verifyToken } from "../utils/jwt.js";
+import { prisma } from "../config/prisma.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 
 /**
@@ -8,11 +9,11 @@ import type { AuthenticatedRequest } from "../types/index.js";
  *
  * Responds with 401 if the token is missing, malformed, or expired.
  */
-export function authenticateToken(
+export async function authenticateToken(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -34,6 +35,33 @@ export function authenticateToken(
       timestamp: new Date().toISOString(),
     });
     return;
+  }
+
+  // Tokens issued after a password reset carry a version that must match the
+  // current value on the user record. Mismatches revoke all older sessions.
+  if (payload.tokenVersion !== undefined) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { tokenVersion: true, status: true },
+      });
+
+      if (
+        !user ||
+        user.status !== "ACTIVE" ||
+        user.tokenVersion !== payload.tokenVersion
+      ) {
+        res.status(401).json({
+          success: false,
+          error: "Invalid or expired authentication token.",
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+    } catch (error) {
+      next(error);
+      return;
+    }
   }
 
   req.user = {

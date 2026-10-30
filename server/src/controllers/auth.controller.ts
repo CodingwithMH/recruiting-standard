@@ -5,6 +5,10 @@ import {
   loginUser,
   loginSchema,
   getMe,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  requestPasswordReset,
+  resetPassword,
   AuthError,
 } from "../services/auth.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
@@ -78,6 +82,80 @@ export async function login(
       success: true,
       message: "Login successful",
       data: result,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    if (err instanceof AuthError) {
+      res.status(err.statusCode).json({
+        success: false,
+        error: err.message,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+    next(err);
+  }
+}
+
+/**
+ * POST /api/v1/auth/forgot-password
+ * Sends a password reset link when the email belongs to an active account.
+ */
+export async function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = forgotPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: "Validation failed",
+        details: parsed.error.flatten().fieldErrors,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const result = await requestPasswordReset(parsed.data);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/v1/auth/reset-password
+ * Consumes a reset token and sets a new password.
+ */
+export async function resetPasswordHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: "Validation failed",
+        details: parsed.error.flatten().fieldErrors,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const result = await resetPassword(parsed.data);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

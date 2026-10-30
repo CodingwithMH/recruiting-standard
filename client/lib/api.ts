@@ -23,7 +23,7 @@ export interface UserProfile {
       id: string;
       schoolId: string | null;
       name: string;
-      status: "PENDING" | "APPROVED" | "SUSPENDED";
+      status: "PENDING" | "APPROVED" | "SUSPENDED" | "REJECTED";
     };
   }>;
 }

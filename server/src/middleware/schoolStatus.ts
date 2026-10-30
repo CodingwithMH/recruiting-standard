@@ -72,6 +72,16 @@ export async function requireApprovedSchool(
       return;
     }
 
+    if (school.status === "REJECTED") {
+      res.status(403).json({
+        success: false,
+        error: "Your school registration was not approved. Please contact institutional support.",
+        schoolStatus: "REJECTED",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
     // Attach school verification details to request context
     req.user.schoolStatus = school.status;
     next();

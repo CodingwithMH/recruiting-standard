@@ -209,9 +209,12 @@ export default function LoginForm() {
           <label htmlFor="login-password" className="block text-xs font-semibold text-[#102341]">
             Password
           </label>
-          <span className="text-[11px] text-slate-400">
-            Forgot password? (Contact admin)
-          </span>
+          <SiteLink
+            href="/forgot-password"
+            className="text-[11px] font-semibold text-[#102341] hover:underline"
+          >
+            Forgot password?
+          </SiteLink>
         </div>
         <div className="relative">
           <input
