@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
@@ -8,13 +9,26 @@ export const metadata: Metadata = {
   description: "Set a new password for your MVP 4.18 account.",
 };
 
-export default async function ResetPasswordPage({
+async function ResetPasswordFormSection({
   searchParams,
 }: {
   searchParams: Promise<{ token?: string }>;
 }) {
   const { token } = await searchParams;
+  return <ResetPasswordForm token={token ?? ""} />;
+}
 
+function ResetPasswordFormFallback() {
+  return (
+    <div className="bg-white p-7 sm:p-9 border border-slate-200/90 rounded-2xl shadow-sm self-start w-full h-72 animate-pulse" />
+  );
+}
+
+export default function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ token?: string }>;
+}) {
   return (
     <section className="py-16 sm:py-20 px-[6%] bg-[#f4f7fc] min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -58,7 +72,9 @@ export default async function ResetPasswordPage({
         </div>
 
         <div className="lg:col-span-6">
-          <ResetPasswordForm token={token ?? ""} />
+          <Suspense fallback={<ResetPasswordFormFallback />}>
+            <ResetPasswordFormSection searchParams={searchParams} />
+          </Suspense>
         </div>
       </div>
     </section>
