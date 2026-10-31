@@ -91,6 +91,13 @@ enum SubscriptionState {
   PENDING
 }
 
+enum GuardianLinkStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  REVOKED
+}
+
 // ----------------------------------------------------
 // Core Entities
 // ----------------------------------------------------
@@ -140,9 +147,31 @@ model User {
   savedProspects    SavedProspect[]
   reviewedDocuments Document[]   @relation("DocumentReviewer")
   passwordResetTokens PasswordResetToken[]
+  guardianLinks     ParentAthleteLink[] @relation("GuardianLinks")
+  athleteLinks      ParentAthleteLink[] @relation("AthleteLinks")
 
   @@index([email])
   @@index([globalRole])
+}
+
+// Links a Parent/Guardian account to an Athlete account. The athlete must
+// approve the request before the parent can act within their linked workflow.
+model ParentAthleteLink {
+  id            String             @id @default(uuid())
+  parentUserId  String
+  athleteUserId String
+  status        GuardianLinkStatus @default(PENDING)
+  respondedAt   DateTime?
+
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  parent        User               @relation("GuardianLinks", fields: [parentUserId], references: [id], onDelete: Cascade)
+  athlete       User               @relation("AthleteLinks", fields: [athleteUserId], references: [id], onDelete: Cascade)
+
+  @@unique([parentUserId, athleteUserId])
+  @@index([parentUserId, status])
+  @@index([athleteUserId, status])
 }
 
 model PasswordResetToken {

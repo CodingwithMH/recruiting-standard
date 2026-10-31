@@ -2,16 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ShieldAlert,
-  LogOut,
-  User,
-  Building2,
-  FileCheck2,
-  Layers,
-} from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
-import { getStoredUser, endSession, isAuthenticated } from "@/lib/auth";
+import { getStoredUser, signOut, isAuthenticated } from "@/lib/auth";
 import type { UserProfile } from "@/lib/api";
 
 export default function AdminLayout({
@@ -33,13 +26,14 @@ export default function AdminLayout({
       router.push("/portal/dashboard");
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUser(current);
     setLoading(false);
   }, [router]);
 
-  const handleSignOut = () => {
-    endSession();
-    router.push("/login");
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.replace("/login");
   };
 
   if (loading) {
@@ -59,7 +53,7 @@ export default function AdminLayout({
     <div className="min-h-screen bg-[#f4f7fc] flex flex-col">
       {/* Top Admin Header */}
       <header className="h-16 sm:h-20 px-[5%] bg-[#102341] text-white flex items-center justify-between sticky top-0 z-40 shadow-sm">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-5">
           <SiteLink href="/admin/dashboard" className="flex items-center gap-2.5">
             <span className="text-xl sm:text-2xl font-black tracking-tighter text-white">
               MVP<span className="text-blue-400 text-sm">↗</span>
@@ -73,6 +67,21 @@ export default function AdminLayout({
               </span>
             </div>
           </SiteLink>
+
+          <nav className="hidden md:flex items-center gap-4 text-xs font-semibold">
+            <SiteLink
+              href="/admin/dashboard"
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Schools
+            </SiteLink>
+            <SiteLink
+              href="/admin/users"
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Users
+            </SiteLink>
+          </nav>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">

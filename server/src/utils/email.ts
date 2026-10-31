@@ -69,3 +69,156 @@ export async function sendPasswordResetEmail(
 
   return true;
 }
+
+/**
+ * Invites a newly added school staff member to set their password and access
+ * the institution's recruiting portal.
+ */
+export async function sendSchoolMemberInvitationEmail(
+  to: string,
+  schoolName: string,
+  setupUrl: string
+): Promise<boolean> {
+  const client = getTransporter();
+
+  if (!client) {
+    logger.warn(
+      "AUTH",
+      "SMTP is not configured. School member invitation email was not sent."
+    );
+    return false;
+  }
+
+  const safeSchoolName = schoolName
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  await client.sendMail({
+    from: env.EMAIL_FROM,
+    to,
+    subject: `You have been invited to ${schoolName} on The Recruiting Standard`,
+    text: [
+      `You have been added to ${schoolName} on The Recruiting Standard.`,
+      "",
+      `Set your password to activate your account (link valid for 1 hour): ${setupUrl}`,
+      "",
+      "If you were not expecting this invitation, please contact your school administrator.",
+    ].join("\n"),
+    html: `
+      <p>You have been added to <strong>${safeSchoolName}</strong> on The Recruiting Standard.</p>
+      <p><a href="${setupUrl}">Set your password and activate your account</a> (link valid for 1 hour).</p>
+      <p>If you were not expecting this invitation, please contact your school administrator.</p>
+    `,
+  });
+
+  return true;
+}
+
+/**
+ * Notifies an athlete that a parent/guardian has requested access to their
+ * account. The athlete must approve the request before any access is granted.
+ */
+export async function sendGuardianLinkRequestEmail(
+  to: string,
+  parentName: string,
+  athleteFirstName: string
+): Promise<boolean> {
+  const client = getTransporter();
+
+  if (!client) {
+    logger.warn(
+      "AUTH",
+      "SMTP is not configured. Guardian link request email was not sent."
+    );
+    return false;
+  }
+
+  const portalUrl = `${env.CLIENT_ORIGIN.replace(/\/$/, "")}/portal/athlete`;
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  const safeParentName = escapeHtml(parentName);
+  const safeAthleteFirstName = escapeHtml(athleteFirstName);
+
+  await client.sendMail({
+    from: env.EMAIL_FROM,
+    to,
+    subject: "New guardian link request",
+    text: [
+      `Hi ${athleteFirstName},`,
+      "",
+      `${parentName} has requested permission to link to your recruiting account.`,
+      "",
+      "No access has been granted yet. Sign in to your athlete portal to approve or reject the request:",
+      portalUrl,
+      "",
+      "If you do not recognize this person, reject the request and contact support.",
+    ].join("\n"),
+    html: `
+      <p>Hi ${safeAthleteFirstName},</p>
+      <p><strong>${safeParentName}</strong> has requested permission to link to your recruiting account.</p>
+      <p>No access has been granted yet. Sign in to your athlete portal to approve or reject the request:</p>
+      <p><a href="${portalUrl}">Review guardian link request</a></p>
+      <p>If you do not recognize this person, reject the request and contact support.</p>
+    `,
+  });
+
+  return true;
+}
+
+/**
+ * Sends a confirmation that a school registration was received and is awaiting
+ * Platform Admin review. Never blocks registration when email is unavailable.
+ */
+export async function sendSchoolRegistrationEmail(
+  to: string,
+  schoolName: string
+): Promise<boolean> {
+  const client = getTransporter();
+
+  if (!client) {
+    logger.warn(
+      "AUTH",
+      "SMTP is not configured. School registration confirmation email was not sent."
+    );
+    return false;
+  }
+
+  const safeSchoolName = schoolName
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  await client.sendMail({
+    from: env.EMAIL_FROM,
+    to,
+    subject: "School registration received",
+    text: [
+      `Thank you for registering ${schoolName} with The Recruiting Standard.`,
+      "",
+      "Your registration is currently Pending review by Platform Administration.",
+      "Once approved, your permanent School ID will be issued and portal access will unlock.",
+      "",
+      "If you did not submit this registration, please contact support.",
+    ].join("\n"),
+    html: `
+      <p>Thank you for registering <strong>${safeSchoolName}</strong> with The Recruiting Standard.</p>
+      <p>Your registration is currently <strong>Pending</strong> review by Platform Administration.</p>
+      <p>Once approved, your permanent School ID will be issued and portal access will unlock.</p>
+      <p>If you did not submit this registration, please contact support.</p>
+    `,
+  });
+
+  return true;
+}

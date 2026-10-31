@@ -1,17 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Building2,
-  ShieldCheck,
-  Users,
-  Search,
-  BookmarkCheck,
-  CreditCard,
-  ArrowUpRight,
-  Sparkles,
-} from "lucide-react";
-import SiteLink from "@/components/ui/SiteLink";
+import { ShieldCheck, Users, Search, BookmarkCheck, Sparkles } from "lucide-react";
 import { getStoredUser } from "@/lib/auth";
 import type { UserProfile } from "@/lib/api";
 
@@ -19,6 +9,7 @@ export default function SchoolDashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUser(getStoredUser());
   }, []);
 

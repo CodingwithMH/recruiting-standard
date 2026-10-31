@@ -6,7 +6,9 @@ import {
   FileCheck,
   CreditCard,
   Clock,
+  Users,
 } from "lucide-react";
+import SiteLink from "@/components/ui/SiteLink";
 import SchoolApprovalQueue from "@/components/admin/SchoolApprovalQueue";
 import { getStoredUser } from "@/lib/auth";
 import type { UserProfile } from "@/lib/api";
@@ -51,7 +53,29 @@ export default function AdminDashboardPage() {
       <SchoolApprovalQueue />
 
       {/* Admin Action Queues */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Queue 0: User Management */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-700 flex items-center justify-center">
+              <Users className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-[#102341]">User Management</h3>
+            <p className="text-xs text-[#65748a] leading-relaxed">
+              Search every platform account, inspect school memberships, activate or suspend
+              access, and send password reset emails.
+            </p>
+          </div>
+          <div className="pt-2">
+            <SiteLink
+              href="/admin/users"
+              className="text-xs font-bold text-blue-600 hover:underline"
+            >
+              Open user directory ↗
+            </SiteLink>
+          </div>
+        </div>
+
         {/* Queue 1: School Approval Queue */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-3">

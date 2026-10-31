@@ -1,4 +1,10 @@
-import { getStoredToken, setStoredToken, clearStoredToken, UserProfile } from "./api";
+import {
+  apiRequest,
+  getStoredToken,
+  setStoredToken,
+  clearStoredToken,
+  UserProfile,
+} from "./api";
 
 const USER_STORAGE_KEY = "trs_auth_user";
 
@@ -31,6 +37,21 @@ export function saveSession(token: string, user: UserProfile): void {
 export function endSession(): void {
   clearStoredToken();
   clearStoredUser();
+}
+
+/**
+ * Revokes the server-side session (invalidating outstanding tokens) and then
+ * clears local credentials. Local state is always cleared even if the API call
+ * fails so a user is never trapped in a stale session.
+ */
+export async function signOut(): Promise<void> {
+  try {
+    if (getStoredToken()) {
+      await apiRequest("auth/logout", { method: "POST" });
+    }
+  } finally {
+    endSession();
+  }
 }
 
 export function isAuthenticated(): boolean {

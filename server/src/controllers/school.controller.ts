@@ -289,9 +289,11 @@ export async function handleAddMember(
 
     res.status(201).json({
       success: true,
-      message: result.invited
-        ? "Member added. A password setup email has been sent."
-        : "Member added successfully.",
+      message: result.invitationSent
+        ? "Member added. An invitation email with a password setup link has been sent."
+        : result.invited
+          ? "Member added, but the invitation email could not be sent. Please retry or contact support."
+          : "Member added successfully.",
       data: result,
       timestamp: new Date().toISOString(),
     });

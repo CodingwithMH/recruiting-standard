@@ -9,6 +9,7 @@ import {
   resetPasswordSchema,
   requestPasswordReset,
   resetPassword,
+  logoutUser,
   AuthError,
 } from "../services/auth.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
@@ -167,6 +168,37 @@ export async function resetPasswordHandler(
       });
       return;
     }
+    next(err);
+  }
+}
+
+/**
+ * POST /api/v1/auth/logout
+ * Revokes all existing sessions for the authenticated user.
+ */
+export async function logout(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: "Authentication required",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const result = await logoutUser(req.user.userId);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
     next(err);
   }
 }

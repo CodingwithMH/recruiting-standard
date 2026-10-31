@@ -5,6 +5,7 @@ import {
   me,
   forgotPassword,
   resetPasswordHandler,
+  logout,
 } from "../controllers/auth.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { authRateLimiter } from "../middleware/rateLimiter.js";
@@ -15,6 +16,7 @@ authRouter.post("/register", authRateLimiter, register);
 authRouter.post("/login", authRateLimiter, login);
 authRouter.post("/forgot-password", authRateLimiter, forgotPassword);
 authRouter.post("/reset-password", authRateLimiter, resetPasswordHandler);
+authRouter.post("/logout", authenticateToken, logout);
 authRouter.get("/me", authenticateToken, me);
 
 export default authRouter;

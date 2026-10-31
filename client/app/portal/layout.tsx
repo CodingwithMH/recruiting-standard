@@ -9,7 +9,7 @@ import {
   User,
 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
-import { getStoredUser, endSession, isAuthenticated } from "@/lib/auth";
+import { getStoredUser, signOut, isAuthenticated } from "@/lib/auth";
 import type { UserProfile } from "@/lib/api";
 
 export default function PortalLayout({
@@ -32,9 +32,9 @@ export default function PortalLayout({
     setLoading(false);
   }, [router]);
 
-  const handleSignOut = () => {
-    endSession();
-    router.push("/login");
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.replace("/login");
   };
 
   if (loading) {

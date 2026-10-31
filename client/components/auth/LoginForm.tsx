@@ -32,6 +32,7 @@ export default function LoginForm() {
   const [pendingSchoolNotice, setPendingSchoolNotice] = useState<{
     schoolName: string;
     contactEmail: string;
+    status: "PENDING" | "SUSPENDED" | "REJECTED";
   } | null>(null);
 
   const formik = useFormik({
@@ -40,7 +41,7 @@ export default function LoginForm() {
       password: "",
     },
     validationSchema: loginSchema,
-    onSubmit: async (values, { setSubmitting }) => {
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
       setServerError(null);
       setPendingSchoolNotice(null);
 
@@ -59,38 +60,48 @@ export default function LoginForm() {
       }
 
       const { user, token } = response.data;
-      saveSession(token, user);
 
-      // Check for pending school status
-      const pendingMembership = user.memberships?.find(
-        (m) => m.school.status === "PENDING"
+      // Pending, suspended, and rejected schools must not receive a usable
+      // portal session. Show the status instead of persisting the token.
+      const blockedMembership = user.memberships?.find(
+        (m) => m.school.status !== "APPROVED"
       );
 
-      if (pendingMembership) {
+      if (
+        user.globalRole === "SCHOOL_STAFF" &&
+        blockedMembership &&
+        blockedMembership.school.status !== "APPROVED"
+      ) {
         setPendingSchoolNotice({
-          schoolName: pendingMembership.school.name,
+          schoolName: blockedMembership.school.name,
           contactEmail: user.email,
+          status: blockedMembership.school.status,
         });
         return;
       }
 
-      // Role-based routing
+      saveSession(token, user);
+      resetForm();
+
+      // Replace the login page in history so browser Back cannot restore the
+      // submitted credentials.
       if (user.globalRole === "PLATFORM_ADMIN") {
-        router.push("/admin/dashboard");
+        router.replace("/admin/dashboard");
       } else if (user.globalRole === "SCHOOL_STAFF") {
-        router.push("/portal/dashboard");
+        router.replace("/portal/dashboard");
       } else if (user.globalRole === "ATHLETE") {
-        router.push("/portal/athlete");
+        router.replace("/portal/athlete");
       } else if (user.globalRole === "PARENT") {
-        router.push("/portal/parent");
+        router.replace("/portal/parent");
       } else {
-        router.push("/portal/dashboard");
+        router.replace("/portal/dashboard");
       }
     },
   });
 
   const handleDismissPending = () => {
     endSession();
+    formik.resetForm();
     setPendingSchoolNotice(null);
   };
 
@@ -99,16 +110,26 @@ export default function LoginForm() {
       <div className="bg-white p-7 sm:p-9 border border-amber-200 rounded-2xl shadow-sm self-start w-full space-y-5">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-semibold uppercase tracking-wider">
           <Clock className="w-3.5 h-3.5" />
-          <span>Institutional Verification Pending</span>
+          <span>
+            {pendingSchoolNotice.status === "PENDING"
+              ? "Institutional Verification Pending"
+              : `Institutional Access ${pendingSchoolNotice.status.toLowerCase()}`}
+          </span>
         </div>
 
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-[#102341]">
-            Registration Pending Review
+            {pendingSchoolNotice.status === "PENDING"
+              ? "Registration Pending Review"
+              : "Portal Access Unavailable"}
           </h2>
           <p className="text-xs text-[#65748a] mt-1.5 leading-relaxed">
             Your school account for <strong className="text-[#102341]">{pendingSchoolNotice.schoolName}</strong> is
-            currently awaiting Platform Administrator verification.
+            {pendingSchoolNotice.status === "PENDING"
+              ? " currently awaiting Platform Administrator verification."
+              : pendingSchoolNotice.status === "SUSPENDED"
+                ? " currently suspended. Please contact institutional support."
+                : " not approved. Please contact institutional support."}
           </p>
         </div>
 
@@ -118,12 +139,12 @@ export default function LoginForm() {
             <div>
               <span className="font-semibold block mb-0.5">Recruiting Portal Access Restricted</span>
               To protect student-athlete privacy, recruiting records and athlete contact tools are
-              accessible only after institutional credentials have been verified and a permanent
-              School ID (SCH-XXXXX) is issued.
+              accessible only while your institution is approved and has an active permanent
+              School ID (SCH-XXXXX).
             </div>
           </div>
           <div className="text-[11px] text-amber-800/80 border-t border-amber-200/50 pt-2">
-            Notification will be sent to: <span className="font-semibold">{pendingSchoolNotice.contactEmail}</span>
+            Account contact: <span className="font-semibold">{pendingSchoolNotice.contactEmail}</span>
           </div>
         </div>
 
@@ -266,8 +287,14 @@ export default function LoginForm() {
         )}
       </button>
 
-      <div className="text-center pt-2 border-t border-slate-100">
-        <span className="text-xs text-[#65748a]">
+      <div className="text-center pt-2 border-t border-slate-100 space-y-1">
+        <span className="block text-xs text-[#65748a]">
+          New athlete or parent/guardian?{" "}
+          <SiteLink href="/signup" className="font-semibold text-[#102341] hover:underline">
+            Create an account ↗
+          </SiteLink>
+        </span>
+        <span className="block text-xs text-[#65748a]">
           New school or athletic department?{" "}
           <SiteLink href="/school-registration" className="font-semibold text-[#102341] hover:underline">
             Register your school ↗

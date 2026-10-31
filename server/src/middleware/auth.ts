@@ -39,11 +39,32 @@ export async function authenticateToken(
 
   // Tokens issued after a password reset carry a version that must match the
   // current value on the user record. Mismatches revoke all older sessions.
+  //
+  // Real sessions also re-load the user's active membership on every request so
+  // revoked memberships, role changes, and school status changes take effect
+  // immediately instead of waiting for the JWT to expire.
   if (payload.tokenVersion !== undefined) {
     try {
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: { tokenVersion: true, status: true },
+        select: {
+          id: true,
+          email: true,
+          globalRole: true,
+          tokenVersion: true,
+          status: true,
+          memberships: {
+            where: { status: "ACTIVE" },
+            orderBy: { createdAt: "asc" },
+            select: {
+              schoolId: true,
+              role: true,
+              school: {
+                select: { id: true, name: true, schoolId: true, status: true },
+              },
+            },
+          },
+        },
       });
 
       if (
@@ -58,12 +79,62 @@ export async function authenticateToken(
         });
         return;
       }
+
+      const primaryMembership =
+        user.memberships.find((m) => m.schoolId === payload.schoolId) ||
+        user.memberships[0];
+
+      req.user = {
+        userId: user.id,
+        email: user.email,
+        globalRole: user.globalRole as typeof payload.globalRole,
+        schoolId: primaryMembership?.schoolId,
+        schoolRole: primaryMembership?.role,
+        schoolStatus: primaryMembership?.school.status,
+      };
+
+      // School staff may only access the portal while their school is approved.
+      if (req.user.globalRole === "SCHOOL_STAFF") {
+        if (!primaryMembership) {
+          res.status(403).json({
+            success: false,
+            error:
+              "Access denied. Your account is not linked to an active school membership.",
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        if (primaryMembership.school.status !== "APPROVED") {
+          res.status(403).json({
+            success: false,
+            error:
+              primaryMembership.school.status === "PENDING"
+                ? "Your school registration is pending Platform Admin approval. Recruiting portal access will unlock after approval."
+                : primaryMembership.school.status === "SUSPENDED"
+                  ? "Your school's recruiting portal access has been suspended. Please contact institutional support."
+                  : "Your school registration was not approved. Please contact institutional support.",
+            schoolStatus: primaryMembership.school.status,
+            schoolName: primaryMembership.school.name,
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      }
+
+      if (req.user.schoolId) {
+        req.schoolId = req.user.schoolId;
+      }
+
+      next();
+      return;
     } catch (error) {
       next(error);
       return;
     }
   }
 
+  // Legacy/test tokens without a tokenVersion fall back to the signed claims.
   req.user = {
     userId: payload.userId,
     email: payload.email,

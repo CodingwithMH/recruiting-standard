@@ -68,8 +68,14 @@ export default function Navigation() {
           );
         })}
         <SiteLink
-          href="/login"
+          href="/signup"
           className="text-slate-600 hover:text-[#102341] transition-colors ml-2"
+        >
+          Sign up
+        </SiteLink>
+        <SiteLink
+          href="/login"
+          className="text-slate-600 hover:text-[#102341] transition-colors"
         >
           Log in ↗
         </SiteLink>
@@ -98,6 +104,13 @@ export default function Navigation() {
             </SiteLink>
           ))}
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-3">
+            <SiteLink
+              href="/signup"
+              onClick={() => setOpen(false)}
+              className="text-sm font-semibold text-slate-700"
+            >
+              Create athlete / parent account
+            </SiteLink>
             <SiteLink
               href="/login"
               onClick={() => setOpen(false)}

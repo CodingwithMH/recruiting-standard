@@ -4,7 +4,8 @@ import { z } from "zod";
 import { prisma } from "../config/prisma.js";
 import { generateCandidateSchoolId } from "../utils/schoolId.js";
 import { hashPassword } from "../utils/password.js";
-import { requestPasswordReset } from "./auth.service.js";
+import { sendSchoolMemberInvitation } from "./auth.service.js";
+import { sendSchoolRegistrationEmail } from "../utils/email.js";
 import { logger } from "../utils/logger.js";
 
 const MAX_SCHOOL_ID_ATTEMPTS = 25;
@@ -206,6 +207,19 @@ export async function registerSchool(input: SchoolRegistrationInput) {
 
     return { school, user };
   });
+
+  try {
+    await sendSchoolRegistrationEmail(
+      result.school.contactEmail,
+      result.school.name
+    );
+  } catch (error) {
+    logger.error(
+      "AUTH",
+      `Failed to send school registration confirmation email for school: ${result.school.id}`,
+      error
+    );
+  }
 
   logger.info(
     "AUTH",
@@ -503,7 +517,7 @@ export async function addSchoolMember(
 ) {
   const school = await prisma.school.findUnique({
     where: { id: schoolId },
-    select: { id: true },
+    select: { id: true, name: true },
   });
 
   if (!school) {
@@ -572,8 +586,13 @@ export async function addSchoolMember(
     return { membership, invited };
   });
 
+  let invitationSent = false;
+
   if (result.invited) {
-    await requestPasswordReset({ email: normalizedEmail });
+    invitationSent = await sendSchoolMemberInvitation(
+      normalizedEmail,
+      school.name
+    );
   }
 
   logger.info(
@@ -581,7 +600,11 @@ export async function addSchoolMember(
     `School member added to ${schoolId}: ${normalizedEmail} (${input.role})`
   );
 
-  return { member: result.membership, invited: result.invited };
+  return {
+    member: result.membership,
+    invited: result.invited,
+    invitationSent,
+  };
 }
 
 /**
