@@ -34,6 +34,10 @@ jobs:
         run: npx prisma validate --schema prisma/schema.prisma
 
       - name: Run server tests
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/recruiting_standard_test?schema=public
+          JWT_SECRET: test-only-secret-value-not-used-in-production-min-32-chars
         run: npm --prefix server test
 
       - name: Build server TypeScript

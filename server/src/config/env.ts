@@ -3,12 +3,18 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const isTest = process.env.NODE_ENV === "test" || process.env.npm_lifecycle_event === "test";
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "staging", "production"]).default("development"),
   PORT: z.coerce.number().default(5000),
   CLIENT_ORIGIN: z.string().default("http://localhost:3000"),
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters"),
+  DATABASE_URL: isTest
+    ? z.string().default("postgresql://postgres:postgres@localhost:5432/recruiting_standard_test?schema=public")
+    : z.string().min(1, "DATABASE_URL is required"),
+  JWT_SECRET: isTest
+    ? z.string().default("test-only-secret-value-not-used-in-production-min-32-chars")
+    : z.string().min(16, "JWT_SECRET must be at least 16 characters"),
   JWT_EXPIRES_IN: z.string().default("7d"),
   REDIS_URL: z.string().optional(),
 
