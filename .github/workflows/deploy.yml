@@ -72,6 +72,14 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           IS_PRODUCTION: ${{ github.ref_name == 'main' }}
         run: |
+          CLEAN_PROJECT_ID=$(echo "$VERCEL_PROJECT_ID" | tr -d '"'\''\r\n ')
+          CLEAN_ORG_ID=$(echo "$VERCEL_ORG_ID" | tr -d '"'\''\r\n ')
+          export VERCEL_PROJECT_ID="$CLEAN_PROJECT_ID"
+          export VERCEL_ORG_ID="$CLEAN_ORG_ID"
+
+          echo "Server Project ID character count: ${#VERCEL_PROJECT_ID}"
+          echo "Server Project ID preview: ${VERCEL_PROJECT_ID:0:6}...${VERCEL_PROJECT_ID: -4}"
+
           if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
             echo "::warning::Missing Vercel secrets for Server (VERCEL_TOKEN, VERCEL_ORG_ID, or VERCEL_PROJECT_ID_SERVER). Skipping API deployment."
             exit 0
