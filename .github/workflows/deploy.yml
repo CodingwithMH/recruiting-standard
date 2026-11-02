@@ -69,7 +69,7 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_SERVER || secrets.VERCEL_SERVER_PROJECT_ID || secrets.VERCEL_PROJECT_ID_API || secrets.SERVER_VERCEL_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_SERVER || secrets.VERCEL_SERVER_TOKEN || secrets.VERCEL_TOKEN }}
           IS_PRODUCTION: ${{ github.ref_name == 'main' }}
         run: |
           CLEAN_PROJECT_ID=$(echo "$VERCEL_PROJECT_ID" | tr -d '"'\''\r\n ')
@@ -117,7 +117,7 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_CLIENT || secrets.VERCEL_CLIENT_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_CLIENT || secrets.VERCEL_CLIENT_TOKEN || secrets.VERCEL_TOKEN }}
           IS_PRODUCTION: ${{ github.ref_name == 'main' }}
         run: |
           if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
