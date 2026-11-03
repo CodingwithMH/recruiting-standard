@@ -11,6 +11,7 @@ import {
   Users,
   Eye,
   EyeOff,
+  ShieldCheck,
 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import { apiRequest, AuthResponse } from "@/lib/api";
@@ -34,6 +35,10 @@ const signupSchema = Yup.object({
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Please confirm your password"),
+  agreeToTerms: Yup.bool().oneOf(
+    [true],
+    "Please confirm the Terms of Use and Privacy Policy"
+  ),
 });
 
 const roleOptions: Array<{
@@ -45,13 +50,13 @@ const roleOptions: Array<{
   {
     value: "ATHLETE",
     label: "Student-Athlete",
-    description: "Build your profile, upload documents, and track verification.",
+    description: "Create a free account, publish highlight videos, and manage guardian access.",
     icon: GraduationCap,
   },
   {
     value: "PARENT",
     label: "Parent / Guardian",
-    description: "Request access to your linked athlete's recruiting account.",
+    description: "Request a secure link to your athlete's account. They must approve it first.",
     icon: Users,
   },
 ];
@@ -70,6 +75,7 @@ export default function SignupForm() {
       phone: "",
       password: "",
       confirmPassword: "",
+      agreeToTerms: false,
     },
     validationSchema: signupSchema,
     onSubmit: async (values, { setSubmitting, resetForm }) => {
@@ -111,7 +117,7 @@ export default function SignupForm() {
     formik.touched[field] && Boolean(formik.errors[field]);
 
   const inputClass = (field: keyof typeof formik.values) =>
-    `w-full rounded-xl border bg-[#f8fafc] px-3.5 py-2.5 text-xs sm:text-sm text-[#102341] focus:bg-white transition-colors outline-none ${
+    `w-full rounded-xl border bg-white px-4 py-3 text-sm text-[#102341] shadow-xs transition-colors outline-none ${
       isInvalid(field)
         ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
         : "border-slate-200 focus:border-[#102341] focus:ring-1 focus:ring-[#102341]"
@@ -119,23 +125,28 @@ export default function SignupForm() {
 
   return (
     <form
-      className="bg-white p-7 sm:p-9 border border-slate-200/90 rounded-2xl shadow-sm self-start w-full space-y-4"
+      className="w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_24px_60px_-28px_rgba(16,35,65,0.45)]"
       onSubmit={formik.handleSubmit}
       noValidate
     >
-      <div className="border-b border-slate-100 pb-4 mb-2">
-        <span className="text-[10px] font-bold tracking-widest text-[#65748a] uppercase block mb-1 font-mono">
-          CREATE YOUR ACCOUNT
-        </span>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#102341] m-0">
-          Join the recruiting standard.
-        </h2>
-        <p className="text-xs text-[#65748a] mt-1.5 leading-relaxed">
-          Athletes and parents/guardians can create an account here. Schools should use the
-          institutional registration flow.
-        </p>
+      <div className="relative overflow-hidden bg-[#102341] px-6 py-6 sm:px-7">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-blue-400/20 blur-2xl" />
+        <div className="relative">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#bed8ff]">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Free athlete & family access
+          </span>
+          <h2 className="mt-3 text-xl font-bold tracking-tight text-white sm:text-2xl">
+            Join the recruiting standard.
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-slate-300">
+            Create a free athlete or parent account. No individual subscription or approved school
+            is required to sign up.
+          </p>
+        </div>
       </div>
 
+      <div className="space-y-4 p-6 sm:p-7">
       {serverError && (
         <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
@@ -148,7 +159,7 @@ export default function SignupForm() {
 
       <div className="space-y-2">
         <span className="block text-xs font-semibold text-[#102341]">I am a...</span>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {roleOptions.map((option) => {
             const Icon = option.icon;
             const selected = formik.values.globalRole === option.value;
@@ -158,17 +169,25 @@ export default function SignupForm() {
                 key={option.value}
                 type="button"
                 onClick={() => formik.setFieldValue("globalRole", option.value)}
-                className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
+                className={`cursor-pointer rounded-xl border p-3 text-left transition-all ${
                   selected
-                    ? "border-[#102341] bg-slate-50 ring-1 ring-[#102341]"
-                    : "border-slate-200 bg-white hover:bg-slate-50/60"
+                    ? "border-[#102341] bg-[#102341] shadow-md"
+                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
                 }`}
               >
-                <span className="flex items-center gap-2 text-xs font-bold text-[#102341]">
-                  <Icon className="w-4 h-4" />
+                <span
+                  className={`flex items-center gap-2 text-xs font-bold ${
+                    selected ? "text-white" : "text-[#102341]"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
                   {option.label}
                 </span>
-                <span className="block text-[11px] text-[#65748a] mt-1 leading-relaxed">
+                <span
+                  className={`mt-0.5 block text-[11px] leading-relaxed ${
+                    selected ? "text-slate-300" : "text-[#65748a]"
+                  }`}
+                >
                   {option.description}
                 </span>
               </button>
@@ -177,7 +196,7 @@ export default function SignupForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <label htmlFor="signup-firstName" className="block text-xs font-semibold text-[#102341]">
             First name
@@ -251,7 +270,7 @@ export default function SignupForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <label htmlFor="signup-password" className="block text-xs font-semibold text-[#102341]">
             Password
@@ -301,10 +320,47 @@ export default function SignupForm() {
         </div>
       </div>
 
+      <div className="space-y-1.5 pt-0.5">
+        <label htmlFor="signup-agreeToTerms" className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            id="signup-agreeToTerms"
+            name="agreeToTerms"
+            type="checkbox"
+            checked={formik.values.agreeToTerms}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-[#102341] focus:ring-[#102341] cursor-pointer"
+          />
+          <span className="text-[11px] text-[#65748a] leading-relaxed">
+            I confirm I am 18 or older, or a parent/guardian is helping me create this account. I
+            agree to the{" "}
+            <SiteLink
+              href="/terms"
+              onClick={(event) => event.stopPropagation()}
+              className="font-semibold text-[#102341] hover:underline"
+            >
+              Terms of Use
+            </SiteLink>{" "}
+            and{" "}
+            <SiteLink
+              href="/privacy-policy"
+              onClick={(event) => event.stopPropagation()}
+              className="font-semibold text-[#102341] hover:underline"
+            >
+              Privacy Policy
+            </SiteLink>
+            .
+          </span>
+        </label>
+        {isInvalid("agreeToTerms") && (
+          <p className="text-[11px] text-red-600 font-medium">{formik.errors.agreeToTerms}</p>
+        )}
+      </div>
+
       <button
         type="submit"
         disabled={formik.isSubmitting}
-        className="w-full py-3.5 px-6 rounded-full bg-[#102341] text-white font-bold text-xs sm:text-sm hover:bg-[#1d3d68] disabled:opacity-60 transition-colors shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer mt-2"
+        className="mt-1 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#102341] px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1d3d68] hover:shadow-lg disabled:opacity-60"
       >
         {formik.isSubmitting ? (
           <span>Creating account...</span>
@@ -316,13 +372,15 @@ export default function SignupForm() {
         )}
       </button>
 
-      <div className="text-center pt-2 border-t border-slate-100">
-        <span className="text-xs text-[#65748a]">
-          Already have an account?{" "}
-          <SiteLink href="/login" className="font-semibold text-[#102341] hover:underline">
-            Log in
+        <div className="border-t border-slate-100 pt-3">
+          <SiteLink
+            href="/login"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#102341] transition-colors hover:border-slate-300 hover:bg-slate-50"
+          >
+            <span>Already have an account? Log in</span>
+            <ArrowUpRight className="h-3.5 w-3.5 text-slate-500" />
           </SiteLink>
-        </span>
+        </div>
       </div>
     </form>
   );

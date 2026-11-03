@@ -55,6 +55,9 @@ export default function FeatureGrid() {
             </article>
           ))}
         </div>
+        <p className="mt-8 text-center text-xs text-[#65748a] leading-relaxed">
+          Discovery, filtering, and institutional contact tools are planned for Milestone 4.
+        </p>
       </div>
     </section>
   );

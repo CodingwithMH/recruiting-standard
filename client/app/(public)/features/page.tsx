@@ -1,18 +1,32 @@
 import type { Metadata } from "next";
-import { GraduationCap, ShieldCheck, Search, FileText, Check, ArrowUpRight, ArrowLeft } from "lucide-react";
+import { GraduationCap, ShieldCheck, Search, FileText, Check, ArrowUpRight, ArrowLeft, Users } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import HowItWorks from "@/components/features/HowItWorks";
 
 export const metadata: Metadata = {
   title: "Features & Architecture",
   description:
-    "Explore the complete feature suite of MVP 4.18: verified multi-sport athlete profiles, approved-athlete search, and isolated recruiting records.",
+    "See what is live now and what is planned for Milestones 3 and 4 in MVP 4.18: guardian linking, athlete profiles, document verification, approved-athlete search, and recruiting records.",
 };
 
 const featureDeepDives = [
   {
+    icon: Users,
+    tag: "FAMILY ACCESS",
+    status: "Live now",
+    title: "Consent-Based Guardian Linking",
+    desc: "Athletes and parents/guardians can connect accounts safely. A guardian gets access only after the athlete approves the request.",
+    bullets: [
+      "Parent/guardian account registration",
+      "Link requests approved by the athlete",
+      "Guardian access can be reviewed and revoked",
+      "Privacy-first access for student-athletes who are minors",
+    ],
+  },
+  {
     icon: GraduationCap,
     tag: "ATHLETE PROFILES",
+    status: "Milestone 3",
     title: "Multi-Sport Profiles Built for Real Evaluation",
     desc: "Record statistics across multiple varsity sports, combine testing metrics, academic standings, and video links in one place.",
     bullets: [
@@ -25,6 +39,7 @@ const featureDeepDives = [
   {
     icon: ShieldCheck,
     tag: "DOCUMENT INTEGRITY",
+    status: "Milestone 3",
     title: "Admin Review & Signed Document Storage",
     desc: "Official transcripts and eligibility forms undergo platform administrator review. Documents are stored in secure private storage.",
     bullets: [
@@ -37,6 +52,7 @@ const featureDeepDives = [
   {
     icon: Search,
     tag: "DISCOVERY & SEARCH",
+    status: "Milestone 4",
     title: "Approved-Athlete Search & Filter Engine",
     desc: "Coaches never sift through unvetted accounts. Our discovery engine restricts search exclusively to verified athletes.",
     bullets: [
@@ -49,6 +65,7 @@ const featureDeepDives = [
   {
     icon: FileText,
     tag: "RECRUITING RECORDS",
+    status: "Milestone 4",
     title: "Private Activity Logs & Offer Management",
     desc: "Maintain institutional logs of calls, campus visits, scholarship offers, and student commitments with strict school-level data isolation.",
     bullets: [
@@ -82,8 +99,9 @@ export default function FeaturesPage() {
             From potential to possibility.
           </h1>
           <p className="text-base sm:text-lg text-[#65748a] leading-relaxed max-w-2xl">
-            One focused place to discover talent, verify academic and athletic credentials, and manage
-            institutional recruiting records with complete confidentiality.
+            MVP 4.18 brings athlete profiles, credential review, and private recruiting records into
+            one focused place. Capabilities roll out in milestone order, and each card below shows
+            what is live today versus what is planned.
           </p>
         </div>
       </section>
@@ -109,8 +127,9 @@ export default function FeaturesPage() {
                 Tools designed specifically for coaching staffs.
               </h2>
               <p className="text-sm sm:text-base text-slate-200 leading-relaxed m-0">
-                Eliminate administrative chaos with dedicated prospect boards, private evaluation notes,
-                and verified student documentation all under your permanent School ID.
+                MVP 4.18 is built to replace administrative chaos with dedicated prospect boards,
+                private evaluation notes, and verified student documentation under your permanent
+                School ID as those milestones roll out.
               </p>
             </div>
           </div>
@@ -128,8 +147,9 @@ export default function FeaturesPage() {
               Engineered for recruiting excellence.
             </h2>
             <p className="text-sm sm:text-base text-[#65748a] leading-relaxed">
-              Every feature in MVP 4.18 addresses specific pain points in the athletic
-              recruitment lifecycle.
+              Every capability in MVP 4.18 addresses a specific pain point in the athletic
+              recruitment lifecycle. Status labels show what is live in this build and what arrives
+              in Milestones 3 and 4.
             </p>
           </div>
 
@@ -142,13 +162,24 @@ export default function FeaturesPage() {
                   className="bg-white rounded-2xl p-7 border border-slate-200/80 hover:border-blue-300 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs">
                         <IconComponent className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-mono font-bold text-[#65748a] uppercase tracking-wider bg-slate-100 px-2.5 py-0.5 rounded-md">
-                        {feat.tag}
-                      </span>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md ${
+                            feat.status === "Live now"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {feat.status}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold text-[#65748a] uppercase tracking-wider bg-slate-100 px-2.5 py-0.5 rounded-md">
+                          {feat.tag}
+                        </span>
+                      </div>
                     </div>
 
                     <h3 className="text-lg font-semibold text-[#102341] mb-2">{feat.title}</h3>
@@ -182,7 +213,7 @@ export default function FeaturesPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-8">
           <div>
             <span className="text-[10px] font-bold tracking-widest text-[#102341]/80 uppercase block mb-3 font-mono">
-              READY TO FIND YOUR NEXT ATHLETE?
+              READY TO BUILD YOUR RECRUITING FOUNDATION?
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight m-0">
               Start with a profile. <br className="hidden sm:block" />

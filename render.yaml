@@ -33,6 +33,16 @@ services:
         sync: false
       - key: STORAGE_SIGNED_URL_TTL_SECONDS
         value: 900
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_UPLOAD_FOLDER
+        value: recruiting-standard/highlights
+      - key: CLOUDINARY_MAX_VIDEO_BYTES
+        value: 104857600
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT

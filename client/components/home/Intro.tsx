@@ -12,8 +12,8 @@ export default function Intro() {
           </h2>
         </div>
         <p className="lg:col-span-5 text-sm sm:text-base text-[#65748a] leading-relaxed">
-          Recruiting should be about finding the right fit. We bring athletes, coaches, and schools
-          together in one focused space, so potential can become a plan.
+          Recruiting should be about finding the right fit. We&apos;re building one focused space
+          for athletes, coaches, and schools, so potential can become a plan.
         </p>
       </div>
     </section>

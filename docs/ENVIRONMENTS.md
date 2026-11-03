@@ -47,6 +47,11 @@ feature/*  ──PR──▶  develop  ──merge──▶  main
 | `STORAGE_ACCESS_KEY_ID` | optional | staging key | production key | Yes (non-dev) |
 | `STORAGE_SECRET_ACCESS_KEY` | optional | staging secret | production secret | Yes (non-dev) |
 | `STORAGE_SIGNED_URL_TTL_SECONDS` | `900` | `900` | `900` | No |
+| `CLOUDINARY_CLOUD_NAME` | optional | staging cloud | production cloud | Yes (non-dev) |
+| `CLOUDINARY_API_KEY` | optional | staging key | production key | Yes (non-dev) |
+| `CLOUDINARY_API_SECRET` | optional | staging secret | production secret | Yes (non-dev) |
+| `CLOUDINARY_UPLOAD_FOLDER` | `recruiting-standard/highlights` | `recruiting-standard/highlights` | `recruiting-standard/highlights` | No |
+| `CLOUDINARY_MAX_VIDEO_BYTES` | `104857600` | `104857600` | `104857600` | No |
 | `SMTP_*` / `EMAIL_FROM` | optional | staging sender | production sender | Yes (non-dev) |
 
 ### Client (`client/`)
@@ -140,6 +145,7 @@ Create two GitHub Environments — `staging` and `production` — and configure 
 | API | Render (Docker) | `server/Dockerfile`, health check `/health`, deploy triggered by hook after migrations |
 | Database | Neon PostgreSQL | Separate branch per environment, pooled connection string |
 | Private storage | AWS S3 | Block All Public Access, signed URLs only |
+| Highlight video storage | Cloudinary (Free plan) | Signed direct uploads; public CDN URLs for school viewing |
 | Email | Resend / SMTP | Provider credentials injected per environment |
 
 Estimated running costs are documented in `docs/ARCHITECTURE.md` §6.

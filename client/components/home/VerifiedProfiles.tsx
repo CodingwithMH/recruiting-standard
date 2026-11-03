@@ -9,15 +9,20 @@ export default function VerifiedProfiles() {
         <div className="max-w-2xl mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[#102341] text-xs font-semibold uppercase tracking-wider mb-3">
             <ShieldCheck className="w-4 h-4 text-slate-700" />
-            <span>Document Verification</span>
+            <span>Document Verification · Milestone 3</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-semibold text-[#102341] tracking-tight leading-tight mb-4">
-            Verified from day one. <br className="hidden sm:block" />
+            Verified profiles, built on trust. <br className="hidden sm:block" />
             <span className="text-[#65748a] font-normal">Recruit with total clarity.</span>
           </h2>
-          <p className="text-sm sm:text-base text-[#65748a] leading-relaxed">
-            We replace unvetted claims with reviewed academic transcripts, combine testing metrics,
-            and official eligibility documents before any athlete appears in discovery.
+          <p className="text-sm sm:text-base text-[#65748a] leading-relaxed mb-3">
+            Document verification is planned for Milestone 3. It will replace unvetted claims with
+            reviewed academic transcripts, testing metrics, and official eligibility documents
+            before an athlete appears in discovery.
+          </p>
+          <p className="text-xs text-[#65748a] leading-relaxed">
+            <strong className="text-[#102341]">Live today:</strong> athlete accounts, guardian
+            linking, and highlight video links.
           </p>
         </div>
 
@@ -84,8 +89,8 @@ export default function VerifiedProfiles() {
               {/* Header Status & Class */}
               <div className="flex items-center justify-between pb-5 border-b border-slate-100">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-800 text-[11px] font-medium border border-slate-200/70">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                  <span>Approved Prospect</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span>Illustrative preview</span>
                 </div>
                 <span className="text-xs text-slate-500 font-medium">Class of 2026 · Basketball</span>
               </div>

@@ -26,6 +26,14 @@ const envSchema = z.object({
   STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
   STORAGE_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(900),
 
+  // Public highlight video storage (Cloudinary). Optional in local development.
+  // Videos are public-to-school assets, unlike private document storage above.
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  CLOUDINARY_UPLOAD_FOLDER: z.string().default("recruiting-standard/highlights"),
+  CLOUDINARY_MAX_VIDEO_BYTES: z.coerce.number().int().positive().default(104857600),
+
   // Transactional email. Optional in local development.
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.number().int().positive().optional()),

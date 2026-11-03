@@ -45,9 +45,15 @@ const plans = [
 export default function PricingSection() {
   return (
     <div className="max-w-6xl mx-auto">
-      <p className="text-center text-xs text-[#65748a] mb-10 max-w-md mx-auto leading-relaxed">
-        All subscriptions are invoiced manually via institutional purchase order or ACH. No credit card required.
-      </p>
+      <div className="text-center mb-10 max-w-xl mx-auto space-y-1.5">
+        <p className="text-xs text-[#65748a] leading-relaxed">
+          All subscriptions are invoiced manually via institutional purchase order or ACH. No credit card required.
+        </p>
+        <p className="text-[11px] text-[#65748a] leading-relaxed">
+          MVP 4.18 features are enabled as their milestone is released. Search and document access
+          are included in your plan and activate with Milestones 3 and 4.
+        </p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {plans.map((plan) => (
           <div

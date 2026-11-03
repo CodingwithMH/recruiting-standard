@@ -8,11 +8,11 @@ const steps = [
   },
   {
     title: "Discover with intention",
-    desc: "Find student-athletes who align with your team and your school.",
+    desc: "Find student-athletes who align with your team and your school. Discovery tools arrive in Milestone 4.",
   },
   {
     title: "Connect and build what’s next",
-    desc: "Start a conversation. Explore the fit. Take the next step together.",
+    desc: "Start a conversation. Explore the fit. Take the next step together. Contact tools arrive in Milestone 4.",
   },
 ];
 

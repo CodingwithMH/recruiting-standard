@@ -33,7 +33,7 @@ const pricingFaqs = [
   },
   {
     q: "What happens if our subscription expires or is suspended?",
-    a: "In accordance with our access logic, school portal access is automatically restricted when a subscription expires or is suspended by a platform administrator until renewal payment is recorded.",
+    a: "Platform administrators can suspend a school when its subscription expires. A suspended school is blocked from portal access until renewal payment is recorded.",
   },
   {
     q: "Can our school switch between monthly and annual plans?",
@@ -85,8 +85,9 @@ export default function PricingPage() {
               Everything your coaching staff needs to recruit.
             </h2>
             <p className="text-sm text-[#65748a]">
-              All subscriptions include full portal access, unrestricted prospect boards, and verified
-              student-athlete document access.
+              Subscriptions cover the full MVP 4.18 platform. Athlete profiles and document
+              verification are enabled in Milestone 3; approved-athlete search and recruiting
+              records are enabled in Milestone 4.
             </p>
           </div>
 

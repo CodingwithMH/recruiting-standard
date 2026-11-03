@@ -27,14 +27,14 @@ export default function Hero() {
             href="/school-registration"
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[#102341] text-white font-bold text-xs sm:text-sm hover:bg-[#1d3d68] transition-all shadow-sm"
           >
-            <span>Find your next recruit</span>
+            <span>Register your school</span>
             <ArrowUpRight className="w-4 h-4 text-[#bed8ff]" />
           </SiteLink>
           <SiteLink
             href="/features"
             className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#102341] hover:text-blue-700 transition-colors py-2"
           >
-            <span>See how it works</span>
+            <span>See what&apos;s live</span>
             <ArrowRight className="w-4 h-4 text-[#65748a]" />
           </SiteLink>
         </div>

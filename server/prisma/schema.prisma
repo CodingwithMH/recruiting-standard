@@ -98,6 +98,14 @@ enum GuardianLinkStatus {
   REVOKED
 }
 
+enum HighlightProvider {
+  CLOUDINARY
+  HUDL
+  YOUTUBE
+  VIMEO
+  OTHER
+}
+
 // ----------------------------------------------------
 // Core Entities
 // ----------------------------------------------------
@@ -149,6 +157,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   guardianLinks     ParentAthleteLink[] @relation("GuardianLinks")
   athleteLinks      ParentAthleteLink[] @relation("AthleteLinks")
+  highlightVideos   HighlightVideo[]
 
   @@index([email])
   @@index([globalRole])
@@ -238,6 +247,28 @@ model AthleteProfile {
 
   @@index([verificationStatus])
   @@index([primarySport, graduationYear])
+}
+
+// Highlight videos are intentionally separate from AthleteProfile so an athlete
+// can publish film before the full profile builder is completed. These are
+// public-to-school assets (unlike Document records, which stay private).
+model HighlightVideo {
+  id              String            @id @default(uuid())
+  userId          String
+  title           String?
+  videoUrl        String
+  provider        HighlightProvider @default(OTHER)
+  publicId        String?           // Cloudinary public_id, used for deletion
+  durationSeconds Int?
+  sizeBytes       Int?
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoUrl])
+  @@index([userId, createdAt])
 }
 
 model Document {

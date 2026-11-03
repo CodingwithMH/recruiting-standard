@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeft, GraduationCap, ShieldCheck, Users } from "lucide-react";
+import { GraduationCap, ShieldCheck, Users } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import SignupForm from "@/components/auth/SignupForm";
 
@@ -14,50 +14,41 @@ const accountBenefits = [
     icon: GraduationCap,
     title: "Student-Athletes",
     description:
-      "Create your account now to prepare your verified athletic profile and document uploads.",
+      "Create a free account, publish highlight videos, and connect with a guardian.",
   },
   {
     icon: Users,
     title: "Parents & Guardians",
     description:
-      "Request a secure link to your athlete's account and oversee their recruiting activity.",
+      "Request a secure link to your athlete's account and oversee their activity.",
   },
   {
     icon: ShieldCheck,
     title: "Consent-Based Linking",
     description:
-      "Parent access is only granted after the linked athlete approves the request.",
+      "Parent access starts only after the linked athlete approves the request.",
   },
 ];
 
 export default function SignupPage() {
   return (
-    <section className="py-16 sm:py-20 px-[6%] bg-[#f4f7fc] min-h-[calc(100vh-80px)]">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+    <section className="py-8 sm:py-10 px-[6%] bg-[#f4f7fc] min-h-[calc(100vh-80px)]">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <div className="lg:col-span-6">
-          <div className="mb-6">
-            <SiteLink
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#102341] transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to home</span>
-            </SiteLink>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[#102341] text-xs font-semibold uppercase tracking-wider mb-4">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[#102341] text-xs font-semibold uppercase tracking-wider mb-3">
             <span>ATHLETE & FAMILY ACCESS</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl font-semibold text-[#102341] tracking-tight leading-tight mb-4">
+          <h1 className="text-3xl sm:text-4xl font-semibold text-[#102341] tracking-tight leading-tight mb-3">
             Start your recruiting journey.
           </h1>
-          <p className="text-base text-[#65748a] leading-relaxed mb-8">
-            Athletes and parents/guardians can create portal accounts here. School staff
-            accounts are created through the institutional registration process.
+          <p className="text-sm sm:text-base text-[#65748a] leading-relaxed mb-5">
+            Athletes and parents/guardians can create free portal accounts here. You do not need a
+            paid individual student plan, and you do not need to wait for a school to be approved
+            before signing up. School staff accounts are created through institutional registration.
           </p>
 
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs max-w-md space-y-5">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs max-w-md space-y-4">
             {accountBenefits.map((benefit) => {
               const Icon = benefit.icon;
               return (
@@ -75,13 +66,33 @@ export default function SignupPage() {
               );
             })}
 
-            <div className="pt-3 border-t border-slate-100">
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <p className="text-[11px] text-[#65748a] leading-relaxed">
+                <strong className="text-[#102341]">Do athletes need an approved school?</strong>{" "}
+                No. Create an account now. School staff can sign in only after their school is
+                approved, and profiles are shared with schools only after completion and approval.
+                No $500/year individual student plan is offered.
+              </p>
+            </div>
+
+            <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
               <SiteLink
                 href="/school-registration"
-                className="text-xs font-semibold text-[#102341] hover:underline"
+                className="block text-xs font-semibold text-[#102341] hover:underline"
               >
                 Registering a school instead? Start here ↗
               </SiteLink>
+              <p className="text-[11px] text-[#65748a] leading-relaxed">
+                Review our{" "}
+                <SiteLink href="/privacy-policy" className="font-semibold text-[#102341] hover:underline">
+                  Privacy Policy
+                </SiteLink>{" "}
+                and{" "}
+                <SiteLink href="/terms" className="font-semibold text-[#102341] hover:underline">
+                  Terms of Use
+                </SiteLink>
+                .
+              </p>
             </div>
           </div>
         </div>

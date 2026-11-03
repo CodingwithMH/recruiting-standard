@@ -11,6 +11,7 @@ import {
   EyeOff,
   Clock,
   ShieldAlert,
+  ShieldCheck,
   LogOut,
 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
@@ -107,7 +108,7 @@ export default function LoginForm() {
 
   if (pendingSchoolNotice) {
     return (
-      <div className="bg-white p-7 sm:p-9 border border-amber-200 rounded-2xl shadow-sm self-start w-full space-y-5">
+      <div className="bg-white p-7 sm:p-9 border border-amber-200 rounded-2xl shadow-sm w-full space-y-5">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-semibold uppercase tracking-wider">
           <Clock className="w-3.5 h-3.5" />
           <span>
@@ -173,22 +174,28 @@ export default function LoginForm() {
 
   return (
     <form
-      className="bg-white p-7 sm:p-9 border border-slate-200/90 rounded-2xl shadow-sm self-start w-full space-y-4"
+      className="w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_24px_60px_-28px_rgba(16,35,65,0.45)]"
       onSubmit={formik.handleSubmit}
       noValidate
     >
-      <div className="border-b border-slate-100 pb-4 mb-2">
-        <span className="text-[10px] font-bold tracking-widest text-[#65748a] uppercase block mb-1 font-mono">
-          WELCOME BACK
-        </span>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#102341] m-0">
-          Back in the game.
-        </h2>
-        <p className="text-xs text-[#65748a] mt-1.5 leading-relaxed">
-          Sign in to access your verified recruiting portal and manage institutional records.
-        </p>
+      <div className="relative overflow-hidden bg-[#102341] px-6 py-6 sm:px-7">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-blue-400/20 blur-2xl" />
+        <div className="relative">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#bed8ff]">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Secure portal access
+          </span>
+          <h2 className="mt-3 text-xl font-bold tracking-tight text-white sm:text-2xl">
+            Sign in to your dashboard.
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-slate-300">
+            Use your account email and password. We&apos;ll take you to the right dashboard for
+            your role.
+          </p>
+        </div>
       </div>
 
+      <div className="space-y-4 p-6 sm:p-7">
       {serverError && (
         <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
@@ -213,7 +220,7 @@ export default function LoginForm() {
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           placeholder="coach@school.org"
-          className={`w-full rounded-xl border bg-[#f8fafc] px-3.5 py-2.5 text-xs sm:text-sm text-[#102341] focus:bg-white transition-colors outline-none ${
+          className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-[#102341] shadow-xs transition-colors outline-none ${
             isInvalid("email")
               ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
               : "border-slate-200 focus:border-[#102341] focus:ring-1 focus:ring-[#102341]"
@@ -247,7 +254,7 @@ export default function LoginForm() {
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             placeholder="••••••••••••"
-            className={`w-full rounded-xl border bg-[#f8fafc] px-3.5 py-2.5 pr-11 text-xs sm:text-sm text-[#102341] focus:bg-white transition-colors outline-none ${
+            className={`w-full rounded-xl border bg-white px-4 py-3 pr-11 text-sm text-[#102341] shadow-xs transition-colors outline-none ${
               isInvalid("password")
                 ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
                 : "border-slate-200 focus:border-[#102341] focus:ring-1 focus:ring-[#102341]"
@@ -275,7 +282,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={formik.isSubmitting}
-        className="w-full py-3.5 px-6 rounded-full bg-[#102341] text-white font-bold text-xs sm:text-sm hover:bg-[#1d3d68] disabled:opacity-60 transition-colors shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer mt-2"
+        className="mt-1 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#102341] px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1d3d68] hover:shadow-lg disabled:opacity-60"
       >
         {formik.isSubmitting ? (
           <span>Signing in...</span>
@@ -287,19 +294,35 @@ export default function LoginForm() {
         )}
       </button>
 
-      <div className="text-center pt-2 border-t border-slate-100 space-y-1">
-        <span className="block text-xs text-[#65748a]">
-          New athlete or parent/guardian?{" "}
-          <SiteLink href="/signup" className="font-semibold text-[#102341] hover:underline">
-            Create an account ↗
+      <div className="space-y-3 border-t border-slate-100 pt-4">
+        <div className="grid gap-2">
+          <SiteLink
+            href="/signup"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#102341] transition-colors hover:border-slate-300 hover:bg-slate-50"
+          >
+            <span>New athlete or parent? Create a free account</span>
+            <ArrowUpRight className="h-3.5 w-3.5 text-slate-500" />
           </SiteLink>
-        </span>
-        <span className="block text-xs text-[#65748a]">
-          New school or athletic department?{" "}
-          <SiteLink href="/school-registration" className="font-semibold text-[#102341] hover:underline">
-            Register your school ↗
+          <SiteLink
+            href="/school-registration"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#102341] transition-colors hover:border-slate-300 hover:bg-slate-50"
+          >
+            <span>New school? Register your institution</span>
+            <ArrowUpRight className="h-3.5 w-3.5 text-slate-500" />
           </SiteLink>
-        </span>
+        </div>
+        <p className="text-center text-[11px] leading-relaxed text-[#65748a]">
+          Review our{" "}
+          <SiteLink href="/privacy-policy" className="font-semibold text-[#102341] hover:underline">
+            Privacy Policy
+          </SiteLink>{" "}
+          and{" "}
+          <SiteLink href="/terms" className="font-semibold text-[#102341] hover:underline">
+            Terms of Use
+          </SiteLink>
+          .
+        </p>
+      </div>
       </div>
     </form>
   );

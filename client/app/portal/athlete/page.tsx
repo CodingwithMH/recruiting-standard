@@ -16,6 +16,7 @@ import {
 import { apiRequest } from "@/lib/api";
 import type { UserProfile } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
+import HighlightVideos from "@/components/athlete/HighlightVideos";
 
 type LinkStatus = "PENDING" | "ACTIVE" | "REJECTED" | "REVOKED";
 
@@ -128,6 +129,8 @@ export default function AthletePortalPage() {
           profile and document uploads in Milestone 3.
         </p>
       </div>
+
+      <HighlightVideos />
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-800 flex items-start gap-2">

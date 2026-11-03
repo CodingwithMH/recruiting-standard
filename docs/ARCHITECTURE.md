@@ -142,6 +142,16 @@ When an authorized user requests to view a document:
 3. The server calls the cloud storage SDK to generate a temporary `GET` signed URL valid for **15 minutes**.
 4. The client receives the temporary URL and opens the document in an authenticated viewer. The URL expires immediately after the viewing window.
 
+### Public Highlight Video Storage (Cloudinary Free Plan)
+Highlight videos are promotional assets intended for college recruiters, so they are handled separately from private documents.
+
+1. The athlete requests `POST /api/v1/athlete/highlights/upload-credentials`.
+2. The API returns a short-lived Cloudinary signed-upload payload (`cloudName`, `apiKey`, `timestamp`, `signature`, `folder`). The API secret never leaves the server.
+3. The browser uploads the video directly to `https://api.cloudinary.com/v1_1/<cloud>/video/upload`, avoiding server memory/bandwidth usage.
+4. On success, the browser calls `POST /api/v1/athlete/highlights` with the returned `secure_url` and `public_id`; the API validates the provider host and stores a `HighlightVideo` record.
+5. Hudl, YouTube, and Vimeo links can be published through the same endpoint without uploading a file.
+6. Athletes may publish up to 10 highlights and can remove them from the portal; deleting a Cloudinary asset also removes it from the Cloudinary account.
+
 ---
 
 ## 4. User Roles & Permission Hierarchy

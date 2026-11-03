@@ -16,8 +16,8 @@ export default function SecuritySection() {
             <span className="text-[#65748a] font-normal">Zero compromise.</span>
           </h2>
           <p className="text-sm sm:text-base text-[#65748a] leading-relaxed">
-            Proprietary recruiting evaluations, prospect boards, and sensitive student transcripts
-            remain strictly confidential to your athletic department.
+            Approved schools get role-gated access and strict school isolation today. Private
+            document storage and recruiting records are rolling out in Milestones 3 and 4.
           </p>
         </div>
 
@@ -27,10 +27,15 @@ export default function SecuritySection() {
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 mb-5">
               <EyeOff className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-semibold text-[#102341] mb-2">School Tenant Isolation</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="text-base font-semibold text-[#102341]">School Tenant Isolation</h3>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                Live now
+              </span>
+            </div>
             <p className="text-xs sm:text-sm text-[#65748a] leading-relaxed">
-              Recruiting records, private notes, and saved prospects from your school can never be
-              viewed, queried, or inferred by competing programs.
+              School staff sessions are bound to their approved school. Cross-school access is
+              denied at the API layer, so competing programs cannot query your institution.
             </p>
           </div>
 
@@ -38,10 +43,15 @@ export default function SecuritySection() {
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 mb-5">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-semibold text-[#102341] mb-2">Private Signed Documents</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="text-base font-semibold text-[#102341]">Private Signed Documents</h3>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
+                Milestone 3
+              </span>
+            </div>
             <p className="text-xs sm:text-sm text-[#65748a] leading-relaxed">
-              Official academic transcripts and eligibility forms are stored in private cloud storage
-              with zero public web URLs—accessible only via signed tokens.
+              Official transcripts and eligibility forms will use private storage with no public
+              URLs. Authorized access will be issued through short-lived signed links.
             </p>
           </div>
 
@@ -49,10 +59,15 @@ export default function SecuritySection() {
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 mb-5">
               <KeyRound className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-semibold text-[#102341] mb-2">Permanent School ID</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="text-base font-semibold text-[#102341]">Permanent School ID</h3>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                Live now
+              </span>
+            </div>
             <p className="text-xs sm:text-sm text-[#65748a] leading-relaxed">
-              Every approved school receives an immutable, permanent School ID that permanently anchors
-              coaching staff authorizations and compliance history.
+              Every approved school receives a permanent School ID that anchors its staff
+              authorizations and institutional profile.
             </p>
           </div>
         </div>

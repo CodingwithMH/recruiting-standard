@@ -52,6 +52,13 @@ export default function HowItWorks() {
           ))}
         </div>
 
+        <p className="mt-8 text-center text-xs text-[#65748a] leading-relaxed max-w-2xl mx-auto">
+          <strong className="text-[#102341]">Delivery status:</strong> account creation and
+          consent-based guardian linking are live now. Athlete profiles and document verification
+          arrive in Milestone 3. Approved-athlete search and recruiting records arrive in Milestone
+          4.
+        </p>
+
         <div className="mt-10 text-center">
           <SiteLink className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#102341] text-white font-bold text-xs sm:text-sm hover:bg-[#1d3d68] transition-colors shadow-sm" href="/school-registration">
             <span>Register Your School</span>

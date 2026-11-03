@@ -8,7 +8,7 @@ const faqs = [
   },
   {
     q: "How can my school join?",
-    a: "Complete the school registration form with your institution and role. School access will become available when our onboarding service launches.",
+    a: "Complete the school registration form with your institution and role. A platform admin reviews each registration, and approved schools receive a permanent School ID plus portal access.",
   },
   {
     q: "Which sports are supported?",

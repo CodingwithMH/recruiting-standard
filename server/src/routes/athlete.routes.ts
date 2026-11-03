@@ -4,6 +4,12 @@ import {
   handleRespondToGuardianLink,
   handleRevokeAthleteGuardianLink,
 } from "../controllers/guardian.controller.js";
+import {
+  handleCreateUploadCredentials,
+  handleDeleteHighlight,
+  handleListHighlights,
+  handleSaveHighlight,
+} from "../controllers/highlight.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole } from "../middleware/roles.js";
 
@@ -24,5 +30,13 @@ athleteRouter.delete(
   "/guardian-links/:linkId",
   handleRevokeAthleteGuardianLink
 );
+
+athleteRouter.get("/highlights", handleListHighlights);
+athleteRouter.post(
+  "/highlights/upload-credentials",
+  handleCreateUploadCredentials
+);
+athleteRouter.post("/highlights", handleSaveHighlight);
+athleteRouter.delete("/highlights/:highlightId", handleDeleteHighlight);
 
 export default athleteRouter;
