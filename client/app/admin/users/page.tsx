@@ -16,7 +16,7 @@ import {
 import { apiRequest } from "@/lib/api";
 
 type GlobalRole = "PLATFORM_ADMIN" | "SCHOOL_STAFF" | "ATHLETE" | "PARENT";
-type UserStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
+type UserStatus = "PENDING" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
 
 interface AdminUser {
   id: string;
@@ -24,6 +24,8 @@ interface AdminUser {
   firstName: string;
   lastName: string;
   phone: string | null;
+  dateOfBirth?: string | null;
+  schoolId?: string | null;
   globalRole: GlobalRole;
   status: UserStatus;
   createdAt: string;
@@ -50,6 +52,7 @@ const ROLE_STYLES: Record<GlobalRole, string> = {
 };
 
 const STATUS_STYLES: Record<UserStatus, string> = {
+  PENDING: "bg-amber-50 text-amber-800 border-amber-200/80",
   ACTIVE: "bg-emerald-50 text-emerald-800 border-emerald-200/80",
   INACTIVE: "bg-slate-100 text-slate-700 border-slate-200",
   SUSPENDED: "bg-red-50 text-red-800 border-red-200/80",
@@ -93,7 +96,15 @@ export default function AdminUsersPage() {
   }, [loadUsers]);
 
   const updateStatus = async (user: AdminUser, nextStatus: UserStatus) => {
-    if (
+    if (user.status === "PENDING" && nextStatus === "ACTIVE") {
+      if (
+        !window.confirm(
+          `Approve and activate ${user.firstName} ${user.lastName} (${user.schoolId || "Athlete"})? This unlocks full portal access.`
+        )
+      ) {
+        return;
+      }
+    } else if (
       nextStatus !== "ACTIVE" &&
       !window.confirm(
         `Set ${user.firstName} ${user.lastName}'s account status to ${nextStatus}? Their active sessions will be revoked.`
@@ -211,6 +222,7 @@ export default function AdminUsersPage() {
               className={inputClass}
             >
               <option value="">All statuses</option>
+              <option value="PENDING">Pending Verification</option>
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
               <option value="SUSPENDED">Suspended</option>
@@ -294,6 +306,18 @@ export default function AdminUsersPage() {
                               {membership.role.replace("_", " ")}
                             </span>
                           </div>
+                        ) : user.schoolId ? (
+                          <div>
+                            <span className="flex items-center gap-1.5 text-xs font-semibold text-[#102341]">
+                              <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                              {user.schoolId}
+                            </span>
+                            {user.dateOfBirth && (
+                              <span className="block text-[10px] text-[#65748a]">
+                                DOB: {new Date(user.dateOfBirth).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-xs text-slate-400">No school</span>
                         )}
@@ -302,7 +326,7 @@ export default function AdminUsersPage() {
                         <span
                           className={`inline-flex px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLES[user.status]}`}
                         >
-                          {user.status}
+                          {user.status === "PENDING" ? "Pending Approval" : user.status}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-xs text-[#65748a]">
@@ -310,7 +334,17 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap items-center justify-end gap-2">
-                          {user.status !== "ACTIVE" ? (
+                          {user.status === "PENDING" ? (
+                            <button
+                              type="button"
+                              onClick={() => void updateStatus(user, "ACTIVE")}
+                              disabled={busy}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold disabled:opacity-60 cursor-pointer shadow-xs"
+                            >
+                              <UserCheck className="w-3.5 h-3.5" />
+                              Approve & Activate
+                            </button>
+                          ) : user.status !== "ACTIVE" ? (
                             <button
                               type="button"
                               onClick={() => void updateStatus(user, "ACTIVE")}

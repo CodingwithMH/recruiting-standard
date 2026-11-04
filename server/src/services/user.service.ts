@@ -7,7 +7,7 @@ export const userListQuerySchema = z.object({
   role: z
     .enum(["PLATFORM_ADMIN", "SCHOOL_STAFF", "ATHLETE", "PARENT"])
     .optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
+  status: z.enum(["PENDING", "ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
   search: z.string().trim().max(200).optional(),
 });
 
@@ -16,7 +16,7 @@ export const updateUserSchema = z
     firstName: z.string().min(1).max(100),
     lastName: z.string().min(1).max(100),
     phone: z.string().max(30).nullable(),
-    status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]),
+    status: z.enum(["PENDING", "ACTIVE", "INACTIVE", "SUSPENDED"]),
   })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
@@ -43,6 +43,8 @@ const userSelect = {
   phone: true,
   globalRole: true,
   status: true,
+  dateOfBirth: true,
+  schoolId: true,
   createdAt: true,
   updatedAt: true,
   memberships: {
