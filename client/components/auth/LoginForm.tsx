@@ -300,7 +300,7 @@ export default function LoginForm() {
             href="/signup"
             className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#102341] transition-colors hover:border-slate-300 hover:bg-slate-50"
           >
-            <span>New athlete or parent? Create a free account</span>
+            <span>New athlete or parent? Create an account</span>
             <ArrowUpRight className="h-3.5 w-3.5 text-slate-500" />
           </SiteLink>
           <SiteLink
