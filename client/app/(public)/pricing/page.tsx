@@ -43,10 +43,7 @@ const pricingFaqs = [
     q: "Who can register as a student-athlete or parent?",
     a: "For our current launch, only student-athletes who attend an approved, participating school can register, along with their parents or guardians. Platform access is sponsored directly by your school's athletic department at no individual student cost.",
   },
-  {
-    q: "What if a school declines to pay for institutional coverage?",
-    a: "For a future release, if a school declines to pay, the student and family will be able to register directly, and a platform admin will manually activate their subscription.",
-  },
+
 ];
 
 export default function PricingPage() {

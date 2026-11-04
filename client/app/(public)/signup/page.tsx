@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { GraduationCap, ShieldCheck, Users, School, Info } from "lucide-react";
+import { GraduationCap, ShieldCheck, Users, School } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import SignupForm from "@/components/auth/SignupForm";
 
@@ -92,15 +92,6 @@ export default function SignupPage() {
                   who take an additional year or prep school post-grad season for physical and
                   athletic development.
                 </p>
-              </div>
-
-              <div className="pt-2 border-t border-slate-200/70 flex items-start gap-2 text-[11px] text-[#65748a] leading-relaxed">
-                <Info className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong className="text-[#102341]">Future Release:</strong> If a school declines
-                  institutional coverage, students and families will be able to register directly,
-                  with a platform administrator manually activating the subscription.
-                </span>
               </div>
 
               <div className="flex items-start gap-2 text-[11px] text-[#65748a] leading-relaxed">
