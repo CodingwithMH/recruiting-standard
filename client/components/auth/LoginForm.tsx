@@ -35,6 +35,10 @@ export default function LoginForm() {
     contactEmail: string;
     status: "PENDING" | "SUSPENDED" | "REJECTED";
   } | null>(null);
+  const [pendingAthleteNotice, setPendingAthleteNotice] = useState<{
+    email: string;
+    message: string;
+  } | null>(null);
 
   const formik = useFormik({
     initialValues: {
@@ -45,6 +49,7 @@ export default function LoginForm() {
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       setServerError(null);
       setPendingSchoolNotice(null);
+      setPendingAthleteNotice(null);
 
       const response = await apiRequest<AuthResponse>("auth/login", {
         method: "POST",
@@ -54,6 +59,18 @@ export default function LoginForm() {
       setSubmitting(false);
 
       if (!response.success || !response.data) {
+        if (
+          response.error &&
+          (response.error.toLowerCase().includes("pending verification") ||
+            response.error.toLowerCase().includes("student-athlete account"))
+        ) {
+          setPendingAthleteNotice({
+            email: values.email,
+            message: response.error,
+          });
+          return;
+        }
+
         setServerError(
           response.error || "Invalid email or password. Please verify your credentials."
         );
@@ -78,6 +95,11 @@ export default function LoginForm() {
           contactEmail: user.email,
           status: blockedMembership.school.status,
         });
+        return;
+      }
+
+      if (!token) {
+        setServerError("Authentication failed. No active session token received.");
         return;
       }
 
@@ -157,6 +179,59 @@ export default function LoginForm() {
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>
+          </button>
+          <SiteLink
+            href="/"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-slate-200 text-[#102341] hover:bg-slate-50 transition-colors text-xs font-semibold text-center"
+          >
+            Back to Home
+          </SiteLink>
+        </div>
+      </div>
+    );
+  }
+
+  if (pendingAthleteNotice) {
+    return (
+      <div className="bg-white p-7 sm:p-9 border border-amber-200 rounded-2xl shadow-sm w-full space-y-5">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-semibold uppercase tracking-wider">
+          <Clock className="w-3.5 h-3.5" />
+          <span>Student-Athlete Verification Pending</span>
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-[#102341]">
+            Registration Pending Approval
+          </h2>
+          <p className="text-xs text-[#65748a] mt-1.5 leading-relaxed">
+            {pendingAthleteNotice.message}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/60 text-amber-900 text-xs leading-relaxed space-y-2">
+          <div className="flex items-start gap-2.5">
+            <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold block mb-0.5">Recruiting Portal Access Restricted</span>
+              To protect student-athlete privacy and ensure recruitment integrity, only verified
+              students enrolled at an approved participating school can access recruiting profiles.
+            </div>
+          </div>
+          <div className="text-[11px] text-amber-800/80 border-t border-amber-200/50 pt-2">
+            Account email: <span className="font-semibold">{pendingAthleteNotice.email}</span>
+          </div>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              formik.resetForm();
+              setPendingAthleteNotice(null);
+            }}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#102341] text-white hover:bg-[#1d3d68] transition-colors text-xs font-semibold shadow-xs cursor-pointer"
+          >
+            <span>Back to Login</span>
           </button>
           <SiteLink
             href="/"

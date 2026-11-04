@@ -20,6 +20,7 @@ enum GlobalRole {
 }
 
 enum UserStatus {
+  PENDING
   ACTIVE
   INACTIVE
   SUSPENDED

@@ -16,7 +16,7 @@ export interface UserProfile {
   dateOfBirth?: string | null;
   schoolId?: string | null;
   globalRole: "PLATFORM_ADMIN" | "SCHOOL_STAFF" | "ATHLETE" | "PARENT";
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  status: "PENDING" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
   createdAt: string;
   memberships?: Array<{
     id: string;
@@ -32,7 +32,9 @@ export interface UserProfile {
 
 export interface AuthResponse {
   user: UserProfile;
-  token: string;
+  token: string | null;
+  isPendingVerification?: boolean;
+  message?: string;
 }
 
 const API_BASE_URL =

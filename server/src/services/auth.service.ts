@@ -167,6 +167,7 @@ export async function registerUser(input: RegisterInput) {
     verifiedSchoolId = school.schoolId || school.id;
   }
 
+  const isAthlete = input.globalRole === "ATHLETE";
   const passwordHash = await hashPassword(input.password);
 
   const user = await prisma.user.create({
@@ -179,7 +180,7 @@ export async function registerUser(input: RegisterInput) {
       globalRole: input.globalRole,
       dateOfBirth: parsedDob,
       schoolId: verifiedSchoolId,
-      status: "ACTIVE",
+      status: isAthlete ? "PENDING" : "ACTIVE",
     },
     select: {
       id: true,
@@ -194,19 +195,34 @@ export async function registerUser(input: RegisterInput) {
     },
   });
 
-  const tokenPayload: JwtPayload = {
-    userId: user.id,
-    email: user.email,
-    globalRole: user.globalRole,
-    schoolId: user.schoolId || undefined,
-    tokenVersion: user.tokenVersion,
+  let token: string | null = null;
+
+  // Student-athletes require institutional and platform admin verification before
+  // receiving an active JWT session.
+  if (!isAthlete) {
+    const tokenPayload: JwtPayload = {
+      userId: user.id,
+      email: user.email,
+      globalRole: user.globalRole,
+      schoolId: user.schoolId || undefined,
+      tokenVersion: user.tokenVersion,
+    };
+    token = signToken(tokenPayload);
+  }
+
+  logger.info(
+    "AUTH",
+    `New user registered: ${user.email} (${user.globalRole}) - Status: ${user.status}`
+  );
+
+  return {
+    user,
+    token,
+    isPendingVerification: isAthlete,
+    message: isAthlete
+      ? "Registration submitted successfully. Your student-athlete account is pending verification by your school and Platform Administration."
+      : undefined,
   };
-
-  const token = signToken(tokenPayload);
-
-  logger.info("AUTH", `New user registered: ${user.email} (${user.globalRole})`);
-
-  return { user, token };
 }
 
 /**
@@ -237,16 +253,38 @@ export async function loginUser(input: LoginInput) {
     throw new AuthError("Invalid email or password");
   }
 
+  const isMatch = await comparePassword(input.password, user.passwordHash);
+  if (!isMatch) {
+    throw new AuthError("Invalid email or password");
+  }
+
+  if (user.status === "PENDING") {
+    let schoolAffiliation = "";
+    if (user.schoolId) {
+      const school = await prisma.school.findFirst({
+        where: {
+          OR: [
+            { schoolId: { equals: user.schoolId, mode: "insensitive" } },
+            { id: user.schoolId },
+          ],
+        },
+        select: { name: true },
+      });
+      if (school) {
+        schoolAffiliation = ` affiliated with ${school.name}`;
+      }
+    }
+    throw new AuthError(
+      `Your student-athlete account${schoolAffiliation} is currently pending verification by your school and Platform Administration. Recruiting portal access will unlock once approved.`,
+      403
+    );
+  }
+
   if (user.status !== "ACTIVE") {
     throw new AuthError(
       "Your account has been deactivated. Please contact support.",
       403
     );
-  }
-
-  const isMatch = await comparePassword(input.password, user.passwordHash);
-  if (!isMatch) {
-    throw new AuthError("Invalid email or password");
   }
 
   const primaryMembership = user.memberships[0];

@@ -12,6 +12,8 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
+  ShieldAlert,
+  Clock,
   Building2,
   Calendar,
 } from "lucide-react";
@@ -106,6 +108,10 @@ export default function SignupForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [pendingAthlete, setPendingAthlete] = useState<{
+    email: string;
+    schoolId: string;
+  } | null>(null);
 
   const formik = useFormik({
     initialValues: {
@@ -151,6 +157,19 @@ export default function SignupForm() {
         return;
       }
 
+      if (
+        response.data.isPendingVerification ||
+        response.data.user.status === "PENDING" ||
+        !response.data.token
+      ) {
+        setPendingAthlete({
+          email: values.email,
+          schoolId: values.schoolId.toUpperCase().trim(),
+        });
+        resetForm();
+        return;
+      }
+
       saveSession(response.data.token, response.data.user);
       resetForm();
 
@@ -173,6 +192,88 @@ export default function SignupForm() {
     }`;
 
   const isAthlete = formik.values.globalRole === "ATHLETE";
+
+  if (pendingAthlete) {
+    return (
+      <div className="w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_24px_60px_-28px_rgba(16,35,65,0.45)]">
+        <div className="relative overflow-hidden bg-[#102341] px-6 py-6 sm:px-7">
+          <div className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-blue-400/20 blur-2xl" />
+          <div className="relative">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300 border border-amber-300/30">
+              <Clock className="h-3.5 w-3.5" />
+              Registration Submitted • Pending Verification
+            </span>
+            <h2 className="mt-3 text-xl font-bold tracking-tight text-white sm:text-2xl">
+              Account Submitted for Approval
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-300">
+              Your student-athlete registration has been received and must be verified before login.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-6 sm:p-7 space-y-5">
+          <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-950 text-xs leading-relaxed space-y-2.5">
+            <div className="flex items-start gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-semibold block text-amber-900">
+                  Institutional Verification Required
+                </span>
+                <p>
+                  To maintain recruitment integrity and eligibility, only verified students who are part
+                  of an approved, participating school can access recruiting profiles.
+                </p>
+              </div>
+            </div>
+            <div className="border-t border-amber-200/60 pt-2.5 space-y-1 text-[11px] text-amber-900/90">
+              <div>
+                Registered Email: <span className="font-semibold">{pendingAthlete.email}</span>
+              </div>
+              {pendingAthlete.schoolId && (
+                <div>
+                  School ID: <span className="font-semibold">{pendingAthlete.schoolId}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="text-xs text-slate-600 leading-relaxed space-y-2">
+            <p>
+              <strong className="text-[#102341]">What happens next?</strong>
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-slate-500">
+              <li>
+                Your school&apos;s athletic department and Platform Administration will verify your enrollment and eligibility.
+              </li>
+              <li>
+                Once verified and approved, your recruiting portal access will unlock.
+              </li>
+              <li>
+                You can then log in with your email and password to build your profile, upload highlight videos, and connect with college coaches.
+              </li>
+            </ul>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row gap-3">
+            <SiteLink
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#102341] text-white hover:bg-[#1d3d68] transition-colors text-xs font-semibold shadow-xs"
+            >
+              <span>Go to Login</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </SiteLink>
+            <SiteLink
+              href="/"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-slate-200 text-[#102341] hover:bg-slate-50 transition-colors text-xs font-semibold text-center"
+            >
+              Return to Home
+            </SiteLink>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form
