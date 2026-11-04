@@ -4,3 +4,4 @@ ADD COLUMN "schoolId" TEXT;
 
 -- CreateIndex
 CREATE INDEX "User_schoolId_idx" ON "User"("schoolId");
+

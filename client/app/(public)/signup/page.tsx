@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { GraduationCap, ShieldCheck, Users, School, Info, CheckCircle2 } from "lucide-react";
+import { GraduationCap, ShieldCheck, Users, School, Info } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import SignupForm from "@/components/auth/SignupForm";
 
