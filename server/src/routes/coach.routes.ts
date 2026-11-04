@@ -40,3 +40,4 @@ coachRouter.get("/records/:athleteProfileId", handleGetRecruitingRecord);
 coachRouter.patch("/records/:recordId", handleUpdateRecruitingRecord);
 
 export default coachRouter;
+

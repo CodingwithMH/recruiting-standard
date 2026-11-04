@@ -140,8 +140,8 @@ export default function SignupForm() {
             Join the recruiting standard.
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-slate-300">
-            Create a free athlete or parent account. No individual subscription or approved school
-            is required to sign up.
+            Create an athlete or parent account. Your school must hold an
+            approved subscription for full portal access.
           </p>
         </div>
       </div>

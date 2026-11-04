@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { GraduationCap, ShieldCheck, Users } from "lucide-react";
+import { GraduationCap, ShieldCheck, Users, School, Info } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import SignupForm from "@/components/auth/SignupForm";
 
 export const metadata: Metadata = {
   title: "Create an Athlete or Parent Account",
   description:
-    "Create a student-athlete or parent/guardian account for The Recruiting Standard portal.",
+    "Create a student-athlete or parent/guardian account on the MVP 4.18 portal. Athletes must be enrolled at an approved, participating school.",
 };
 
 const accountBenefits = [
@@ -14,19 +14,19 @@ const accountBenefits = [
     icon: GraduationCap,
     title: "Student-Athletes",
     description:
-      "Create a free account, publish highlight videos, and connect with a guardian.",
+      "Build your recruiting profile, publish highlight videos, and connect with a parent/guardian.",
   },
   {
     icon: Users,
     title: "Parents & Guardians",
     description:
-      "Request a secure link to your athlete's account and oversee their activity.",
+      "Request a secure link to your athlete's account and oversee their recruiting journey.",
   },
   {
     icon: ShieldCheck,
     title: "Consent-Based Linking",
     description:
-      "Parent access starts only after the linked athlete approves the request.",
+      "Parent access begins only after the linked athlete reviews and approves the request.",
   },
 ];
 
@@ -43,9 +43,9 @@ export default function SignupPage() {
             Start your recruiting journey.
           </h1>
           <p className="text-sm sm:text-base text-[#65748a] leading-relaxed mb-5">
-            Athletes and parents/guardians can create free portal accounts here. You do not need a
-            paid individual student plan, and you do not need to wait for a school to be approved
-            before signing up. School staff accounts are created through institutional registration.
+            For our current launch, student-athletes who attend an approved, participating school—and
+            their parents or guardians—can register here. Access is funded at the institutional
+            level by your school, with zero individual fees for students and families.
           </p>
 
           <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs max-w-md space-y-4">
@@ -66,13 +66,43 @@ export default function SignupPage() {
               );
             })}
 
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <p className="text-[11px] text-[#65748a] leading-relaxed">
-                <strong className="text-[#102341]">Do athletes need an approved school?</strong>{" "}
-                No. Create an account now. School staff can sign in only after their school is
-                approved, and profiles are shared with schools only after completion and approval.
-                No $500/year individual student plan is offered.
-              </p>
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2.5">
+              <div>
+                <p className="text-[11px] text-[#65748a] leading-relaxed">
+                  <strong className="text-[#102341]">Who can register?</strong>{" "}
+                  Only students who are part of an approved, participating school can register,
+                  along with their parents or guardians.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] text-[#65748a] leading-relaxed">
+                  <strong className="text-[#102341]">Must athletes be linked to an approved school?</strong>{" "}
+                  Yes. For this launch, all athlete accounts must be affiliated with an enrolled
+                  school. Your school&apos;s athletic program covers the platform subscription, so
+                  there is no individual student charge.
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/70 flex items-start gap-2 text-[11px] text-[#65748a] leading-relaxed">
+                <Info className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong className="text-[#102341]">Future Release:</strong> If a school declines
+                  institutional coverage, students and families will be able to register directly,
+                  with a platform administrator manually activating the subscription.
+                </span>
+              </div>
+
+              <div className="flex items-start gap-2 text-[11px] text-[#65748a] leading-relaxed">
+                <School className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                <span>
+                  Need your school enrolled? Direct your athletic director or coach to the{" "}
+                  <SiteLink href="/school-registration" className="font-semibold text-[#102341] hover:underline">
+                    school registration
+                  </SiteLink>{" "}
+                  page.
+                </span>
+              </div>
             </div>
 
             <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
