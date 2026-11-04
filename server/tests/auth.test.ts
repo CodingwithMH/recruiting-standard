@@ -82,6 +82,18 @@ test("Auth validation schemas enforce proper email and password constraints", ()
   });
   assert.equal(shortPassword.success, false);
 
+  // Valid athlete registration with School ID and DOB
+  const validAthlete = registerSchema.safeParse({
+    email: "athlete@school.org",
+    password: "StrongPassword123!",
+    firstName: "Marcus",
+    lastName: "Johnson",
+    globalRole: "ATHLETE",
+    schoolId: "SCH-10492",
+    dateOfBirth: "2008-05-15",
+  });
+  assert.equal(validAthlete.success, true);
+
   // Valid login input
   const validLogin = loginSchema.safeParse({
     email: "coach@school.org",

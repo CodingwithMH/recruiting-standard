@@ -26,6 +26,8 @@ export const registerSchema = z.object({
   globalRole: z
     .enum(["SCHOOL_STAFF", "ATHLETE", "PARENT"])
     .default("SCHOOL_STAFF"),
+  schoolId: z.string().trim().optional(),
+  dateOfBirth: z.string().trim().optional(),
 });
 
 export const loginSchema = z.object({
@@ -86,6 +88,85 @@ export async function registerUser(input: RegisterInput) {
     );
   }
 
+  let verifiedSchoolId: string | undefined = undefined;
+  let parsedDob: Date | undefined = undefined;
+
+  if (input.globalRole === "ATHLETE") {
+    // 1. Validate Date of Birth (Ages 14 - 20)
+    if (!input.dateOfBirth) {
+      throw new AuthError(
+        "Date of birth is required for student-athlete registration.",
+        400
+      );
+    }
+
+    const dob = new Date(input.dateOfBirth);
+    if (isNaN(dob.getTime())) {
+      throw new AuthError(
+        "Please provide a valid date of birth (YYYY-MM-DD).",
+        400
+      );
+    }
+
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    if (age < 14) {
+      throw new AuthError(
+        "Student-athletes must be at least 14 years of age to register.",
+        400
+      );
+    }
+    if (age > 20) {
+      throw new AuthError(
+        "Student-athletes must be 20 years of age or younger to register (including re-classified athletes).",
+        400
+      );
+    }
+
+    parsedDob = dob;
+
+    // 2. Validate School ID
+    if (!input.schoolId || input.schoolId.trim().length === 0) {
+      throw new AuthError(
+        "A valid School ID is required for student-athlete registration. Ask your coach or athletic director for your school's ID.",
+        400
+      );
+    }
+
+    const normalizedSchoolId = input.schoolId.trim().toUpperCase();
+
+    const school = await prisma.school.findFirst({
+      where: {
+        OR: [
+          { schoolId: { equals: normalizedSchoolId, mode: "insensitive" } },
+          { id: input.schoolId.trim() },
+        ],
+      },
+      select: { id: true, schoolId: true, name: true, status: true },
+    });
+
+    if (!school) {
+      throw new AuthError(
+        `School ID "${input.schoolId.trim()}" was not found. Please verify the ID with your school's athletic department.`,
+        404
+      );
+    }
+
+    if (school.status !== "APPROVED") {
+      throw new AuthError(
+        `School "${school.name}" is currently ${school.status.toLowerCase()}. Student-athletes can only register after the school is approved by Platform Administration.`,
+        403
+      );
+    }
+
+    verifiedSchoolId = school.schoolId || school.id;
+  }
+
   const passwordHash = await hashPassword(input.password);
 
   const user = await prisma.user.create({
@@ -96,6 +177,8 @@ export async function registerUser(input: RegisterInput) {
       lastName: input.lastName,
       phone: input.phone || null,
       globalRole: input.globalRole,
+      dateOfBirth: parsedDob,
+      schoolId: verifiedSchoolId,
       status: "ACTIVE",
     },
     select: {
@@ -104,6 +187,7 @@ export async function registerUser(input: RegisterInput) {
       firstName: true,
       lastName: true,
       globalRole: true,
+      schoolId: true,
       status: true,
       tokenVersion: true,
       createdAt: true,
@@ -114,6 +198,7 @@ export async function registerUser(input: RegisterInput) {
     userId: user.id,
     email: user.email,
     globalRole: user.globalRole,
+    schoolId: user.schoolId || undefined,
     tokenVersion: user.tokenVersion,
   };
 
@@ -170,7 +255,7 @@ export async function loginUser(input: LoginInput) {
     userId: user.id,
     email: user.email,
     globalRole: user.globalRole,
-    schoolId: primaryMembership?.schoolId,
+    schoolId: primaryMembership?.schoolId || user.schoolId || undefined,
     schoolRole: primaryMembership?.role,
     tokenVersion: user.tokenVersion,
   };
@@ -214,6 +299,7 @@ export async function getMe(userId: string) {
       lastName: true,
       phone: true,
       globalRole: true,
+      schoolId: true,
       status: true,
       createdAt: true,
       memberships: {

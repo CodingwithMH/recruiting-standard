@@ -13,6 +13,8 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   phone?: string | null;
+  dateOfBirth?: string | null;
+  schoolId?: string | null;
   globalRole: "PLATFORM_ADMIN" | "SCHOOL_STAFF" | "ATHLETE" | "PARENT";
   status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
   createdAt: string;

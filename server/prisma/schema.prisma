@@ -144,6 +144,8 @@ model User {
   firstName         String
   lastName          String
   phone             String?
+  dateOfBirth       DateTime?
+  schoolId          String?
   globalRole        GlobalRole
   status            UserStatus   @default(ACTIVE)
   tokenVersion      Int          @default(0)
@@ -162,6 +164,7 @@ model User {
 
   @@index([email])
   @@index([globalRole])
+  @@index([schoolId])
 }
 
 // Links a Parent/Guardian account to an Athlete account. The athlete must

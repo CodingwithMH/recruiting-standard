@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
-import { GraduationCap, ShieldCheck, Users, School, Info } from "lucide-react";
+import { GraduationCap, ShieldCheck, Users, School, Info, CheckCircle2 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import SignupForm from "@/components/auth/SignupForm";
 
 export const metadata: Metadata = {
   title: "Create an Athlete or Parent Account",
   description:
-    "Create a student-athlete or parent/guardian account on the MVP 4.18 portal. Athletes must be enrolled at an approved, participating school.",
+    "Create a student-athlete or parent/guardian account on the MVP 4.18 portal. Student-athletes (ages 14–20) must enter their approved School ID.",
 };
 
 const accountBenefits = [
   {
     icon: GraduationCap,
-    title: "Student-Athletes",
+    title: "Student-Athletes (Ages 14–20)",
     description:
-      "Build your recruiting profile, publish highlight videos, and connect with a parent/guardian.",
+      "Enter your approved School ID and date of birth to build your verified profile, publish highlights, and link a guardian.",
   },
   {
     icon: Users,
@@ -43,9 +43,9 @@ export default function SignupPage() {
             Start your recruiting journey.
           </h1>
           <p className="text-sm sm:text-base text-[#65748a] leading-relaxed mb-5">
-            For our current launch, student-athletes who attend an approved, participating school—and
-            their parents or guardians—can register here. Access is funded at the institutional
-            level by your school, with zero individual fees for students and families.
+            Student-athletes (ages 14–20, including re-classified prospects) enrolled at an approved,
+            participating school—and their parents or guardians—can register here. Access is funded
+            institutionally by your school with zero individual athlete fees.
           </p>
 
           <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs max-w-md space-y-4">
@@ -70,17 +70,27 @@ export default function SignupPage() {
               <div>
                 <p className="text-[11px] text-[#65748a] leading-relaxed">
                   <strong className="text-[#102341]">Who can register?</strong>{" "}
-                  Only students who are part of an approved, participating school can register,
+                  Student-athletes between 14 and 20 years old who attend an approved, participating
+                  school (including domestic high schools, prep schools, and international academies),
                   along with their parents or guardians.
                 </p>
               </div>
 
               <div>
                 <p className="text-[11px] text-[#65748a] leading-relaxed">
-                  <strong className="text-[#102341]">Must athletes be linked to an approved school?</strong>{" "}
-                  Yes. For this launch, all athlete accounts must be affiliated with an enrolled
-                  school. Your school&apos;s athletic program covers the platform subscription, so
-                  there is no individual student charge.
+                  <strong className="text-[#102341]">What is needed to sign up?</strong>{" "}
+                  Athletes must enter their approved 5-digit School ID (e.g.{" "}
+                  <code className="text-[#102341] font-mono font-bold">SCH-10492</code>) provided by
+                  their athletic director or head coach.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] text-[#65748a] leading-relaxed">
+                  <strong className="text-[#102341]">Re-Classification & Age Eligibility:</strong>{" "}
+                  Athletes ages 14 to 20 are supported, accommodating re-classed student-athletes
+                  who take an additional year or prep school post-grad season for physical and
+                  athletic development.
                 </p>
               </div>
 
