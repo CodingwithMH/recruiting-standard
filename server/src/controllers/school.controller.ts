@@ -16,6 +16,9 @@ import {
   addSchoolMember,
   updateSchoolMember,
   removeSchoolMember,
+  listSchoolAthletes,
+  approveSchoolAthlete,
+  rejectSchoolAthlete,
   SchoolRegistrationError,
 } from "../services/school.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
@@ -355,6 +358,80 @@ export async function handleRemoveMember(
       success: true,
       message: "Member removed from the school.",
       data: membership,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/v1/schools/:id/athletes
+ * Lists student-athletes affiliated with this school.
+ */
+export async function handleListSchoolAthletes(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const athletes = await listSchoolAthletes(getParam(req.params.id));
+
+    res.status(200).json({
+      success: true,
+      data: athletes,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/v1/schools/:id/athletes/:athleteId/approve
+ * Approves a student-athlete's account for this school.
+ */
+export async function handleApproveSchoolAthlete(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const athlete = await approveSchoolAthlete(
+      getParam(req.params.id),
+      getParam(req.params.athleteId)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Athlete approved successfully and portal access unlocked.",
+      data: athlete,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/v1/schools/:id/athletes/:athleteId/reject
+ * Deactivates or rejects a student-athlete's affiliation with this school.
+ */
+export async function handleRejectSchoolAthlete(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const athlete = await rejectSchoolAthlete(
+      getParam(req.params.id),
+      getParam(req.params.athleteId)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Athlete removed from active school roster.",
+      data: athlete,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

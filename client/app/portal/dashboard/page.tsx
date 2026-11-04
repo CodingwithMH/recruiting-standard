@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldCheck, Users, Search, BookmarkCheck, Sparkles } from "lucide-react";
+import { ShieldCheck, Users, Search, BookmarkCheck, Sparkles, GraduationCap } from "lucide-react";
+import SiteLink from "@/components/ui/SiteLink";
 import { getStoredUser } from "@/lib/auth";
 import type { UserProfile } from "@/lib/api";
 
@@ -57,22 +58,25 @@ export default function SchoolDashboardPage() {
 
       {/* Quick Action / Module Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Module 1: Institutional Roster */}
+        {/* Module 1: Institutional Athlete Roster */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#102341]">
-              <Users className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700">
+              <GraduationCap className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-[#102341]">Coaching Staff Roster</h3>
+            <h3 className="text-base font-bold text-[#102341]">Student-Athlete Roster</h3>
             <p className="text-xs text-[#65748a] leading-relaxed">
-              Manage authorized school staff, athletic directors, and recruiting coordinators with
-              role-based permissions.
+              Review and approve student-athletes who registered with your School ID. Verify eligibility and unlock portal recruiting access.
             </p>
           </div>
           <div className="pt-2">
-            <span className="text-xs font-bold text-blue-600 inline-flex items-center gap-1">
-              Active in Step 2.6 ↗
-            </span>
+            <SiteLink
+              href="/portal/athletes"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1d3d68] text-white text-xs font-bold transition-colors"
+            >
+              <span>Manage & Approve Athletes</span>
+              <span>↗</span>
+            </SiteLink>
           </div>
         </div>
 

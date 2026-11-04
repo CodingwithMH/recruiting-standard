@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2,
+  GraduationCap,
   LogOut,
   ShieldCheck,
   User,
@@ -123,13 +124,22 @@ export default function PortalLayout({
           </div>
 
           {primaryMembership && (
-            <SiteLink
-              href="/portal/school"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-[#102341] transition-colors text-xs font-semibold"
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">School Settings</span>
-            </SiteLink>
+            <>
+              <SiteLink
+                href="/portal/athletes"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-blue-900 transition-colors text-xs font-semibold"
+              >
+                <GraduationCap className="w-3.5 h-3.5 text-blue-700" />
+                <span className="hidden sm:inline">Athlete Roster</span>
+              </SiteLink>
+              <SiteLink
+                href="/portal/school"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-[#102341] transition-colors text-xs font-semibold"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">School Settings</span>
+              </SiteLink>
+            </>
           )}
 
           <button

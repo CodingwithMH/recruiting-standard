@@ -11,6 +11,9 @@ import {
   handleAddMember,
   handleUpdateMember,
   handleRemoveMember,
+  handleListSchoolAthletes,
+  handleApproveSchoolAthlete,
+  handleRejectSchoolAthlete,
 } from "../controllers/school.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole, requireSchoolRole } from "../middleware/roles.js";
@@ -101,6 +104,32 @@ schoolRouter.delete(
   requireApprovedSchool,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleRemoveMember
+);
+
+// Student-athlete roster management and verification (School Admin or Coach)
+schoolRouter.get(
+  "/:id/athletes",
+  authenticateToken,
+  requireSchoolTenant,
+  requireApprovedSchool,
+  requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER"),
+  handleListSchoolAthletes
+);
+schoolRouter.post(
+  "/:id/athletes/:athleteId/approve",
+  authenticateToken,
+  requireSchoolTenant,
+  requireApprovedSchool,
+  requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER"),
+  handleApproveSchoolAthlete
+);
+schoolRouter.post(
+  "/:id/athletes/:athleteId/reject",
+  authenticateToken,
+  requireSchoolTenant,
+  requireApprovedSchool,
+  requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER"),
+  handleRejectSchoolAthlete
 );
 
 export default schoolRouter;

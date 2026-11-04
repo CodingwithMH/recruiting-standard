@@ -706,3 +706,186 @@ export async function removeSchoolMember(
     select: { id: true, status: true },
   });
 }
+
+/**
+ * Lists all student-athletes affiliated with the school.
+ */
+export async function listSchoolAthletes(schoolId: string) {
+  const school = await prisma.school.findUnique({
+    where: { id: schoolId },
+    select: { id: true, schoolId: true, name: true },
+  });
+
+  if (!school) {
+    throw new SchoolNotFoundError(schoolId);
+  }
+
+  const schoolIdentifiers = [school.id];
+  if (school.schoolId) {
+    schoolIdentifiers.push(school.schoolId);
+  }
+
+  return prisma.user.findMany({
+    where: {
+      globalRole: "ATHLETE",
+      OR: [
+        { schoolId: { in: schoolIdentifiers } },
+        ...(school.schoolId
+          ? [{ schoolId: { equals: school.schoolId, mode: "insensitive" as const } }]
+          : []),
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      dateOfBirth: true,
+      schoolId: true,
+      status: true,
+      createdAt: true,
+      athleteProfile: {
+        select: {
+          id: true,
+          graduationYear: true,
+          primarySport: true,
+          positions: true,
+          gpa: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Approves a student-athlete affiliated with this school, activating their portal account.
+ */
+export async function approveSchoolAthlete(
+  schoolId: string,
+  athleteId: string
+) {
+  const school = await prisma.school.findUnique({
+    where: { id: schoolId },
+    select: { id: true, schoolId: true, name: true },
+  });
+
+  if (!school) {
+    throw new SchoolNotFoundError(schoolId);
+  }
+
+  const athlete = await prisma.user.findUnique({
+    where: { id: athleteId },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      globalRole: true,
+      schoolId: true,
+      status: true,
+    },
+  });
+
+  if (!athlete || athlete.globalRole !== "ATHLETE") {
+    throw new SchoolManagementError("Student-athlete not found.", 404);
+  }
+
+  const matchesSchool =
+    athlete.schoolId === school.id ||
+    (school.schoolId &&
+      athlete.schoolId?.toUpperCase() === school.schoolId.toUpperCase());
+
+  if (!matchesSchool) {
+    throw new SchoolManagementError(
+      "This athlete is not affiliated with your school.",
+      403
+    );
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: athleteId },
+    data: { status: "ACTIVE" },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      status: true,
+      schoolId: true,
+    },
+  });
+
+  logger.info(
+    "AUTH",
+    `School ${school.name} (${school.schoolId || school.id}) approved athlete ${athlete.email}`
+  );
+
+  return updated;
+}
+
+/**
+ * Rejects or deactivates a student-athlete from this school.
+ */
+export async function rejectSchoolAthlete(
+  schoolId: string,
+  athleteId: string
+) {
+  const school = await prisma.school.findUnique({
+    where: { id: schoolId },
+    select: { id: true, schoolId: true, name: true },
+  });
+
+  if (!school) {
+    throw new SchoolNotFoundError(schoolId);
+  }
+
+  const athlete = await prisma.user.findUnique({
+    where: { id: athleteId },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      globalRole: true,
+      schoolId: true,
+    },
+  });
+
+  if (!athlete || athlete.globalRole !== "ATHLETE") {
+    throw new SchoolManagementError("Student-athlete not found.", 404);
+  }
+
+  const matchesSchool =
+    athlete.schoolId === school.id ||
+    (school.schoolId &&
+      athlete.schoolId?.toUpperCase() === school.schoolId.toUpperCase());
+
+  if (!matchesSchool) {
+    throw new SchoolManagementError(
+      "This athlete is not affiliated with your school.",
+      403
+    );
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: athleteId },
+    data: { status: "INACTIVE" },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      status: true,
+      schoolId: true,
+    },
+  });
+
+  logger.info(
+    "AUTH",
+    `School ${school.name} deactivated athlete affiliation for ${athlete.email}`
+  );
+
+  return updated;
+}
