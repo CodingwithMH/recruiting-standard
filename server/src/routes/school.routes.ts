@@ -50,9 +50,12 @@ schoolRouter.post(
 );
 
 // School profile (Platform Admin or an approved school member)
+// Explicitly gate to school-affiliated roles; Athletes and Parents never have
+// a schoolId so this is defence-in-depth rather than a critical fix.
 schoolRouter.get(
   "/:id",
   authenticateToken,
+  requireGlobalRole("PLATFORM_ADMIN", "SCHOOL_STAFF"),
   requireSchoolTenant,
   requireApprovedSchool,
   handleGetSchool
