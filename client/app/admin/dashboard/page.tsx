@@ -122,14 +122,17 @@ export default function AdminDashboardPage() {
             </div>
             <h3 className="text-base font-bold text-[#102341]">School Subscriptions</h3>
             <p className="text-xs text-[#65748a] leading-relaxed">
-              Manually record payments for annual ($1,500/yr) and monthly ($250/mo) school access plans
-              and manage institution billing status.
+              Manually record payments for annual ($1,500/yr) and monthly ($250/mo) school access
+              plans. Overdue monthly accounts automatically include the $25 late fee plus 6.25% tax.
             </p>
           </div>
           <div className="pt-2">
-            <span className="text-xs font-bold text-slate-500">
-              Milestone 5 (Subscription Admin)
-            </span>
+            <SiteLink
+              href="/admin/subscriptions"
+              className="text-xs font-bold text-blue-600 hover:underline"
+            >
+              Open subscription manager ↗
+            </SiteLink>
           </div>
         </div>
       </div>

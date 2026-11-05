@@ -29,6 +29,10 @@ const sections = [
     body: "Displayed prices are the actual launch plans. Payments are collected manually by our team. Final cancellation terms and payment conditions will be provided before any purchase.",
   },
   {
+    title: "Late payment fee",
+    body: "Monthly school subscriptions are billed at $250 per month and are due when each monthly billing period ends. If a monthly payment is not received by its due date, a $25 late fee plus 6.25% tax is added to the amount due. Late fees apply only to monthly plans and are collected together with the next payment.",
+  },
+  {
     title: "Changes and contact",
     body: "The final terms will identify the operating entity, governing law, dispute process, and support contact before the service launches.",
   },
@@ -55,7 +59,7 @@ export default function TermsPage() {
             A clear foundation.
           </h1>
           <p className="text-xs text-slate-500 font-mono">
-            Draft terms · Last updated October 27, 2026
+            Draft terms · Last updated November 5, 2026
           </p>
         </div>
       </section>

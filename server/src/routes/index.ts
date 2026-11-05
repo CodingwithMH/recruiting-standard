@@ -6,6 +6,7 @@ import userRouter from "./user.routes.js";
 import parentRouter from "./parent.routes.js";
 import athleteRouter from "./athlete.routes.js";
 import coachRouter from "./coach.routes.js";
+import subscriptionRouter from "./subscription.routes.js";
 
 const apiRouter = Router();
 
@@ -16,5 +17,6 @@ apiRouter.use("/users", userRouter);
 apiRouter.use("/parent", parentRouter);
 apiRouter.use("/athlete", athleteRouter);
 apiRouter.use("/coach", coachRouter);
+apiRouter.use("/subscriptions", subscriptionRouter);
 
 export default apiRouter;

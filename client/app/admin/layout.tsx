@@ -81,6 +81,12 @@ export default function AdminLayout({
             >
               Users
             </SiteLink>
+            <SiteLink
+              href="/admin/subscriptions"
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Subscriptions
+            </SiteLink>
           </nav>
         </div>
 

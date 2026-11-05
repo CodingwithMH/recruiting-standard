@@ -337,17 +337,19 @@ model RecruitingRecord {
 }
 
 model Subscription {
-  id             String            @id @default(uuid())
-  schoolId       String            @unique
-  plan           SubscriptionPlan
-  paymentStatus  PaymentStatus     @default(PENDING)
-  state          SubscriptionState @default(PENDING)
-  startDate      DateTime?
-  expirationDate DateTime?
-  notes          String?           // Manual billing log entries from Platform Admin
+  id                     String            @id @default(uuid())
+  schoolId               String            @unique
+  plan                   SubscriptionPlan
+  paymentStatus          PaymentStatus     @default(PENDING)
+  state                  SubscriptionState @default(PENDING)
+  startDate              DateTime?
+  expirationDate         DateTime?
+  lastPaymentAt          DateTime?
+  lastPaymentAmountCents Int?
+  notes                  String?           // Manual billing log entries from Platform Admin
 
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
 
   school         School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
