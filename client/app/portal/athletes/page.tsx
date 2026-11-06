@@ -3,20 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
-  Building2,
-  Calendar,
   CheckCircle2,
   Clock,
   GraduationCap,
   RefreshCw,
   Search,
-  ShieldAlert,
   ShieldCheck,
   UserCheck,
   UserX,
-  Users,
 } from "lucide-react";
-import SiteLink from "@/components/ui/SiteLink";
 import { apiRequest } from "@/lib/api";
 import type { UserProfile } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
@@ -60,6 +55,7 @@ export default function SchoolAthletesPage() {
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUser(getStoredUser());
   }, []);
 
@@ -87,6 +83,7 @@ export default function SchoolAthletesPage() {
 
   useEffect(() => {
     if (schoolId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void loadAthletes();
     }
   }, [schoolId, loadAthletes]);

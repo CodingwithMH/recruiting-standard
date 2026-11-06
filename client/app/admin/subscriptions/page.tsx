@@ -6,8 +6,11 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  PauseCircle,
+  Play,
   RefreshCw,
   X,
+  XCircle,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 
@@ -31,6 +34,8 @@ interface SubscriptionRow {
   paymentStatus: PaymentStatus;
   effectivePaymentStatus: PaymentStatus;
   state: SubscriptionState;
+  effectiveState: SubscriptionState;
+  accessAllowed: boolean;
   startDate: string | null;
   expirationDate: string | null;
   lastPaymentAt: string | null;
@@ -159,6 +164,41 @@ export default function AdminSubscriptionsPage() {
       await load();
     } else {
       setError(res.error || "Unable to record this payment.");
+    }
+  };
+
+  const changeState = async (
+    subscription: SubscriptionRow,
+    state: "ACTIVE" | "SUSPENDED" | "EXPIRED"
+  ) => {
+    if (
+      state !== "ACTIVE" &&
+      !window.confirm(
+        `Set the subscription for ${subscription.schoolName} to ${state}? Recruiting access will be blocked immediately.`
+      )
+    ) {
+      return;
+    }
+
+    setBusySchoolId(subscription.schoolId);
+    setError(null);
+    setNotice(null);
+
+    const res = await apiRequest(
+      `/subscriptions/${subscription.schoolId}/state`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ state }),
+      }
+    );
+
+    setBusySchoolId(null);
+
+    if (res.success) {
+      setNotice(res.message || "Subscription state updated.");
+      await load();
+    } else {
+      setError(res.error || "Unable to update this subscription.");
     }
   };
 
@@ -303,10 +343,21 @@ export default function AdminSubscriptionsPage() {
                         </span>
                         <span
                           className={`inline-flex w-fit px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
-                            STATE_STYLES[subscription.state]
+                            STATE_STYLES[subscription.effectiveState]
                           }`}
                         >
-                          {subscription.state}
+                          {subscription.effectiveState}
+                        </span>
+                        <span
+                          className={`inline-flex w-fit px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
+                            subscription.accessAllowed
+                              ? "bg-emerald-50 text-emerald-800 border-emerald-200/80"
+                              : "bg-red-50 text-red-800 border-red-200/80"
+                          }`}
+                        >
+                          {subscription.accessAllowed
+                            ? "Recruiting enabled"
+                            : "Access blocked"}
                         </span>
                       </div>
                     </td>
@@ -351,7 +402,40 @@ export default function AdminSubscriptionsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex justify-end">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {subscription.effectiveState !== "ACTIVE" && (
+                          <button
+                            type="button"
+                            onClick={() => void changeState(subscription, "ACTIVE")}
+                            disabled={busySchoolId === subscription.schoolId}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold disabled:opacity-60 cursor-pointer shadow-xs"
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                            Activate
+                          </button>
+                        )}
+                        {subscription.effectiveState === "ACTIVE" && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => void changeState(subscription, "SUSPENDED")}
+                              disabled={busySchoolId === subscription.schoolId}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[11px] font-bold disabled:opacity-60 cursor-pointer"
+                            >
+                              <PauseCircle className="w-3.5 h-3.5" />
+                              Suspend
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void changeState(subscription, "EXPIRED")}
+                              disabled={busySchoolId === subscription.schoolId}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 text-red-800 text-[11px] font-bold disabled:opacity-60 cursor-pointer"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              Expire
+                            </button>
+                          </>
+                        )}
                         <button
                           type="button"
                           onClick={() => openPayment(subscription)}

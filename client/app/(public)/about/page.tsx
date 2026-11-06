@@ -85,7 +85,7 @@ export default function AboutPage() {
                 Built on trust. Grounded in verification.
               </h2>
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed m-0">
-                High school athletic programs and college coaches deserve recruiting data they can
+                Prep, private, and high school athletic programs deserve recruiting data they can
                 rely on without spending weeks verifying basic eligibility.
               </p>
             </div>

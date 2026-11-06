@@ -13,15 +13,18 @@ import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole, requireSchoolRole } from "../middleware/roles.js";
 import { requireSchoolTenant } from "../middleware/tenant.js";
 import { requireApprovedSchool } from "../middleware/schoolStatus.js";
+import { requireActiveSubscription } from "../middleware/subscriptionAccess.js";
 
 export const coachRouter = Router();
 
-// All coach routes require: authenticated + SCHOOL_STAFF + approved school + tenant isolation
+// All coach routes require: authenticated + SCHOOL_STAFF + approved school +
+// active subscription + tenant isolation.
 coachRouter.use(
   authenticateToken,
   requireGlobalRole("PLATFORM_ADMIN", "SCHOOL_STAFF"),
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER")
 );
 

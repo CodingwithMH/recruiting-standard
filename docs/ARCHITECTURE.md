@@ -49,7 +49,8 @@ recruiting-standard/
 The platform adopts a **logical multi-tenancy model with strict programmatic tenant isolation** inside a single PostgreSQL database. All institutional records (coach watchlists, internal evaluations, contact records, offers, and subscriptions) are anchored to a specific `schoolId`.
 
 ### Permanent School ID Sovereignty
-- When a high school registers on the public website, its initial status is `PENDING`.
+- When a prep, private, or high school program registers on the public website, its initial status is `PENDING`.
+- College students and college programs are not eligible for this platform.
 - A pending school has **zero access** to the recruiting portal.
 - Upon Platform Admin verification and approval:
   - The school is assigned a permanent, unique, immutable identifier (e.g. `SCH-10492`).
@@ -143,7 +144,7 @@ When an authorized user requests to view a document:
 4. The client receives the temporary URL and opens the document in an authenticated viewer. The URL expires immediately after the viewing window.
 
 ### Public Highlight Video Storage (Cloudinary Free Plan)
-Highlight videos are promotional assets intended for college recruiters, so they are handled separately from private documents.
+Highlight videos are promotional assets intended for participating prep, private, and high school coaches, so they are handled separately from private documents.
 
 1. The athlete requests `POST /api/v1/athlete/highlights/upload-credentials`.
 2. The API returns a short-lived Cloudinary signed-upload payload (`cloudName`, `apiKey`, `timestamp`, `signature`, `folder`). The API secret never leaves the server.

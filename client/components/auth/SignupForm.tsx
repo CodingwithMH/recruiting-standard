@@ -15,7 +15,6 @@ import {
   ShieldAlert,
   Clock,
   Building2,
-  Calendar,
 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import { apiRequest, AuthResponse } from "@/lib/api";
@@ -250,7 +249,7 @@ export default function SignupForm() {
                 Once verified and approved, your recruiting portal access will unlock.
               </li>
               <li>
-                You can then log in with your email and password to build your profile, upload highlight videos, and connect with college coaches.
+                You can then log in with your email and password to build your profile, upload highlight videos, and connect with participating school coaches.
               </li>
             </ul>
           </div>

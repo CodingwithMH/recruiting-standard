@@ -59,7 +59,7 @@ const featureDeepDives = [
       "Filter by Sport, Graduation Year, Position, and Academic Eligibility",
       "Zero unvetted or duplicate athlete profiles in search",
       "Save promising prospects directly to your school recruiting boards",
-      "Fast, indexed search built for high school and college programs",
+      "Fast, indexed search built for prep, private, and high school programs",
     ],
   },
   {

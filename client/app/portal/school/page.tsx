@@ -25,8 +25,9 @@ interface SchoolProfile {
   name: string;
   address: string | null;
   city: string | null;
-  state: string | null;
-  zipCode: string | null;
+  country: string | null;
+  provinceRegion: string | null;
+  postalCode: string | null;
   contactEmail: string;
   contactPhone: string | null;
   status: SchoolStatus;
@@ -52,8 +53,9 @@ interface ProfileForm {
   name: string;
   address: string;
   city: string;
-  state: string;
-  zipCode: string;
+  country: string;
+  provinceRegion: string;
+  postalCode: string;
   contactEmail: string;
   contactPhone: string;
 }
@@ -70,8 +72,9 @@ const EMPTY_PROFILE: ProfileForm = {
   name: "",
   address: "",
   city: "",
-  state: "",
-  zipCode: "",
+  country: "United States",
+  provinceRegion: "",
+  postalCode: "",
   contactEmail: "",
   contactPhone: "",
 };
@@ -139,8 +142,9 @@ export default function SchoolSettingsPage() {
         name: data.name || "",
         address: data.address || "",
         city: data.city || "",
-        state: data.state || "",
-        zipCode: data.zipCode || "",
+        country: data.country || "United States",
+        provinceRegion: data.provinceRegion || "",
+        postalCode: data.postalCode || "",
         contactEmail: data.contactEmail || "",
         contactPhone: data.contactPhone || "",
       });
@@ -420,34 +424,47 @@ export default function SchoolSettingsPage() {
             />
           </label>
 
-          <div className="grid grid-cols-2 gap-4">
-            <label className="space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                State
-              </span>
-              <input
-                name="state"
-                value={profile.state}
-                onChange={handleProfileChange}
-                disabled={!isAdmin}
-                required
-                className={inputClass}
-              />
-            </label>
-            <label className="space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Zip / Postal
-              </span>
-              <input
-                name="zipCode"
-                value={profile.zipCode}
-                onChange={handleProfileChange}
-                disabled={!isAdmin}
-                required
-                className={inputClass}
-              />
-            </label>
-          </div>
+          <label className="space-y-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Country
+            </span>
+            <input
+              name="country"
+              value={profile.country}
+              onChange={handleProfileChange}
+              disabled={!isAdmin}
+              required
+              className={inputClass}
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              State / Province / Region
+            </span>
+            <input
+              name="provinceRegion"
+              value={profile.provinceRegion}
+              onChange={handleProfileChange}
+              disabled={!isAdmin}
+              required
+              className={inputClass}
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Postal Code
+            </span>
+            <input
+              name="postalCode"
+              value={profile.postalCode}
+              onChange={handleProfileChange}
+              disabled={!isAdmin}
+              required
+              className={inputClass}
+            />
+          </label>
 
           <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
@@ -674,7 +691,9 @@ export default function SchoolSettingsPage() {
         <div className="bg-white rounded-xl border border-slate-200/90 p-4 flex items-center gap-3">
           <MapPin className="w-4 h-4 text-blue-600" />
           <span className="text-xs text-[#65748a]">
-            {[school.city, school.state].filter(Boolean).join(", ") || "Location pending"}
+            {[school.city, school.provinceRegion, school.country]
+              .filter(Boolean)
+              .join(", ") || "Location pending"}
           </span>
         </div>
         <div className="bg-white rounded-xl border border-slate-200/90 p-4 flex items-center gap-3">

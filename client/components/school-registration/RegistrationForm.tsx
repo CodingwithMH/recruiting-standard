@@ -20,7 +20,9 @@ interface RegistrationSuccessData {
     name: string;
     contactEmail: string;
     city: string;
-    state: string;
+    country: string;
+    provinceRegion: string;
+    postalCode: string;
   };
   status: string;
   message: string;
@@ -56,16 +58,21 @@ const validationSchema = Yup.object({
     .min(2, "City is required")
     .max(100, "City cannot exceed 100 characters")
     .required("City is required"),
-  state: Yup.string()
+  country: Yup.string()
     .trim()
-    .min(2, "State is required")
-    .max(50, "State cannot exceed 50 characters")
-    .required("State is required"),
-  zipCode: Yup.string()
+    .min(2, "Country is required")
+    .max(100, "Country cannot exceed 100 characters")
+    .required("Country is required"),
+  provinceRegion: Yup.string()
     .trim()
-    .min(3, "Zip code is required")
-    .max(20, "Zip code cannot exceed 20 characters")
-    .required("Zip Code is required"),
+    .min(2, "State / Province / Region is required")
+    .max(100, "State / Province / Region cannot exceed 100 characters")
+    .required("State / Province / Region is required"),
+  postalCode: Yup.string()
+    .trim()
+    .min(2, "Postal code is required")
+    .max(20, "Postal code cannot exceed 20 characters")
+    .required("Postal Code is required"),
   password: Yup.string()
     .min(8, "Password must be at least 8 characters")
     .max(128, "Password cannot exceed 128 characters")
@@ -88,8 +95,9 @@ export default function RegistrationForm() {
       contactPhone: "",
       address: "",
       city: "",
-      state: "",
-      zipCode: "",
+      country: "",
+      provinceRegion: "",
+      postalCode: "",
       password: "",
       plan: "ANNUAL_1500" as "ANNUAL_1500" | "MONTHLY_250",
     },
@@ -325,8 +333,8 @@ export default function RegistrationForm() {
         )}
       </div>
 
-      {/* City, State, Zip */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* City, Country, Province/Region, Postal Code */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <label htmlFor="city" className="block text-xs font-semibold text-[#102341]">City</label>
           <input
@@ -348,42 +356,98 @@ export default function RegistrationForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="state" className="block text-xs font-semibold text-[#102341]">State</label>
-          <input
-            id="state"
-            name="state"
-            value={formik.values.state}
+          <label htmlFor="country" className="block text-xs font-semibold text-[#102341]">Country</label>
+          <select
+            id="country"
+            name="country"
+            value={formik.values.country}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            placeholder="Nebraska"
             className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-[#102341] outline-none transition ${
-              isInvalid("state")
+              isInvalid("country")
                 ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
                 : "border-slate-200 focus:border-[#102341] focus:ring-1 focus:ring-[#102341]"
             }`}
-          />
-          {isInvalid("state") && (
-            <p className="text-[11px] text-red-600 font-medium">{formik.errors.state}</p>
+          >
+            <option value="">Select a country</option>
+            <option value="United States">United States</option>
+            <option value="Canada">Canada</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="Australia">Australia</option>
+            <option value="Bahamas">Bahamas</option>
+            <option value="Barbados">Barbados</option>
+            <option value="Belgium">Belgium</option>
+            <option value="Bermuda">Bermuda</option>
+            <option value="Brazil">Brazil</option>
+            <option value="China">China</option>
+            <option value="Colombia">Colombia</option>
+            <option value="Dominican Republic">Dominican Republic</option>
+            <option value="France">France</option>
+            <option value="Germany">Germany</option>
+            <option value="Ghana">Ghana</option>
+            <option value="Haiti">Haiti</option>
+            <option value="Ireland">Ireland</option>
+            <option value="Italy">Italy</option>
+            <option value="Jamaica">Jamaica</option>
+            <option value="Japan">Japan</option>
+            <option value="Kenya">Kenya</option>
+            <option value="Mexico">Mexico</option>
+            <option value="Netherlands">Netherlands</option>
+            <option value="New Zealand">New Zealand</option>
+            <option value="Nigeria">Nigeria</option>
+            <option value="Puerto Rico">Puerto Rico</option>
+            <option value="South Africa">South Africa</option>
+            <option value="South Korea">South Korea</option>
+            <option value="Spain">Spain</option>
+            <option value="Sweden">Sweden</option>
+            <option value="Switzerland">Switzerland</option>
+            <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+            <option value="Venezuela">Venezuela</option>
+          </select>
+          {isInvalid("country") && (
+            <p className="text-[11px] text-red-600 font-medium">{formik.errors.country}</p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="zipCode" className="block text-xs font-semibold text-[#102341]">Zip Code</label>
+          <label htmlFor="provinceRegion" className="block text-xs font-semibold text-[#102341]">
+            State / Province / Region
+          </label>
           <input
-            id="zipCode"
-            name="zipCode"
-            value={formik.values.zipCode}
+            id="provinceRegion"
+            name="provinceRegion"
+            value={formik.values.provinceRegion}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            placeholder="68508"
+            placeholder="Nebraska"
             className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-[#102341] outline-none transition ${
-              isInvalid("zipCode")
+              isInvalid("provinceRegion")
                 ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
                 : "border-slate-200 focus:border-[#102341] focus:ring-1 focus:ring-[#102341]"
             }`}
           />
-          {isInvalid("zipCode") && (
-            <p className="text-[11px] text-red-600 font-medium">{formik.errors.zipCode}</p>
+          {isInvalid("provinceRegion") && (
+            <p className="text-[11px] text-red-600 font-medium">{formik.errors.provinceRegion}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="postalCode" className="block text-xs font-semibold text-[#102341]">Postal Code</label>
+          <input
+            id="postalCode"
+            name="postalCode"
+            value={formik.values.postalCode}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            placeholder="68508"
+            className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-[#102341] outline-none transition ${
+              isInvalid("postalCode")
+                ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                : "border-slate-200 focus:border-[#102341] focus:ring-1 focus:ring-[#102341]"
+            }`}
+          />
+          {isInvalid("postalCode") && (
+            <p className="text-[11px] text-red-600 font-medium">{formik.errors.postalCode}</p>
           )}
         </div>
       </div>

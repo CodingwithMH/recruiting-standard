@@ -70,9 +70,9 @@ export default function SignupPage() {
               <div>
                 <p className="text-[11px] text-[#65748a] leading-relaxed">
                   <strong className="text-[#102341]">Who can register?</strong>{" "}
-                  Student-athletes between 14 and 20 years old who attend an approved, participating
-                  school (including domestic high schools, prep schools, and international academies),
-                  along with their parents or guardians.
+                  Prep, private, and high school student-athletes between 14 and 20 years old who
+                  attend an approved, participating school (including domestic and international
+                  academies), along with their parents or guardians.
                 </p>
               </div>
 

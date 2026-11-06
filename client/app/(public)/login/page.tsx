@@ -68,8 +68,7 @@ export default function LoginPage() {
               <p className="text-xs text-[#65748a] leading-relaxed">
                 <strong className="text-[#102341]">Role-based access & school data isolation:</strong>{" "}
                 School Admins manage school profile and authorized coaching staff. Coaches search
-                approved prospects and manage private school recruiting notes. All school records
-                are strictly isolated from rival programs.
+                approved prospects and manage private school recruiting notes.
               </p>
               <p className="text-xs text-[#65748a] leading-relaxed">
                 Student-athlete privacy comes first. Read our{" "}

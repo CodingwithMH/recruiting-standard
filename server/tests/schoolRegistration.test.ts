@@ -16,8 +16,9 @@ test("schoolRegistrationSchema enforces all required institutional fields", () =
     contactPhone: "(555) 234-5678",
     address: "1234 Patriot Way",
     city: "Lincoln",
-    state: "Nebraska",
-    zipCode: "68508",
+    country: "United States",
+    provinceRegion: "Nebraska",
+    postalCode: "68508",
     password: "AthleticDirector2026!",
     plan: "ANNUAL_1500" as const,
   };
@@ -38,8 +39,9 @@ test("schoolRegistrationSchema rejects invalid emails and short passwords", () =
     contactPhone: "555-1234",
     address: "123 Main St",
     city: "Omaha",
-    state: "NE",
-    zipCode: "68102",
+    country: "United States",
+    provinceRegion: "Nebraska",
+    postalCode: "68102",
     password: "ValidPassword123!",
   };
   const res1 = schoolRegistrationSchema.safeParse(invalidEmail);
@@ -52,12 +54,63 @@ test("schoolRegistrationSchema rejects invalid emails and short passwords", () =
     contactPhone: "555-1234",
     address: "123 Main St",
     city: "Omaha",
-    state: "NE",
-    zipCode: "68102",
+    country: "United States",
+    provinceRegion: "Nebraska",
+    postalCode: "68102",
     password: "short",
   };
   const res2 = schoolRegistrationSchema.safeParse(shortPassword);
   assert.equal(res2.success, false);
+});
+
+test("schoolRegistrationSchema accepts international province and postal code formats", () => {
+  const result = schoolRegistrationSchema.safeParse({
+    schoolName: "Maple Leaf Preparatory Academy",
+    athleticDirectorName: "Jordan Lee",
+    contactEmail: "jordan.lee@mapleleaf.ca",
+    contactPhone: "+1 416 555 0199",
+    address: "100 Academy Way",
+    city: "Toronto",
+    country: "Canada",
+    provinceRegion: "Ontario",
+    postalCode: "M5V 2T6",
+    password: "International2026!",
+    plan: "ANNUAL_1500",
+  });
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.data.country, "Canada");
+    assert.equal(result.data.provinceRegion, "Ontario");
+    assert.equal(result.data.postalCode, "M5V 2T6");
+  }
+});
+
+test("schoolRegistrationSchema defaults country and requires province/region and postal code", () => {
+  const base = {
+    schoolName: "North Shore Prep",
+    athleticDirectorName: "Casey Morgan",
+    contactEmail: "casey@northshore.edu",
+    contactPhone: "555-333-2222",
+    address: "12 Shore Road",
+    city: "Vancouver",
+    country: "Canada",
+    provinceRegion: "British Columbia",
+    postalCode: "V6B 1A1",
+    password: "NorthShore2026!",
+    plan: "ANNUAL_1500" as const,
+  };
+
+  assert.equal(schoolRegistrationSchema.safeParse(base).success, true);
+
+  const { country: _country, ...withoutCountry } = base;
+  assert.equal(schoolRegistrationSchema.safeParse(withoutCountry).success, true);
+
+  const { provinceRegion: _provinceRegion, ...withoutProvince } = base;
+  assert.equal(schoolRegistrationSchema.safeParse(withoutProvince).success, false);
+
+  const { postalCode: _postalCode, ...withoutPostal } = base;
+  assert.equal(schoolRegistrationSchema.safeParse(withoutPostal).success, false);
 });
 
 test("schoolRegistrationSchema supports both ANNUAL_1500 and MONTHLY_250 subscription tiers", () => {
@@ -68,8 +121,9 @@ test("schoolRegistrationSchema supports both ANNUAL_1500 and MONTHLY_250 subscri
     contactPhone: "555-888-9999",
     address: "456 Oak Lane",
     city: "Austin",
-    state: "TX",
-    zipCode: "78701",
+    country: "United States",
+    provinceRegion: "Texas",
+    postalCode: "78701",
     password: "OakCreekPassword2026!",
   };
 

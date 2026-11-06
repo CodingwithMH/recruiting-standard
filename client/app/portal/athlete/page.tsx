@@ -315,8 +315,8 @@ export default function AthletePortalPage() {
           </div>
           <h3 className="text-base font-bold text-[#102341]">Profile Verification Status</h3>
           <p className="text-xs text-[#65748a] leading-relaxed">
-            Your profile completion and verification indicators will guide college recruiters
-            on the authenticity of your academic and athletic information.
+            Your profile completion and verification indicators will guide participating school
+            coaches on the authenticity of your academic and athletic information.
           </p>
           <div className="pt-2">
             <span className="text-xs font-bold text-slate-500">

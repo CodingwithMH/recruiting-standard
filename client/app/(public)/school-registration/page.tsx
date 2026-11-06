@@ -31,7 +31,7 @@ const registrationSteps = [
 ];
 
 const institutionalChecklist = [
-  "Accredited high school, prep academy, or college athletic program",
+  "Accredited prep, private, or high school athletic program only (college and university programs are not eligible)",
   "Authorized Athletic Director, Head Coach, or Administrator contact",
   "Official institutional email domain for identity verification",
   "Agreement to platform athlete data protection & privacy standards",

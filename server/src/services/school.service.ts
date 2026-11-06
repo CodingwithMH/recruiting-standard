@@ -23,8 +23,12 @@ export const schoolRegistrationSchema = z.object({
   contactPhone: z.string().min(7, "A valid contact phone number is required").max(20),
   address: z.string().min(2, "Street address is required").max(200),
   city: z.string().min(2, "City is required").max(100),
-  state: z.string().min(2, "State is required").max(50),
-  zipCode: z.string().min(3, "Zip / Postal code is required").max(20),
+  country: z.string().min(2, "Country is required").max(100).default("United States"),
+  provinceRegion: z
+    .string()
+    .min(2, "State / Province / Region is required")
+    .max(100),
+  postalCode: z.string().min(2, "Postal code is required").max(20),
   password: z.string().min(8, "Password must be at least 8 characters").max(128),
   plan: z.enum(["ANNUAL_1500", "MONTHLY_250"]).default("ANNUAL_1500"),
 });
@@ -34,8 +38,12 @@ export const schoolProfileUpdateSchema = z
     name: z.string().min(2, "School name must be at least 2 characters").max(150),
     address: z.string().min(2, "Street address is required").max(200),
     city: z.string().min(2, "City is required").max(100),
-    state: z.string().min(2, "State is required").max(50),
-    zipCode: z.string().min(3, "Zip / Postal code is required").max(20),
+    country: z.string().min(2, "Country is required").max(100),
+    provinceRegion: z
+      .string()
+      .min(2, "State / Province / Region is required")
+      .max(100),
+    postalCode: z.string().min(2, "Postal code is required").max(20),
     contactEmail: z.string().email("A valid institutional email is required"),
     contactPhone: z.string().min(7, "A valid contact phone number is required").max(20),
   })
@@ -161,8 +169,9 @@ export async function registerSchool(input: SchoolRegistrationInput) {
         name: input.schoolName.trim(),
         address: input.address.trim(),
         city: input.city.trim(),
-        state: input.state.trim(),
-        zipCode: input.zipCode.trim(),
+        country: input.country.trim(),
+        provinceRegion: input.provinceRegion.trim(),
+        postalCode: input.postalCode.trim(),
         contactEmail: normalizedEmail,
         contactPhone: input.contactPhone.trim(),
         status: "PENDING",
@@ -233,7 +242,9 @@ export async function registerSchool(input: SchoolRegistrationInput) {
       contactEmail: result.school.contactEmail,
       status: result.school.status,
       city: result.school.city,
-      state: result.school.state,
+      country: result.school.country,
+      provinceRegion: result.school.provinceRegion,
+      postalCode: result.school.postalCode,
       createdAt: result.school.createdAt,
     },
     user: {
@@ -325,8 +336,9 @@ export async function listSchools(status?: SchoolStatus) {
       contactPhone: true,
       address: true,
       city: true,
-      state: true,
-      zipCode: true,
+      country: true,
+      provinceRegion: true,
+      postalCode: true,
       status: true,
       approvedAt: true,
       createdAt: true,
@@ -347,8 +359,9 @@ export async function getSchoolProfile(schoolId: string) {
       name: true,
       address: true,
       city: true,
-      state: true,
-      zipCode: true,
+      country: true,
+      provinceRegion: true,
+      postalCode: true,
       contactEmail: true,
       contactPhone: true,
       status: true,
@@ -387,8 +400,13 @@ export async function updateSchoolProfile(
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
       ...(input.address !== undefined ? { address: input.address.trim() } : {}),
       ...(input.city !== undefined ? { city: input.city.trim() } : {}),
-      ...(input.state !== undefined ? { state: input.state.trim() } : {}),
-      ...(input.zipCode !== undefined ? { zipCode: input.zipCode.trim() } : {}),
+      ...(input.country !== undefined ? { country: input.country.trim() } : {}),
+      ...(input.provinceRegion !== undefined
+        ? { provinceRegion: input.provinceRegion.trim() }
+        : {}),
+      ...(input.postalCode !== undefined
+        ? { postalCode: input.postalCode.trim() }
+        : {}),
       ...(input.contactEmail !== undefined
         ? { contactEmail: input.contactEmail.toLowerCase().trim() }
         : {}),
@@ -402,8 +420,9 @@ export async function updateSchoolProfile(
       name: true,
       address: true,
       city: true,
-      state: true,
-      zipCode: true,
+      country: true,
+      provinceRegion: true,
+      postalCode: true,
       contactEmail: true,
       contactPhone: true,
       status: true,

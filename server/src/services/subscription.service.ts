@@ -6,6 +6,10 @@ import type {
 import { z } from "zod";
 import { prisma } from "../config/prisma.js";
 import { logger } from "../utils/logger.js";
+import {
+  effectiveSubscriptionState,
+  evaluateSubscriptionAccess,
+} from "../utils/subscriptionAccess.js";
 
 // ----------------------------------------------------
 // Billing Constants
@@ -31,9 +35,18 @@ export const recordSubscriptionPaymentSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
+export const subscriptionStateUpdateSchema = z.object({
+  state: z.enum(["ACTIVE", "SUSPENDED", "EXPIRED", "CANCELLED"]),
+  expirationDate: z.coerce.date().optional(),
+  notes: z.string().max(1000).optional(),
+});
+
 export type SubscriptionListQuery = z.infer<typeof subscriptionListQuerySchema>;
 export type RecordSubscriptionPaymentInput = z.infer<
   typeof recordSubscriptionPaymentSchema
+>;
+export type SubscriptionStateUpdateInput = z.infer<
+  typeof subscriptionStateUpdateSchema
 >;
 
 // ----------------------------------------------------
@@ -182,6 +195,64 @@ export function formatCents(cents: number): string {
 // Service Functions
 // ----------------------------------------------------
 
+/**
+ * Returns the subscription for a single school, including billing calculations.
+ * Intended for school-staff-facing portal endpoints.
+ */
+export async function getSchoolSubscription(schoolId: string) {
+  const subscription = await prisma.subscription.findUnique({
+    where: { schoolId },
+    select: {
+      id: true,
+      schoolId: true,
+      plan: true,
+      paymentStatus: true,
+      state: true,
+      startDate: true,
+      expirationDate: true,
+      lastPaymentAt: true,
+      lastPaymentAmountCents: true,
+      updatedAt: true,
+      school: {
+        select: {
+          id: true,
+          schoolId: true,
+          name: true,
+          status: true,
+        },
+      },
+    },
+  });
+
+  if (!subscription) {
+    throw new SubscriptionNotFoundError(schoolId);
+  }
+
+  const now = new Date();
+  const bill = calculateSubscriptionBill(subscription, now);
+  const access = evaluateSubscriptionAccess(subscription, now);
+
+  return {
+    id: subscription.id,
+    schoolId: subscription.schoolId,
+    schoolName: subscription.school.name,
+    schoolCode: subscription.school.schoolId,
+    plan: subscription.plan,
+    paymentStatus: subscription.paymentStatus,
+    effectivePaymentStatus: bill.effectivePaymentStatus,
+    state: subscription.state,
+    effectiveState: access.effectiveState,
+    accessAllowed: access.allowed,
+    startDate: subscription.startDate,
+    expirationDate: subscription.expirationDate,
+    lastPaymentAt: subscription.lastPaymentAt,
+    basePriceCents: bill.basePriceCents,
+    amountDueCents: bill.amountDueCents,
+    isLate: bill.isLate,
+    updatedAt: subscription.updatedAt,
+  };
+}
+
 export async function listSubscriptions(query: SubscriptionListQuery = {}) {
   const subscriptions = await prisma.subscription.findMany({
     where: {
@@ -217,6 +288,7 @@ export async function listSubscriptions(query: SubscriptionListQuery = {}) {
 
   return subscriptions.map((subscription) => {
     const bill = calculateSubscriptionBill(subscription, now);
+    const access = evaluateSubscriptionAccess(subscription, now);
 
     return {
       id: subscription.id,
@@ -229,6 +301,8 @@ export async function listSubscriptions(query: SubscriptionListQuery = {}) {
       paymentStatus: subscription.paymentStatus,
       effectivePaymentStatus: bill.effectivePaymentStatus,
       state: subscription.state,
+      effectiveState: access.effectiveState,
+      accessAllowed: access.allowed,
       startDate: subscription.startDate,
       expirationDate: subscription.expirationDate,
       lastPaymentAt: subscription.lastPaymentAt,
@@ -323,5 +397,94 @@ export async function recordSubscriptionPayment(
     lateFeeTaxCents: bill.lateFeeTaxCents,
     lateFeeTotalCents: bill.lateFeeTotalCents,
     isLate: bill.isLate,
+  };
+}
+
+/**
+ * Applies an explicit Platform Admin state change. Activation without an
+ * explicit expiration extends the current paid-through period (or starts one
+ * from today), while suspension/cancellation preserves existing dates.
+ */
+export async function setSubscriptionState(
+  schoolId: string,
+  input: SubscriptionStateUpdateInput
+) {
+  const subscription = await prisma.subscription.findUnique({
+    where: { schoolId },
+    include: { school: { select: { name: true } } },
+  });
+
+  if (!subscription) {
+    throw new SubscriptionNotFoundError(schoolId);
+  }
+
+  const now = new Date();
+  let expirationDate = subscription.expirationDate;
+
+  if (input.state === "ACTIVE") {
+    expirationDate =
+      input.expirationDate ??
+      nextBillingDate(subscription.expirationDate, subscription.plan, now);
+  } else if (input.state === "EXPIRED") {
+    expirationDate = input.expirationDate ?? now;
+  } else if (input.expirationDate !== undefined) {
+    expirationDate = input.expirationDate;
+  }
+
+  const previousEffectiveState = effectiveSubscriptionState(subscription, now);
+  const logParts = [
+    `[${now.toISOString()}] Subscription state changed: ${previousEffectiveState} -> ${input.state}`,
+    input.notes?.trim() ? `notes: ${input.notes.trim()}` : null,
+  ].filter((part): part is string => part !== null);
+
+  const entry = logParts.join(" - ");
+
+  const updated = await prisma.subscription.update({
+    where: { schoolId },
+    data: {
+      state: input.state,
+      expirationDate,
+      ...(input.state === "ACTIVE" && !subscription.startDate
+        ? { startDate: now }
+        : {}),
+      notes: subscription.notes
+        ? `${subscription.notes}\n${entry}`
+        : entry,
+    },
+    select: {
+      id: true,
+      schoolId: true,
+      plan: true,
+      paymentStatus: true,
+      state: true,
+      startDate: true,
+      expirationDate: true,
+      lastPaymentAt: true,
+      lastPaymentAmountCents: true,
+      notes: true,
+      updatedAt: true,
+      school: {
+        select: {
+          id: true,
+          schoolId: true,
+          name: true,
+          status: true,
+          contactEmail: true,
+        },
+      },
+    },
+  });
+
+  logger.info(
+    "BILLING",
+    `Subscription for ${subscription.school.name} (${schoolId}) set to ${input.state}`
+  );
+
+  const access = evaluateSubscriptionAccess(updated, now);
+
+  return {
+    subscription: updated,
+    effectiveState: access.effectiveState,
+    accessAllowed: access.allowed,
   };
 }

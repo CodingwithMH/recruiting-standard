@@ -21,7 +21,8 @@ interface SchoolRow {
   contactEmail: string;
   contactPhone: string | null;
   city: string | null;
-  state: string | null;
+  country: string | null;
+  provinceRegion: string | null;
   status: SchoolStatus;
   approvedAt: string | null;
   createdAt: string;
@@ -183,7 +184,9 @@ export default function SchoolApprovalQueue() {
                       <span className="block font-bold text-[#102341]">{school.name}</span>
                       <span className="block text-[11px] text-[#65748a]">{school.contactEmail}</span>
                       <span className="block text-[11px] text-[#65748a]">
-                        {[school.city, school.state].filter(Boolean).join(", ") || "Address pending"}
+                        {[school.city, school.provinceRegion, school.country]
+                          .filter(Boolean)
+                          .join(", ") || "Address pending"}
                       </span>
                     </td>
                     <td className="px-4 py-4 font-mono text-xs font-bold text-[#102341]">

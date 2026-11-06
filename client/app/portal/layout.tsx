@@ -10,7 +10,14 @@ import {
   User,
 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
-import { getStoredUser, signOut, isAuthenticated } from "@/lib/auth";
+import {
+  endSession,
+  getStoredUser,
+  setStoredUser,
+  signOut,
+  isAuthenticated,
+} from "@/lib/auth";
+import { apiRequest } from "@/lib/api";
 import type { UserProfile } from "@/lib/api";
 
 export default function PortalLayout({
@@ -23,14 +30,40 @@ export default function PortalLayout({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!isAuthenticated()) {
-      router.push("/login");
+      router.replace("/login");
       return;
     }
-    const current = getStoredUser();
+
+    const cached = getStoredUser();
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUser(current);
-    setLoading(false);
+    setUser(cached);
+
+    const verifySession = async () => {
+      // Re-validate against the server on every portal entry so direct links
+      // cannot bypass pending/rejected/suspended account restrictions.
+      const res = await apiRequest<UserProfile>("auth/me");
+
+      if (cancelled) return;
+
+      if (!res.success || !res.data) {
+        endSession();
+        router.replace("/login");
+        return;
+      }
+
+      setStoredUser(res.data);
+      setUser(res.data);
+      setLoading(false);
+    };
+
+    void verifySession();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleSignOut = async () => {
@@ -55,12 +88,13 @@ export default function PortalLayout({
   const schoolName = primaryMembership?.school.name || "School Portal";
   const schoolId = primaryMembership?.school.schoolId;
   const schoolStatus = primaryMembership?.school.status;
+  const isUserBlocked = !!user && user.status !== "ACTIVE";
   const isSchoolBlocked =
     user?.globalRole === "SCHOOL_STAFF" &&
     !!schoolStatus &&
     schoolStatus !== "APPROVED";
 
-  if (isSchoolBlocked) {
+  if (isUserBlocked || isSchoolBlocked) {
     return (
       <div className="min-h-screen bg-[#f4f7fc] flex items-center justify-center p-6">
         <div className="bg-white max-w-md w-full rounded-2xl border border-amber-200 p-8 text-center space-y-4">
@@ -71,11 +105,17 @@ export default function PortalLayout({
             Portal Access Unavailable
           </h1>
           <p className="text-xs text-[#65748a] leading-relaxed">
-            {schoolStatus === "PENDING" &&
+            {user?.status === "PENDING" &&
+              "Your student-athlete account is awaiting school approval. Portal access unlocks after your school verifies you."}
+            {user?.status === "INACTIVE" &&
+              "Your account is inactive and cannot access the recruiting portal. Please contact your school administrator."}
+            {user?.status === "SUSPENDED" &&
+              "Your account has been suspended and cannot access the recruiting portal. Please contact institutional support."}
+            {!isUserBlocked && schoolStatus === "PENDING" &&
               "Your school registration is awaiting Platform Admin approval."}
-            {schoolStatus === "SUSPENDED" &&
+            {!isUserBlocked && schoolStatus === "SUSPENDED" &&
               "Your school's portal access has been suspended. Please contact institutional support."}
-            {schoolStatus === "REJECTED" &&
+            {!isUserBlocked && schoolStatus === "REJECTED" &&
               "Your school registration was not approved. Please contact institutional support."}
           </p>
           <button
