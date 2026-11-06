@@ -290,7 +290,7 @@ export default function AdminSubscriptionsPage() {
               <tr className="border-b border-slate-200/80 text-[10px] uppercase tracking-wider text-slate-500">
                 <th className="px-6 py-3 font-bold">School</th>
                 <th className="px-4 py-3 font-bold">Plan</th>
-                <th className="px-4 py-3 font-bold">Billing status</th>
+                <th className="px-4 py-3 font-bold">Status</th>
                 <th className="px-4 py-3 font-bold">Paid through</th>
                 <th className="px-4 py-3 font-bold">Amount due</th>
                 <th className="px-4 py-3 font-bold">Last payment</th>
@@ -333,33 +333,17 @@ export default function AdminSubscriptionsPage() {
                       {PLAN_LABELS[subscription.plan]}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex flex-col gap-1.5">
-                        <span
-                          className={`inline-flex w-fit px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
-                            PAYMENT_STYLES[subscription.effectivePaymentStatus]
-                          }`}
-                        >
-                          {subscription.effectivePaymentStatus}
-                        </span>
-                        <span
-                          className={`inline-flex w-fit px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
-                            STATE_STYLES[subscription.effectiveState]
-                          }`}
-                        >
-                          {subscription.effectiveState}
-                        </span>
-                        <span
-                          className={`inline-flex w-fit px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
-                            subscription.accessAllowed
-                              ? "bg-emerald-50 text-emerald-800 border-emerald-200/80"
-                              : "bg-red-50 text-red-800 border-red-200/80"
-                          }`}
-                        >
-                          {subscription.accessAllowed
-                            ? "Recruiting enabled"
-                            : "Access blocked"}
-                        </span>
-                      </div>
+                      <span
+                        className={`inline-flex px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
+                          subscription.effectivePaymentStatus === "OVERDUE"
+                            ? PAYMENT_STYLES.OVERDUE
+                            : STATE_STYLES[subscription.effectiveState] || "bg-slate-100 text-slate-700 border-slate-200"
+                        }`}
+                      >
+                        {subscription.effectivePaymentStatus === "OVERDUE"
+                          ? "OVERDUE"
+                          : subscription.effectiveState}
+                      </span>
                     </td>
                     <td className="px-4 py-4 text-xs text-[#65748a]">
                       {formatDate(subscription.expirationDate)}
