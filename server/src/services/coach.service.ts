@@ -109,6 +109,8 @@ const athletePublicSelect = {
   highSchoolName: true,
   city: true,
   state: true,
+  highlightLinks: true,
+  athleticStats: true,
   verificationStatus: true,
   completionPercentage: true,
   user: {

@@ -10,12 +10,19 @@ import {
   handleListHighlights,
   handleSaveHighlight,
 } from "../controllers/highlight.controller.js";
+import {
+  handleGetAthleteProfile,
+  handleUpdateAthleteProfile,
+} from "../controllers/athleteProfile.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole } from "../middleware/roles.js";
 
 export const athleteRouter = Router();
 
 athleteRouter.use(authenticateToken, requireGlobalRole("ATHLETE"));
+
+athleteRouter.get("/profile", handleGetAthleteProfile);
+athleteRouter.put("/profile", handleUpdateAthleteProfile);
 
 athleteRouter.get("/guardian-links", handleListAthleteGuardianLinks);
 athleteRouter.post(

@@ -32,8 +32,11 @@ interface SchoolAthlete {
     id: string;
     graduationYear: number;
     primarySport: string;
+    sports?: string[];
     positions: string[];
     gpa: number | null;
+    completionPercentage?: number;
+    verificationStatus?: string;
   } | null;
 }
 
@@ -363,13 +366,21 @@ export default function SchoolAthletesPage() {
                         {athlete.athleteProfile ? (
                           <div>
                             <span className="font-semibold text-[#102341]">
-                              {athlete.athleteProfile.primarySport}
+                              {athlete.athleteProfile.sports?.length
+                                ? athlete.athleteProfile.sports.join(" · ")
+                                : athlete.athleteProfile.primarySport}
                             </span>
                             <span className="block text-[10px] text-[#65748a]">
                               Class of {athlete.athleteProfile.graduationYear}
                               {athlete.athleteProfile.positions?.length > 0 &&
                                 ` · ${athlete.athleteProfile.positions.join(", ")}`}
                             </span>
+                            {typeof athlete.athleteProfile.completionPercentage ===
+                              "number" && (
+                              <span className="block text-[10px] text-slate-400">
+                                Profile {athlete.athleteProfile.completionPercentage}% complete
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-[11px] text-slate-400 italic">

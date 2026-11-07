@@ -5,7 +5,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
-  FileText,
   GraduationCap,
   RefreshCw,
   ShieldCheck,
@@ -16,6 +15,7 @@ import {
 import { apiRequest } from "@/lib/api";
 import type { UserProfile } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
+import AthleteProfileBuilder from "@/components/athlete/AthleteProfileBuilder";
 import HighlightVideos from "@/components/athlete/HighlightVideos";
 
 type LinkStatus = "PENDING" | "ACTIVE" | "REJECTED" | "REVOKED";
@@ -125,10 +125,12 @@ export default function AthletePortalPage() {
           Welcome, {user?.firstName} {user?.lastName}
         </h1>
         <p className="text-xs sm:text-sm text-[#65748a] mt-1 leading-relaxed">
-          Manage who can access your recruiting account, then build your verified athletic
-          profile and document uploads in Milestone 3.
+          Build your multi-sport recruiting profile, publish highlight film, and manage who
+          can access your account.
         </p>
       </div>
+
+      <AthleteProfileBuilder />
 
       <HighlightVideos />
 
@@ -292,39 +294,6 @@ export default function AthletePortalPage() {
         </section>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#102341]">
-            <FileText className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-[#102341]">Academic & Document Verification</h3>
-          <p className="text-xs text-[#65748a] leading-relaxed">
-            Transcripts, combine reports, and eligibility documents will be stored in private
-            cloud storage and reviewed by platform administrators.
-          </p>
-          <div className="pt-2">
-            <span className="text-xs font-bold text-slate-500">
-              Active in Milestone 3 (Document Queue)
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#102341]">
-            <Clock className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-[#102341]">Profile Verification Status</h3>
-          <p className="text-xs text-[#65748a] leading-relaxed">
-            Your profile completion and verification indicators will guide participating school
-            coaches on the authenticity of your academic and athletic information.
-          </p>
-          <div className="pt-2">
-            <span className="text-xs font-bold text-slate-500">
-              Active in Milestone 3 (Profile Builder)
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
