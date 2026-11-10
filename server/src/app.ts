@@ -11,6 +11,10 @@ import apiRouter from "./routes/index.js";
 
 const app: Application = express();
 
+// Trust reverse proxy hops (e.g. Vercel, Cloudflare, AWS ALB) so express-rate-limit
+// and logger correctly read client IPs from X-Forwarded-For.
+app.set("trust proxy", 1);
+
 // Security and utility middleware
 app.use(
   helmet({
