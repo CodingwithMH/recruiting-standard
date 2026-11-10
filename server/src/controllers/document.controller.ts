@@ -209,6 +209,32 @@ export async function handleGetDocumentAccess(
   }
 }
 
+export async function handleRedirectDocumentAccess(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: "Authentication required.",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const access = await getDocumentAccessUrl(
+      req.user,
+      getParam(req.params.documentId)
+    );
+
+    res.redirect(access.downloadUrl);
+  } catch (err) {
+    handleDocumentError(err, res, next);
+  }
+}
+
 export async function handleListDocumentsForReview(
   req: AuthenticatedRequest,
   res: Response,

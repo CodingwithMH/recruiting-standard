@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { handleGetDocumentAccess } from "../controllers/document.controller.js";
+import {
+  handleGetDocumentAccess,
+  handleRedirectDocumentAccess,
+} from "../controllers/document.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 export const documentRouter = Router();
@@ -10,5 +13,6 @@ export const documentRouter = Router();
 documentRouter.use(authenticateToken);
 
 documentRouter.get("/:documentId/access", handleGetDocumentAccess);
+documentRouter.get("/:documentId/view", handleRedirectDocumentAccess);
 
 export default documentRouter;

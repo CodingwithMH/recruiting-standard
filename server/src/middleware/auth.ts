@@ -14,9 +14,17 @@ export async function authenticateToken(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const authHeader = req.headers.authorization;
+  let token: string | undefined;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.slice(7).trim();
+  } else if (typeof req.query.token === "string" && req.query.token.trim()) {
+    // Support token query param for direct browser navigation links
+    token = req.query.token.trim();
+  }
+
+  if (!token) {
     res.status(401).json({
       success: false,
       error: "Authentication required. Please provide a valid Bearer token.",
@@ -25,7 +33,6 @@ export async function authenticateToken(
     return;
   }
 
-  const token = authHeader.slice(7).trim();
   const payload = verifyToken(token);
 
   if (!payload) {
