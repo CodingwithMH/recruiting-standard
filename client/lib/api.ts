@@ -105,57 +105,26 @@ export async function apiRequest<T>(
 }
 
 /**
- * Fetches an authorized document stream from the API and opens it in a new tab
- * using a local Blob URL (e.g. `blob:http://localhost:3000/...`).
+ * Opens the secure in-app document viewer in a new tab.
  *
- * Security benefits:
- * 1. The token is sent exclusively in the Authorization header — never exposed in the URL.
- * 2. The Blob URL is memory-bound to the current browser origin/session.
- * 3. Copying and pasting the Blob URL into Incognito, another browser, or after logout
- *    fails immediately (browser returns ERR_FILE_NOT_FOUND).
- * 4. Third-party cloud storage (Backblaze B2 / S3) URLs are never exposed to the client.
+ * Security:
+ * 1. The target URL is an authenticated internal route (`/document-preview?id=...`).
+ * 2. If opened while logged out, in Incognito, or by an unauthorized user, the viewer
+ *    strictly blocks access with "Authentication Required" or "Access Denied".
+ * 3. Backblaze B2 URLs are never exposed. The file is streamed server-side and rendered
+ *    via a session-bound blob inside a protected same-origin iframe.
  */
-export async function openDocumentPreview(
+export function openDocumentPreview(
   documentId: string,
   previewWindow?: Window | null
-): Promise<{ success: boolean; error?: string }> {
+): { success: boolean; error?: string } {
   try {
-    const token = getStoredToken();
-    if (!token) {
-      if (previewWindow) previewWindow.close();
-      return { success: false, error: "Authentication required." };
-    }
-
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/view`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (previewWindow) previewWindow.close();
-      const data = await response.json().catch(() => null);
-      return {
-        success: false,
-        error:
-          data?.error ||
-          (response.status === 403
-            ? "Access denied. You do not have permission to view this document."
-            : response.status === 404
-            ? "Document not found."
-            : `Failed to open document (HTTP ${response.status}).`),
-      };
-    }
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-
+    const targetUrl = `/document-preview?id=${encodeURIComponent(documentId)}`;
     if (previewWindow && !previewWindow.closed) {
-      previewWindow.location.href = blobUrl;
+      previewWindow.location.href = targetUrl;
     } else {
-      window.open(blobUrl, "_blank");
+      window.open(targetUrl, "_blank");
     }
-
     return { success: true };
   } catch (err) {
     if (previewWindow) previewWindow.close();
@@ -164,7 +133,7 @@ export async function openDocumentPreview(
       error:
         err instanceof Error
           ? err.message
-          : "Unable to open document. Please check your connection.",
+          : "Unable to open document preview. Please check popup permissions.",
     };
   }
 }
