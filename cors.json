@@ -1,7 +1,9 @@
 [
   {
-    "corsRuleName": "recruiting-local-dev",
+    "corsRuleName": "recruiting-web-access",
     "allowedOrigins": [
+      "https://recruiting-standard.vercel.app",
+      "https://*.vercel.app",
       "http://localhost:3000",
       "http://127.0.0.1:3000"
     ],
@@ -9,10 +11,11 @@
       "s3_get",
       "s3_head",
       "s3_put",
-      "s3_delete"
+      "s3_delete",
+      "s3_post"
     ],
     "allowedHeaders": ["*"],
-    "exposeHeaders": ["ETag"],
+    "exposeHeaders": ["ETag", "x-amz-request-id", "x-amz-id-2"],
     "maxAgeSeconds": 3600
   }
 ]

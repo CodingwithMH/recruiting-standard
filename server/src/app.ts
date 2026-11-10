@@ -21,9 +21,26 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+const allowedOrigins = [
+  env.CLIENT_ORIGIN,
+  "http://localhost:3000",
+  "https://recruiting-standard.vercel.app",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [env.CLIENT_ORIGIN, "http://localhost:3000"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
     exposedHeaders: ["Content-Disposition", "Content-Type", "Content-Length"],
   })
