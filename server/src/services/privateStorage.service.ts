@@ -3,6 +3,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  PutBucketCorsCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -254,4 +255,35 @@ export async function deleteStoredObject(storageKey: string): Promise<void> {
       Key: storageKey,
     })
   );
+}
+
+/**
+ * Ensures the S3/Backblaze B2 bucket allows web browser uploads from any deployed origin
+ * (Vercel, custom domain, localhost).
+ */
+export async function ensureStorageCorsConfigured(): Promise<void> {
+  if (!isPrivateStorageConfigured()) return;
+  const config = getStorageConfig();
+  const client = getClient(config);
+
+  try {
+    await client.send(
+      new PutBucketCorsCommand({
+        Bucket: config.bucket,
+        CORSConfiguration: {
+          CORSRules: [
+            {
+              AllowedHeaders: ["*"],
+              AllowedMethods: ["GET", "PUT", "POST", "HEAD", "DELETE"],
+              AllowedOrigins: ["*"],
+              ExposeHeaders: ["ETag", "x-amz-request-id", "x-amz-id-2"],
+              MaxAgeSeconds: 3600,
+            },
+          ],
+        },
+      })
+    );
+  } catch {
+    // Non-fatal if storage credentials do not have PutBucketCors permission
+  }
 }

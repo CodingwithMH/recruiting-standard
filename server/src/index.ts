@@ -2,6 +2,10 @@ import app from "./app.js";
 import { env } from "./config/env.js";
 import { prisma } from "./config/prisma.js";
 import { logger, c } from "./utils/logger.js";
+import {
+  ensureStorageCorsConfigured,
+  isPrivateStorageConfigured,
+} from "./services/privateStorage.service.js";
 
 async function startServer() {
   try {
@@ -25,7 +29,12 @@ async function startServer() {
       );
     }
 
-    // 2. Start HTTP Server
+    // 2. Ensure private storage CORS is configured for browser uploads from any deployed origin
+    if (isPrivateStorageConfigured()) {
+      void ensureStorageCorsConfigured();
+    }
+
+    // 3. Start HTTP Server
     const server = app.listen(env.PORT, () => {
       logger.info(
         "APP",
