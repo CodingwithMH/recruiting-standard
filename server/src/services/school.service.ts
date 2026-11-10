@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, School, type SchoolStatus } from "@prisma/client";
+import { Prisma, School, type SchoolStatus } from "@prisma/client";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { prisma } from "../config/prisma.js";
@@ -10,7 +10,7 @@ import { logger } from "../utils/logger.js";
 
 const MAX_SCHOOL_ID_ATTEMPTS = 25;
 
-type SchoolClient = Pick<PrismaClient, "school">;
+type SchoolClient = Pick<typeof prisma, "school">;
 
 // ----------------------------------------------------
 // Validation Schemas
