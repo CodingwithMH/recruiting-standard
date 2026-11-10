@@ -45,27 +45,45 @@ export async function authenticateToken(
   // immediately instead of waiting for the JWT to expire.
   if (payload.tokenVersion !== undefined) {
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: payload.userId },
-        select: {
-          id: true,
-          email: true,
-          globalRole: true,
-          tokenVersion: true,
-          status: true,
-          memberships: {
-            where: { status: "ACTIVE" },
-            orderBy: { createdAt: "asc" },
+      let user = null;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          user = await prisma.user.findUnique({
+            where: { id: payload.userId },
             select: {
-              schoolId: true,
-              role: true,
-              school: {
-                select: { id: true, name: true, schoolId: true, status: true },
+              id: true,
+              email: true,
+              globalRole: true,
+              tokenVersion: true,
+              status: true,
+              memberships: {
+                where: { status: "ACTIVE" },
+                orderBy: { createdAt: "asc" },
+                select: {
+                  schoolId: true,
+                  role: true,
+                  school: {
+                    select: { id: true, name: true, schoolId: true, status: true },
+                  },
+                },
               },
             },
-          },
-        },
-      });
+          });
+          break;
+        } catch (dbErr: unknown) {
+          const errMessage = dbErr instanceof Error ? dbErr.message : String(dbErr);
+          if (
+            attempt === 1 &&
+            (errMessage.includes("Can't reach database server") ||
+              (typeof dbErr === "object" && dbErr !== null && "code" in dbErr && (dbErr as { code: string }).code === "P1001"))
+          ) {
+            // Neon serverless database cold-start recovery: retry once after 1s
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            continue;
+          }
+          throw dbErr;
+        }
+      }
 
       if (
         !user ||
