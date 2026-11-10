@@ -605,23 +605,51 @@ export async function addSchoolMember(
     return { membership, invited };
   });
 
-  let invitationSent = false;
-
-  if (result.invited) {
-    invitationSent = await sendSchoolMemberInvitation(
-      normalizedEmail,
-      school.name
-    );
-  }
+  const invitationSent = await sendSchoolMemberInvitation(
+    normalizedEmail,
+    school.name
+  );
 
   logger.info(
     "AUTH",
-    `School member added to ${schoolId}: ${normalizedEmail} (${input.role})`
+    `School member added to ${schoolId}: ${normalizedEmail} (${input.role}), invitationSent: ${invitationSent}`
   );
 
   return {
     member: result.membership,
     invited: result.invited,
+    invitationSent,
+  };
+}
+
+export async function resendSchoolMemberInvitation(
+  schoolId: string,
+  membershipId: string
+) {
+  const membership = await prisma.schoolMembership.findFirst({
+    where: { id: membershipId, schoolId, status: "ACTIVE" },
+    include: {
+      user: { select: { email: true, firstName: true } },
+      school: { select: { name: true } },
+    },
+  });
+
+  if (!membership) {
+    throw new SchoolManagementError("Membership not found.", 404);
+  }
+
+  const invitationSent = await sendSchoolMemberInvitation(
+    membership.user.email,
+    membership.school.name
+  );
+
+  logger.info(
+    "AUTH",
+    `Resent school invitation for member ${membershipId} (${membership.user.email}) at ${schoolId}: ${invitationSent}`
+  );
+
+  return {
+    email: membership.user.email,
     invitationSent,
   };
 }

@@ -290,6 +290,27 @@ export default function SchoolSettingsPage() {
     }
   };
 
+  const handleResend = async (member: SchoolMember) => {
+    if (!schoolId) return;
+
+    setBusyMemberId(member.id);
+    setError(null);
+    setNotice(null);
+
+    const res = await apiRequest(
+      `/schools/${schoolId}/members/${member.id}/resend`,
+      { method: "POST" }
+    );
+
+    setBusyMemberId(null);
+
+    if (res.success) {
+      setNotice(res.message || `Invitation email resent to ${member.user.email}.`);
+    } else {
+      setError(res.error || "Unable to resend invitation.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -667,15 +688,27 @@ export default function SchoolSettingsPage() {
                           {member.title || "—"}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => void handleRemove(member)}
-                            disabled={busy}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 text-red-800 text-[11px] font-bold disabled:opacity-60 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Remove
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void handleResend(member)}
+                              disabled={busy}
+                              title="Resend invitation email with password setup link"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 text-[11px] font-bold disabled:opacity-60 cursor-pointer"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              Resend Invite
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleRemove(member)}
+                              disabled={busy}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 text-red-800 text-[11px] font-bold disabled:opacity-60 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Remove
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

@@ -19,6 +19,7 @@ import {
   listSchoolAthletes,
   approveSchoolAthlete,
   rejectSchoolAthlete,
+  resendSchoolMemberInvitation,
   SchoolRegistrationError,
 } from "../services/school.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
@@ -358,6 +359,34 @@ export async function handleRemoveMember(
       success: true,
       message: "Member removed from the school.",
       data: membership,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/v1/schools/:id/members/:membershipId/resend
+ * Resends the invitation email with a fresh password setup link.
+ */
+export async function handleResendMemberInvitation(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const result = await resendSchoolMemberInvitation(
+      getParam(req.params.id),
+      getParam(req.params.membershipId)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: result.invitationSent
+        ? `Invitation email resent to ${result.email}.`
+        : `Invitation could not be sent to ${result.email}. Please check SMTP configuration.`,
+      data: result,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

@@ -11,6 +11,7 @@ import {
   handleAddMember,
   handleUpdateMember,
   handleRemoveMember,
+  handleResendMemberInvitation,
   handleListSchoolAthletes,
   handleApproveSchoolAthlete,
   handleRejectSchoolAthlete,
@@ -104,6 +105,14 @@ schoolRouter.delete(
   requireApprovedSchool,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleRemoveMember
+);
+schoolRouter.post(
+  "/:id/members/:membershipId/resend",
+  authenticateToken,
+  requireSchoolTenant,
+  requireApprovedSchool,
+  requireSchoolRole("SCHOOL_ADMIN"),
+  handleResendMemberInvitation
 );
 
 // Student-athlete roster management and verification (School Admin or Coach)
