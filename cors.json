@@ -1,0 +1,18 @@
+[
+  {
+    "corsRuleName": "recruiting-local-dev",
+    "allowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000"
+    ],
+    "allowedOperations": [
+      "s3_get",
+      "s3_head",
+      "s3_put",
+      "s3_delete"
+    ],
+    "allowedHeaders": ["*"],
+    "exposeHeaders": ["ETag"],
+    "maxAgeSeconds": 3600
+  }
+]

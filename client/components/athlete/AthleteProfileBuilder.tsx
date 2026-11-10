@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
+  BadgeCheck,
   BarChart3,
   CheckCircle2,
+  Circle,
+  Clock,
   GraduationCap,
   Link2,
   Loader2,
@@ -12,6 +15,7 @@ import {
   RefreshCw,
   Ruler,
   Save,
+  Send,
   ShieldCheck,
   Target,
   Trash2,
@@ -20,6 +24,12 @@ import {
 import { apiRequest } from "@/lib/api";
 
 type VerificationStatus = "UNVERIFIED" | "PENDING" | "APPROVED" | "REJECTED";
+
+interface CompletionItem {
+  key: string;
+  label: string;
+  complete: boolean;
+}
 
 interface SportStatistic {
   label: string;
@@ -49,7 +59,11 @@ interface AthleteProfile {
   };
   highlightLinks: string[];
   completionPercentage: number;
+  completionChecklist?: CompletionItem[];
   verificationStatus: VerificationStatus;
+  verificationNotes?: string | null;
+  submittedAt?: string | null;
+  verifiedAt?: string | null;
   updatedAt: string;
 }
 
@@ -89,6 +103,28 @@ const VERIFICATION_LABELS: Record<VerificationStatus, string> = {
   APPROVED: "Verified",
   REJECTED: "Verification rejected",
 };
+
+const VERIFICATION_PANEL_STYLES: Record<VerificationStatus, string> = {
+  UNVERIFIED:
+    "border-slate-200 bg-slate-50/60 text-[#102341]",
+  PENDING: "border-amber-200 bg-amber-50 text-amber-900",
+  APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-900",
+  REJECTED: "border-red-200 bg-red-50 text-red-800",
+};
+
+const MIN_COMPLETION_TO_SUBMIT = 80;
+
+function formatDate(value: string | null): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return isNaN(parsed.getTime())
+    ? null
+    : parsed.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+}
 
 const inputClass =
   "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-[#102341] outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
@@ -175,18 +211,31 @@ function toOptionalString(value: string): string | null {
 export default function AthleteProfileBuilder() {
   const [form, setForm] = useState<ProfileForm>(createEmptyForm);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [completionChecklist, setCompletionChecklist] = useState<
+    CompletionItem[]
+  >([]);
   const [verificationStatus, setVerificationStatus] =
     useState<VerificationStatus>("UNVERIFIED");
+  const [verificationNotes, setVerificationNotes] = useState<string | null>(
+    null
+  );
+  const [submittedAt, setSubmittedAt] = useState<string | null>(null);
+  const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const applyProfile = useCallback((profile: AthleteProfile) => {
     setForm(toForm(profile));
     setCompletionPercentage(profile.completionPercentage);
+    setCompletionChecklist(profile.completionChecklist ?? []);
     setVerificationStatus(profile.verificationStatus);
+    setVerificationNotes(profile.verificationNotes ?? null);
+    setSubmittedAt(profile.submittedAt ?? null);
+    setVerifiedAt(profile.verifiedAt ?? null);
     setUpdatedAt(profile.updatedAt);
   }, []);
 
@@ -375,6 +424,8 @@ export default function AthleteProfileBuilder() {
       .map((link) => link.trim())
       .filter(Boolean);
 
+    const priorVerificationStatus = verificationStatus;
+
     setSaving(true);
 
     const res = await apiRequest<AthleteProfile>("/athlete/profile", {
@@ -400,9 +451,37 @@ export default function AthleteProfileBuilder() {
 
     if (res.success && res.data) {
       applyProfile(res.data);
-      setNotice("Athlete profile saved. Your profile is now visible to coaches.");
+      setNotice(
+        priorVerificationStatus === "APPROVED" ||
+          priorVerificationStatus === "REJECTED"
+          ? "Athlete profile saved. Because your profile changed, submit it again for verification."
+          : "Athlete profile saved. Your profile is now visible to coaches."
+      );
     } else {
       setError(res.error || "Unable to save your athlete profile.");
+    }
+  };
+
+  const handleSubmitForVerification = async () => {
+    setSubmitting(true);
+    setError(null);
+    setNotice(null);
+
+    const res = await apiRequest<AthleteProfile>("/athlete/profile/submit", {
+      method: "POST",
+    });
+
+    setSubmitting(false);
+
+    if (res.success && res.data) {
+      applyProfile(res.data);
+      setNotice(
+        "Profile submitted for verification. Our review team will approve or reject it, and the result will appear here."
+      );
+    } else {
+      setError(
+        res.error || "Unable to submit your profile for verification."
+      );
     }
   };
 
@@ -454,7 +533,7 @@ export default function AthleteProfileBuilder() {
           </div>
         ) : (
           <>
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
               <div className="flex items-center justify-between gap-3 text-[11px] font-bold text-[#102341]">
                 <span className="inline-flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
@@ -473,6 +552,135 @@ export default function AthleteProfileBuilder() {
                   ? `Last updated ${new Date(updatedAt).toLocaleDateString()}`
                   : "Complete your profile to appear in coach searches."}
               </p>
+
+              {completionChecklist.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 pt-1 border-t border-slate-200/70">
+                  {completionChecklist.map((item) => (
+                    <div
+                      key={item.key}
+                      className="flex items-center gap-1.5 text-[11px]"
+                    >
+                      {item.complete ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      ) : (
+                        <Circle className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                      )}
+                      <span
+                        className={
+                          item.complete
+                            ? "font-semibold text-[#102341]"
+                            : "text-[#65748a]"
+                        }
+                      >
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div
+              className={`rounded-xl border p-4 space-y-3 ${VERIFICATION_PANEL_STYLES[verificationStatus]}`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold">
+                  {verificationStatus === "APPROVED" ? (
+                    <BadgeCheck className="w-4 h-4" />
+                  ) : verificationStatus === "PENDING" ? (
+                    <Clock className="w-4 h-4" />
+                  ) : verificationStatus === "REJECTED" ? (
+                    <AlertCircle className="w-4 h-4" />
+                  ) : (
+                    <ShieldCheck className="w-4 h-4" />
+                  )}
+                  <span>
+                    {VERIFICATION_LABELS[verificationStatus]}
+                    {verificationStatus === "PENDING" &&
+                      formatDate(submittedAt) &&
+                      ` · submitted ${formatDate(submittedAt)}`}
+                    {verificationStatus === "APPROVED" &&
+                      formatDate(verifiedAt) &&
+                      ` · verified ${formatDate(verifiedAt)}`}
+                  </span>
+                </div>
+
+                {verificationStatus === "UNVERIFIED" && (
+                  <button
+                    type="button"
+                    onClick={() => void handleSubmitForVerification()}
+                    disabled={
+                      submitting || completionPercentage < MIN_COMPLETION_TO_SUBMIT
+                    }
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1b355c] text-white text-[11px] font-bold disabled:opacity-60 cursor-pointer shrink-0"
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    {submitting
+                      ? "Submitting..."
+                      : "Submit for verification"}
+                  </button>
+                )}
+              </div>
+
+              {verificationStatus === "UNVERIFIED" && (
+                <p className="text-[10px] leading-relaxed opacity-80">
+                  {completionPercentage < MIN_COMPLETION_TO_SUBMIT
+                    ? `Reach ${MIN_COMPLETION_TO_SUBMIT}% completion to submit your profile for verification (currently ${completionPercentage}%). Complete the missing checklist items above.`
+                    : "Submitting sends your profile to our review team. Verified athletes appear first in coach searches and can share approved documents with subscribed schools."}
+                </p>
+              )}
+
+              {verificationStatus === "PENDING" && (
+                <p className="text-[10px] leading-relaxed opacity-80">
+                  Our review team is checking your profile. You can keep
+                  editing it; reviewers always see your latest saved
+                  information. The decision will appear here.
+                </p>
+              )}
+
+              {verificationStatus === "APPROVED" && (
+                <div className="space-y-2">
+                  <p className="text-[10px] leading-relaxed opacity-80">
+                    Verified profiles appear first in coach searches and unlock
+                    document access for subscribed school coaches. Saving changes
+                    to your profile will reset verification and require a new
+                    review.
+                  </p>
+                  {verificationNotes && (
+                    <div className="rounded-lg border border-emerald-200 bg-white/70 px-3 py-2">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                        Reviewer notes
+                      </span>
+                      <span className="block text-[11px] text-emerald-800 mt-0.5 whitespace-pre-line">
+                        {verificationNotes}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {verificationStatus === "REJECTED" && (
+                <div className="space-y-2">
+                  <p className="text-[10px] leading-relaxed opacity-80">
+                    Update and save your profile to address the reviewer
+                    feedback, then submit it again for verification.
+                  </p>
+                  {verificationNotes && (
+                    <div className="rounded-lg border border-red-200 bg-white/70 px-3 py-2">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-red-700">
+                        Reviewer feedback
+                      </span>
+                      <span className="block text-[11px] text-red-800 mt-0.5 whitespace-pre-line">
+                        {verificationNotes}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">

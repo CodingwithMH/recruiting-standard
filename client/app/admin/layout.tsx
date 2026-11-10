@@ -82,6 +82,18 @@ export default function AdminLayout({
               Users
             </SiteLink>
             <SiteLink
+              href="/admin/verifications"
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Verifications
+            </SiteLink>
+            <SiteLink
+              href="/admin/documents"
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Documents
+            </SiteLink>
+            <SiteLink
               href="/admin/subscriptions"
               className="text-slate-300 hover:text-white transition-colors"
             >

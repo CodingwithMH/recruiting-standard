@@ -7,6 +7,7 @@ import {
   CreditCard,
   Clock,
   Users,
+  BadgeCheck,
 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import SchoolApprovalQueue from "@/components/admin/SchoolApprovalQueue";
@@ -95,7 +96,29 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Queue 2: Athlete Document Review Queue */}
+        {/* Queue 2: Athlete Profile Verification Queue */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <BadgeCheck className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-[#102341]">Athlete Profile Verification</h3>
+            <p className="text-xs text-[#65748a] leading-relaxed">
+              Review athlete profiles submitted for verification. Approve or reject with notes;
+              verified athletes rank first in coach searches and unlock document sharing.
+            </p>
+          </div>
+          <div className="pt-2">
+            <SiteLink
+              href="/admin/verifications"
+              className="text-xs font-bold text-blue-600 hover:underline"
+            >
+              Open profile verification queue ↗
+            </SiteLink>
+          </div>
+        </div>
+
+        {/* Queue 3: Athlete Document Review Queue */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
@@ -108,13 +131,16 @@ export default function AdminDashboardPage() {
             </p>
           </div>
           <div className="pt-2">
-            <span className="text-xs font-bold text-slate-500">
-              Milestone 3 (Private Storage)
-            </span>
+            <SiteLink
+              href="/admin/documents"
+              className="text-xs font-bold text-blue-600 hover:underline"
+            >
+              Open document review queue ↗
+            </SiteLink>
           </div>
         </div>
 
-        {/* Queue 3: Subscription Management */}
+        {/* Queue 4: Subscription Management */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">

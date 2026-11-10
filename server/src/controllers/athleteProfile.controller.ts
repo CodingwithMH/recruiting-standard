@@ -5,6 +5,7 @@ import {
   athleteProfileUpdateSchema,
   getAthleteProfile,
   getAthleteProfileById,
+  submitAthleteProfileForVerification,
   updateAthleteProfile,
 } from "../services/athleteProfile.service.js";
 
@@ -91,6 +92,36 @@ export async function handleUpdateAthleteProfile(
     res.status(200).json({
       success: true,
       message: "Athlete profile saved.",
+      data: profile,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    handleProfileError(err, res, next);
+  }
+}
+
+export async function handleSubmitAthleteProfileVerification(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: "Authentication required.",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const profile = await submitAthleteProfileForVerification(
+      req.user.userId
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Profile submitted for verification.",
       data: profile,
       timestamp: new Date().toISOString(),
     });

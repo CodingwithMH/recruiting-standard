@@ -47,6 +47,7 @@ feature/*  ──PR──▶  develop  ──merge──▶  main
 | `STORAGE_ACCESS_KEY_ID` | optional | staging key | production key | Yes (non-dev) |
 | `STORAGE_SECRET_ACCESS_KEY` | optional | staging secret | production secret | Yes (non-dev) |
 | `STORAGE_SIGNED_URL_TTL_SECONDS` | `900` | `900` | `900` | No |
+| `DOCUMENT_MAX_SIZE_BYTES` | `10485760` | `10485760` | `10485760` | No |
 | `CLOUDINARY_CLOUD_NAME` | optional | staging cloud | production cloud | Yes (non-dev) |
 | `CLOUDINARY_API_KEY` | optional | staging key | production key | Yes (non-dev) |
 | `CLOUDINARY_API_SECRET` | optional | staging secret | production secret | Yes (non-dev) |

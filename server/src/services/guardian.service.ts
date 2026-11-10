@@ -139,10 +139,60 @@ export async function requestGuardianLink(
 }
 
 export async function listGuardianLinks(parentUserId: string) {
-  return prisma.parentAthleteLink.findMany({
+  const links = await prisma.parentAthleteLink.findMany({
     where: { parentUserId },
     orderBy: { createdAt: "desc" },
     include: { athlete: { select: athleteSummary } },
+  });
+
+  // Verification progress is only exposed for links the athlete has approved.
+  // A pending or rejected request must not reveal profile information.
+  const activeAthleteIds = links
+    .filter((link) => link.status === "ACTIVE")
+    .map((link) => link.athleteUserId);
+
+  const profiles = activeAthleteIds.length
+    ? await prisma.athleteProfile.findMany({
+        where: { userId: { in: activeAthleteIds } },
+        select: {
+          userId: true,
+          primarySport: true,
+          graduationYear: true,
+          completionPercentage: true,
+          verificationStatus: true,
+          verifiedAt: true,
+        },
+      })
+    : [];
+
+  const profilesByUserId = new Map(
+    profiles.map((profile) => [profile.userId, profile])
+  );
+
+  return links.map((link) => {
+    const profile =
+      link.status === "ACTIVE"
+        ? profilesByUserId.get(link.athleteUserId)
+        : undefined;
+
+    return {
+      id: link.id,
+      status: link.status,
+      respondedAt: link.respondedAt,
+      createdAt: link.createdAt,
+      athlete: {
+        ...link.athlete,
+        athleteProfile: profile
+          ? {
+              primarySport: profile.primarySport,
+              graduationYear: profile.graduationYear,
+              completionPercentage: profile.completionPercentage,
+              verificationStatus: profile.verificationStatus,
+              verifiedAt: profile.verifiedAt,
+            }
+          : null,
+      },
+    };
   });
 }
 

@@ -17,6 +17,7 @@ import type { UserProfile } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import AthleteProfileBuilder from "@/components/athlete/AthleteProfileBuilder";
 import HighlightVideos from "@/components/athlete/HighlightVideos";
+import PrivateDocuments from "@/components/athlete/PrivateDocuments";
 
 type LinkStatus = "PENDING" | "ACTIVE" | "REJECTED" | "REVOKED";
 
@@ -131,6 +132,8 @@ export default function AthletePortalPage() {
       </div>
 
       <AthleteProfileBuilder />
+
+      <PrivateDocuments />
 
       <HighlightVideos />
 

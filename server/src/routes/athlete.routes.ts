@@ -12,8 +12,15 @@ import {
 } from "../controllers/highlight.controller.js";
 import {
   handleGetAthleteProfile,
+  handleSubmitAthleteProfileVerification,
   handleUpdateAthleteProfile,
 } from "../controllers/athleteProfile.controller.js";
+import {
+  handleConfirmDocumentUpload,
+  handleCreateDocumentUploadUrl,
+  handleDeleteAthleteDocument,
+  handleListAthleteDocuments,
+} from "../controllers/document.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole } from "../middleware/roles.js";
 
@@ -23,6 +30,10 @@ athleteRouter.use(authenticateToken, requireGlobalRole("ATHLETE"));
 
 athleteRouter.get("/profile", handleGetAthleteProfile);
 athleteRouter.put("/profile", handleUpdateAthleteProfile);
+athleteRouter.post(
+  "/profile/submit",
+  handleSubmitAthleteProfileVerification
+);
 
 athleteRouter.get("/guardian-links", handleListAthleteGuardianLinks);
 athleteRouter.post(
@@ -37,6 +48,11 @@ athleteRouter.delete(
   "/guardian-links/:linkId",
   handleRevokeAthleteGuardianLink
 );
+
+athleteRouter.get("/documents", handleListAthleteDocuments);
+athleteRouter.post("/documents/upload-url", handleCreateDocumentUploadUrl);
+athleteRouter.post("/documents", handleConfirmDocumentUpload);
+athleteRouter.delete("/documents/:documentId", handleDeleteAthleteDocument);
 
 athleteRouter.get("/highlights", handleListHighlights);
 athleteRouter.post(

@@ -25,6 +25,7 @@ const envSchema = z.object({
   STORAGE_ACCESS_KEY_ID: z.string().optional(),
   STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
   STORAGE_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  DOCUMENT_MAX_SIZE_BYTES: z.coerce.number().int().positive().default(10 * 1024 * 1024),
 
   // Public highlight video storage (Cloudinary). Optional in local development.
   // Videos are public-to-school assets, unlike private document storage above.

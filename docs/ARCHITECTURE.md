@@ -117,8 +117,9 @@ Student-athletes upload sensitive records including academic transcripts, standa
 ```
 [Athlete Client]                [Express API Server]              [Private Cloud Storage]
        │                                  │                                  │
-       │── 1. POST /documents/upload ────>│                                  │
-       │   (filename, mime, size, type)   │                                  │
+        │── 1. POST /athlete/documents/ ──>│                                  │
+        │      upload-url                  │                                  │
+        │   (filename, mime, size, type)   │                                  │
        │                                  │── 2. Validate athlete role & ───>│
        │                                  │      Generate Presigned PUT      │
        │<─ 3. Return Presigned URL ───────│      (10 min expiry)             │
@@ -126,9 +127,9 @@ Student-athletes upload sensitive records including academic transcripts, standa
        │                                  │                                  │
        │── 4. PUT file directly to Storage Bucket ──────────────────────────>│
        │                                  │                                  │
-       │── 5. POST /documents/confirm ───>│                                  │
-       │   (saves Document record with    │                                  │
-       │    status: PENDING)              │                                  │
+        │── 5. POST /athlete/documents ───>│                                  │
+        │   (verifies object, then saves   │                                  │
+        │    Document record status:PENDING)│                                 │
        ▼                                  ▼                                  ▼
 ```
 
@@ -143,6 +144,21 @@ When an authorized user requests to view a document:
 3. The server calls the cloud storage SDK to generate a temporary `GET` signed URL valid for **15 minutes**.
 4. The client receives the temporary URL and opens the document in an authenticated viewer. The URL expires immediately after the viewing window.
 
+### Document Review Workflow (Approve / Reject with Notes)
+Uploaded documents enter `PENDING` status. Platform admins review them from `GET /api/v1/admin/documents?status=PENDING` and decide via `PATCH /api/v1/admin/documents/:documentId/review`:
+
+- **Approve:** reviewer notes are optional; sets `status=APPROVED` and stamps `reviewerId`/`reviewedAt`. Approved documents are the only ones visible to subscribed school staff (see access policy above) and cannot be deleted by the athlete.
+- **Reject:** reviewer notes are **required** (`400` otherwise) and are surfaced to the athlete in their portal so they can correct and re-upload.
+- **Reversals:** a prior decision may be reversed (approved → rejected and vice versa). Re-reviewing a document into its current status returns `409` so `reviewedAt` and reviewer attribution stay accurate.
+- The queue response includes the reviewing admin's name and the athlete's profile verification status for context; conversely, the profile verification queue (`GET /api/v1/admin/athlete-verifications`) summarizes each athlete's approved/pending/rejected document counts.
+
+### Guardian Oversight of Verification Progress
+Parents/guardians exercise their oversight role through the link workflow only — no profile data is exposed until the athlete approves the link:
+
+- `GET /api/v1/parent/links` lists link requests; for **ACTIVE** links only, each response also carries the athlete's profile verification progress (`verificationStatus`, `completionPercentage`, primary sport, graduation year). Pending/rejected links return no profile data.
+- `GET /api/v1/parent/links/:linkId/documents` lists the actively linked athlete's uploaded documents with their review statuses and rejection notes, so guardians can help the athlete address reviewer feedback.
+- Guardians never receive raw storage keys. Document downloads go through the same `GET /api/v1/documents/:id/access` endpoint and its short-lived signed URLs, which independently re-verify the ACTIVE link.
+
 ### Public Highlight Video Storage (Cloudinary Free Plan)
 Highlight videos are promotional assets intended for participating prep, private, and high school coaches, so they are handled separately from private documents.
 
@@ -153,16 +169,34 @@ Highlight videos are promotional assets intended for participating prep, private
 5. Hudl, YouTube, and Vimeo links can be published through the same endpoint without uploading a file.
 6. Athletes may publish up to 10 highlights and can remove them from the portal; deleting a Cloudinary asset also removes it from the Cloudinary account.
 
+### Athlete Profile Completion & Verification Lifecycle
+
+The `AthleteProfile` carries two athlete-facing status signals:
+
+- **`completionPercentage` (0–100%)** — automatically recalculated on every profile save across ten equally weighted checks (graduation year, sport, positions, statistics, GPA, test score, high school, location, highlight link, measurements). `GET /api/v1/athlete/profile` also returns a `completionChecklist` array so the portal renders a "what's missing" indicator alongside the percentage.
+- **`verificationStatus`** (`UNVERIFIED` → `PENDING` → `APPROVED`/`REJECTED`) — the review state machine:
+
+| Transition | Trigger | Rules |
+|---|---|---|
+| `UNVERIFIED` → `PENDING` | Athlete calls `POST /api/v1/athlete/profile/submit` | Requires ≥ 80% completion; blocked while `PENDING`/`APPROVED`. |
+| `PENDING` → `APPROVED` | Platform Admin calls `PATCH /api/v1/admin/athlete-verifications/:athleteProfileId/review` | Sets `verifiedAt`/`verifiedById`; optional notes. |
+| `PENDING` → `REJECTED` | Same admin endpoint with `status: REJECTED` | Reviewer notes are **required** and shown to the athlete. |
+| `APPROVED`/`REJECTED` → `UNVERIFIED` | Athlete saves a profile update (`PUT /api/v1/athlete/profile`) | Editing a reviewed profile invalidates the decision; the athlete must resubmit. |
+
+Platform admins browse the queue via `GET /api/v1/admin/athlete-verifications?status=PENDING`, which includes each athlete's completion percentage and an approved/pending/rejected document summary. Only `PENDING` profiles can be reviewed (`409` otherwise).
+
+Verified (`APPROVED`) profiles rank first in coach searches and satisfy the athlete-verification precondition in the private document access policy above.
+
 ---
 
 ## 4. User Roles & Permission Hierarchy
 
 | Role | Scope | Key Capabilities |
 |---|---|---|
-| **Platform Admin** | Platform-Wide | Review and approve/reject registering schools; assign permanent `SchoolID`; review student transcripts and verification queue; administer manual school subscriptions ($1,500/yr or $250/mo); system health metrics. |
+| **Platform Admin** | Platform-Wide | Review and approve/reject registering schools; assign permanent `SchoolID`; review student transcripts, athlete profile verification queue, and documents; administer manual school subscriptions ($1,500/yr or $250/mo); system health metrics. |
 | **School Admin** | Own School Only | Manage institutional profile, invite/revoke coach and recruiter accounts, view school dashboard, review subscription status. |
 | **Coach / Recruiter** | Own School Only | Search approved athletes; save prospect watchlists; maintain school-private recruiting logs, evaluation notes, and offer statuses. |
-| **Athlete** | Own Profile Only | Build multi-sport athletic and academic profile; upload transcripts and combine reports; monitor verification status badge (`Unverified`, `Pending`, `Approved`). |
+| **Athlete** | Own Profile Only | Build multi-sport athletic and academic profile; upload transcripts and combine reports; track profile completion (0–100% with checklist); submit for verification and monitor the status badge (`Unverified`, `Pending`, `Approved`, `Rejected`) with reviewer feedback. |
 | **Parent / Guardian** | Linked Athlete Only | View linked athlete profile, monitor verification progress, oversee recruiting interactions in compliance with youth privacy standards. |
 
 ---

@@ -10,6 +10,7 @@ import {
   handleUpdateRecruitingRecord,
 } from "../controllers/coach.controller.js";
 import { handleGetAthleteProfileDetail } from "../controllers/athleteProfile.controller.js";
+import { handleListCoachAthleteDocuments } from "../controllers/document.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole, requireSchoolRole } from "../middleware/roles.js";
 import { requireSchoolTenant } from "../middleware/tenant.js";
@@ -32,6 +33,10 @@ coachRouter.use(
 // Athlete search — search approved athletes across the platform
 coachRouter.get("/athletes", handleSearchAthletes);
 coachRouter.get("/athletes/:athleteProfileId", handleGetAthleteProfileDetail);
+coachRouter.get(
+  "/athletes/:athleteProfileId/documents",
+  handleListCoachAthleteDocuments
+);
 
 // Saved prospects — coach's personal watch list within their school
 coachRouter.get("/prospects", handleListProspects);

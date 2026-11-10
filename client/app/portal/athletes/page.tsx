@@ -47,6 +47,22 @@ const STATUS_STYLES: Record<AthleteStatus, string> = {
   SUSPENDED: "bg-red-50 text-red-800 border-red-200/80",
 };
 
+type ProfileVerificationStatus = "UNVERIFIED" | "PENDING" | "APPROVED" | "REJECTED";
+
+const VERIFICATION_STYLES: Record<ProfileVerificationStatus, string> = {
+  UNVERIFIED: "bg-slate-100 text-slate-700 border-slate-200",
+  PENDING: "bg-amber-50 text-amber-800 border-amber-200/80",
+  APPROVED: "bg-emerald-50 text-emerald-800 border-emerald-200/80",
+  REJECTED: "bg-red-50 text-red-800 border-red-200/80",
+};
+
+const VERIFICATION_LABELS: Record<ProfileVerificationStatus, string> = {
+  UNVERIFIED: "Unverified",
+  PENDING: "Verification pending",
+  APPROVED: "Verified",
+  REJECTED: "Verification rejected",
+};
+
 export default function SchoolAthletesPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [athletes, setAthletes] = useState<SchoolAthlete[]>([]);
@@ -379,6 +395,14 @@ export default function SchoolAthletesPage() {
                               "number" && (
                               <span className="block text-[10px] text-slate-400">
                                 Profile {athlete.athleteProfile.completionPercentage}% complete
+                              </span>
+                            )}
+                            {athlete.athleteProfile.verificationStatus && (
+                              <span
+                                className={`mt-1 inline-flex px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${VERIFICATION_STYLES[athlete.athleteProfile.verificationStatus as ProfileVerificationStatus] ?? VERIFICATION_STYLES.UNVERIFIED}`}
+                              >
+                                {VERIFICATION_LABELS[athlete.athleteProfile.verificationStatus as ProfileVerificationStatus] ??
+                                  athlete.athleteProfile.verificationStatus}
                               </span>
                             )}
                           </div>

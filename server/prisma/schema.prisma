@@ -241,6 +241,8 @@ model AthleteProfile {
   athleticStats        Json?              // Sport-specific stats & combine metrics
   completionPercentage Int                @default(0) // 0-100%
   verificationStatus   VerificationStatus @default(UNVERIFIED)
+  verificationNotes    String? // Reviewer decision notes (required on rejection)
+  submittedForVerificationAt DateTime? // When the athlete last submitted for review
   verifiedAt           DateTime?
   verifiedById         String?
 
@@ -283,7 +285,7 @@ model Document {
   athleteProfileId   String
   type               DocumentType
   title              String
-  privateStorageRef  String         // Private S3/GCS object key, NEVER public URLs
+  privateStorageRef  String         @unique // Private S3/GCS object key, NEVER public URLs
   fileSizeBytes      Int
   mimeType           String
   status             DocumentStatus @default(PENDING)
