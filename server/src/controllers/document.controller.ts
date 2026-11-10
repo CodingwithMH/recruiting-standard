@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import type { AuthenticatedRequest } from "../types/index.js";
 import {
   DocumentError,
+  authorizeDocumentAccess,
   confirmDocumentUpload,
   deleteAthleteDocument,
   documentConfirmSchema,
@@ -16,7 +17,10 @@ import {
   reviewDocument,
   reviewDocumentSchema,
 } from "../services/document.service.js";
-import { PrivateStorageError } from "../services/privateStorage.service.js";
+import {
+  PrivateStorageError,
+  streamDocument,
+} from "../services/privateStorage.service.js";
 
 function getParam(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return value[0] ?? "";
@@ -224,12 +228,39 @@ export async function handleRedirectDocumentAccess(
       return;
     }
 
-    const access = await getDocumentAccessUrl(
+    // 1. Authorize — throws DocumentError (403/404) if the caller is not allowed.
+    const { storageKey, mimeType, title } = await authorizeDocumentAccess(
       req.user,
       getParam(req.params.documentId)
     );
 
-    res.redirect(access.downloadUrl);
+    // 2. Fetch the object body from Backblaze B2 / S3 on the server side.
+    const { body, contentLength } = await streamDocument(storageKey);
+
+    // 3. Set response headers so the browser renders / downloads the file.
+    res.setHeader("Content-Type", mimeType || "application/octet-stream");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(title)}"`
+    );
+    if (contentLength !== undefined) {
+      res.setHeader("Content-Length", contentLength);
+    }
+    // Prevent the browser from caching the authenticated stream.
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate"
+    );
+
+    // 4. Pipe the S3 body stream directly to the HTTP response.
+    //    If the client disconnects, destroy the upstream to avoid memory leaks.
+    req.on("close", () => {
+      if (typeof (body as NodeJS.ReadableStream & { destroy?: () => void }).destroy === "function") {
+        (body as NodeJS.ReadableStream & { destroy: () => void }).destroy();
+      }
+    });
+
+    (body as NodeJS.ReadableStream).pipe(res);
   } catch (err) {
     handleDocumentError(err, res, next);
   }

@@ -198,6 +198,52 @@ export async function getStoredObjectMetadata(
   }
 }
 
+export interface DocumentStream {
+  /** Raw Node.js readable stream of the object body from B2/S3. */
+  body: NodeJS.ReadableStream;
+  contentType: string | undefined;
+  contentLength: number | undefined;
+  contentDisposition: string | undefined;
+}
+
+/**
+ * Fetches the object from private storage and returns its body as a Node.js
+ * readable stream together with the relevant HTTP headers. The caller is
+ * responsible for piping this stream to the HTTP response.
+ *
+ * This keeps the signed URL entirely server-side — the browser never receives
+ * a URL it could bookmark or share.
+ */
+export async function streamDocument(
+  storageKey: string
+): Promise<DocumentStream> {
+  const config = getStorageConfig();
+  const client = getClient(config);
+
+  const result = await client.send(
+    new GetObjectCommand({
+      Bucket: config.bucket,
+      Key: storageKey,
+    })
+  );
+
+  if (!result.Body) {
+    throw new PrivateStorageError("Object body is empty.", 502);
+  }
+
+  // The AWS SDK v3 Body type exposes a transformToWebStream() method on the
+  // browser side and is a Node.js IncomingMessage-compatible readable on the
+  // server side. We cast to the Node.js readable interface.
+  const body = result.Body as unknown as NodeJS.ReadableStream;
+
+  return {
+    body,
+    contentType: result.ContentType,
+    contentLength: result.ContentLength,
+    contentDisposition: result.ContentDisposition,
+  };
+}
+
 export async function deleteStoredObject(storageKey: string): Promise<void> {
   const config = getStorageConfig();
   const client = getClient(config);

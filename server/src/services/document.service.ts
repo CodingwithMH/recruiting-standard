@@ -582,6 +582,98 @@ export async function getDocumentAccessUrl(
   };
 }
 
+/**
+ * Runs all authorization checks for document access, then returns the storage
+ * key so the caller can stream the object directly — without exposing a
+ * presigned URL to the client.
+ */
+export async function authorizeDocumentAccess(
+  requester: DocumentRequester,
+  documentId: string
+): Promise<{
+  storageKey: string;
+  mimeType: string;
+  title: string;
+}> {
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    select: {
+      id: true,
+      title: true,
+      mimeType: true,
+      status: true,
+      privateStorageRef: true,
+      athleteProfile: {
+        select: {
+          userId: true,
+          verificationStatus: true,
+          user: { select: { status: true } },
+        },
+      },
+    },
+  });
+
+  if (!document) {
+    throw new DocumentError("Document not found.", 404);
+  }
+
+  const athleteUserId = document.athleteProfile.userId;
+  const isOwner = requester.userId === athleteUserId;
+  const isAdmin = requester.globalRole === "PLATFORM_ADMIN";
+
+  let parentLinkActive: boolean | undefined;
+  let schoolStatus: SchoolStatus | null | undefined;
+  let subscriptionActive: boolean | undefined;
+
+  if (requester.globalRole === "PARENT" && !isOwner) {
+    const link = await prisma.parentAthleteLink.findFirst({
+      where: {
+        parentUserId: requester.userId,
+        athleteUserId,
+        status: "ACTIVE",
+      },
+      select: { id: true },
+    });
+    parentLinkActive = Boolean(link);
+  }
+
+  if (requester.globalRole === "SCHOOL_STAFF" && !isAdmin && requester.schoolId) {
+    const [school, subscription] = await Promise.all([
+      prisma.school.findUnique({
+        where: { id: requester.schoolId },
+        select: { status: true },
+      }),
+      prisma.subscription.findUnique({
+        where: { schoolId: requester.schoolId },
+        select: { state: true, expirationDate: true },
+      }),
+    ]);
+
+    schoolStatus = school?.status ?? null;
+    subscriptionActive = evaluateSubscriptionAccess(subscription).allowed;
+  }
+
+  const decision = evaluateDocumentAccess(requester, {
+    athleteUserId,
+    athleteAccountActive: document.athleteProfile.user.status === "ACTIVE",
+    documentStatus: document.status,
+    athleteVerificationStatus: document.athleteProfile.verificationStatus,
+    parentLinkActive,
+    schoolStatus,
+    subscriptionActive,
+  });
+
+  if (!decision.allowed) {
+    throw new DocumentError(accessDeniedMessage(decision.reason), 403);
+  }
+
+  return {
+    storageKey: document.privateStorageRef,
+    mimeType: document.mimeType,
+    title: document.title,
+  };
+}
+
 const reviewQueueSelect = {
   id: true,
   title: true,
