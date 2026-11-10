@@ -16,7 +16,7 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, openDocumentPreview } from "@/lib/api";
 import type { UserProfile } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 
@@ -217,17 +217,15 @@ export default function ParentPortalPage() {
     setBusyDocId(document.id);
     setError(null);
 
-    const res = await apiRequest<DocumentAccess>(
-      `/documents/${document.id}/access`
-    );
+    // Open a blank tab synchronously during the click event to avoid browser popup blockers.
+    const previewWindow = window.open("about:blank", "_blank");
+
+    const result = await openDocumentPreview(document.id, previewWindow);
+    if (!result.success && result.error) {
+      setError(result.error);
+    }
 
     setBusyDocId(null);
-
-    if (res.success && res.data) {
-      window.open(res.data.downloadUrl, "_blank", "noopener,noreferrer");
-    } else {
-      setError(res.error || "Unable to open that document.");
-    }
   };
 
   const handleRevoke = async (link: GuardianLink) => {

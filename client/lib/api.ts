@@ -103,3 +103,68 @@ export async function apiRequest<T>(
     };
   }
 }
+
+/**
+ * Fetches an authorized document stream from the API and opens it in a new tab
+ * using a local Blob URL (e.g. `blob:http://localhost:3000/...`).
+ *
+ * Security benefits:
+ * 1. The token is sent exclusively in the Authorization header — never exposed in the URL.
+ * 2. The Blob URL is memory-bound to the current browser origin/session.
+ * 3. Copying and pasting the Blob URL into Incognito, another browser, or after logout
+ *    fails immediately (browser returns ERR_FILE_NOT_FOUND).
+ * 4. Third-party cloud storage (Backblaze B2 / S3) URLs are never exposed to the client.
+ */
+export async function openDocumentPreview(
+  documentId: string,
+  previewWindow?: Window | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = getStoredToken();
+    if (!token) {
+      if (previewWindow) previewWindow.close();
+      return { success: false, error: "Authentication required." };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/view`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (previewWindow) previewWindow.close();
+      const data = await response.json().catch(() => null);
+      return {
+        success: false,
+        error:
+          data?.error ||
+          (response.status === 403
+            ? "Access denied. You do not have permission to view this document."
+            : response.status === 404
+            ? "Document not found."
+            : `Failed to open document (HTTP ${response.status}).`),
+      };
+    }
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.location.href = blobUrl;
+    } else {
+      window.open(blobUrl, "_blank");
+    }
+
+    return { success: true };
+  } catch (err) {
+    if (previewWindow) previewWindow.close();
+    return {
+      success: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Unable to open document. Please check your connection.",
+    };
+  }
+}

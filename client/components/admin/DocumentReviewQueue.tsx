@@ -9,7 +9,7 @@ import {
   RefreshCw,
   ShieldX,
 } from "lucide-react";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, openDocumentPreview } from "@/lib/api";
 import ReviewNotesForm from "@/components/admin/ReviewNotesForm";
 
 type DocumentType =
@@ -168,27 +168,12 @@ export default function DocumentReviewQueue() {
     // Modern browsers block window.open if called after an asynchronous await.
     const previewWindow = window.open("about:blank", "_blank");
 
-    try {
-      const res = await apiRequest<DocumentAccess>(
-        `/documents/${document.id}/access`
-      );
-
-      if (res.success && res.data?.downloadUrl) {
-        if (previewWindow) {
-          previewWindow.location.href = res.data.downloadUrl;
-        } else {
-          window.location.href = res.data.downloadUrl;
-        }
-      } else {
-        if (previewWindow) previewWindow.close();
-        setError(res.error || "Unable to open that document.");
-      }
-    } catch {
-      if (previewWindow) previewWindow.close();
-      setError("Unable to open that document.");
-    } finally {
-      setBusyId(null);
+    const result = await openDocumentPreview(document.id, previewWindow);
+    if (!result.success && result.error) {
+      setError(result.error);
     }
+
+    setBusyId(null);
   };
 
   const handleReview = async (

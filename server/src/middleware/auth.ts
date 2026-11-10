@@ -19,9 +19,6 @@ export async function authenticateToken(
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.slice(7).trim();
-  } else if (typeof req.query.token === "string" && req.query.token.trim()) {
-    // Support token query param for direct browser navigation links
-    token = req.query.token.trim();
   }
 
   if (!token) {

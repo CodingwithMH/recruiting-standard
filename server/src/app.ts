@@ -12,7 +12,11 @@ import apiRouter from "./routes/index.js";
 const app: Application = express();
 
 // Security and utility middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 app.use(
   cors({
     origin: [env.CLIENT_ORIGIN, "http://localhost:3000"],
