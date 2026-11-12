@@ -14,6 +14,7 @@ import {
   UserX,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
+import SiteLink from "@/components/ui/SiteLink";
 
 type GlobalRole = "PLATFORM_ADMIN" | "SCHOOL_STAFF" | "ATHLETE" | "PARENT";
 type UserStatus = "PENDING" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
@@ -297,10 +298,13 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-4">
                         {membership ? (
                           <div>
-                            <span className="flex items-center gap-1.5 text-xs font-semibold text-[#102341]">
+                            <SiteLink
+                              href={`/admin/schools/${membership.school.id}`}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#102341] hover:text-blue-700 hover:underline"
+                            >
                               <Building2 className="w-3.5 h-3.5 text-slate-400" />
                               {membership.school.name}
-                            </span>
+                            </SiteLink>
                             <span className="block text-[10px] font-mono text-[#65748a]">
                               {membership.school.schoolId || "Pending ID"} ·{" "}
                               {membership.role.replace("_", " ")}

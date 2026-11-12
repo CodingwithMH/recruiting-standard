@@ -175,6 +175,79 @@ export async function sendGuardianLinkRequestEmail(
   return true;
 }
 
+export interface ContactInquiryEmailInput {
+  name: string;
+  email: string;
+  inquiryLabel: string;
+  message: string;
+}
+
+/**
+ * Delivers a public contact-form inquiry to the configured MVP 4.18 inbox.
+ * Returns `false` when SMTP is not configured so the API can ask the visitor
+ * to use the backup contact email instead of silently dropping the message.
+ */
+export async function sendContactInquiryEmail(
+  to: string,
+  inquiry: ContactInquiryEmailInput
+): Promise<boolean> {
+  const client = getTransporter();
+
+  if (!client) {
+    logger.warn(
+      "CONTACT",
+      "SMTP is not configured. Contact inquiry email was not sent."
+    );
+    return false;
+  }
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  const safeName = escapeHtml(inquiry.name);
+  const safeEmail = escapeHtml(inquiry.email);
+  const safeInquiryLabel = escapeHtml(inquiry.inquiryLabel);
+  const safeMessage = escapeHtml(inquiry.message).replace(/\r?\n/g, "<br />");
+  const safeSubjectName = inquiry.name.replace(/[\r\n]+/g, " ").trim();
+
+  await client.sendMail({
+    from: env.EMAIL_FROM,
+    to,
+    replyTo: inquiry.email,
+    subject: `[MVP 4.18] ${inquiry.inquiryLabel} inquiry from ${safeSubjectName}`,
+    text: [
+      `New ${inquiry.inquiryLabel} inquiry`,
+      "",
+      `Name: ${inquiry.name}`,
+      `Email: ${inquiry.email}`,
+      `Inquiry type: ${inquiry.inquiryLabel}`,
+      "",
+      "Message:",
+      inquiry.message,
+      "",
+      "Reply directly to this email to respond to the visitor.",
+    ].join("\n"),
+    html: `
+      <h2>New ${safeInquiryLabel} inquiry</h2>
+      <p>
+        <strong>Name:</strong> ${safeName}<br />
+        <strong>Email:</strong> ${safeEmail}<br />
+        <strong>Inquiry type:</strong> ${safeInquiryLabel}
+      </p>
+      <p><strong>Message:</strong></p>
+      <p>${safeMessage}</p>
+      <p>Reply directly to this email to respond to the visitor.</p>
+    `,
+  });
+
+  return true;
+}
+
 /**
  * Sends a confirmation that a school registration was received and is awaiting
  * Platform Admin review. Never blocks registration when email is unavailable.

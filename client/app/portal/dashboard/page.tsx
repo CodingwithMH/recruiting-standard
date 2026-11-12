@@ -177,13 +177,17 @@ export default function SchoolDashboardPage() {
             <h3 className="text-base font-bold text-[#102341]">Verified Talent Search</h3>
             <p className="text-xs text-[#65748a] leading-relaxed">
               Explore administrator-approved student-athletes filtered by sport, graduation year,
-              position, and academic metrics.
+              position or event, and location.
             </p>
           </div>
           <div className="pt-2">
-            <span className="text-xs font-bold text-slate-500 inline-flex items-center gap-1">
-              Milestone 4 (Gated Engine)
-            </span>
+            <SiteLink
+              href="/portal/search"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1d3d68] text-white text-xs font-bold transition-colors"
+            >
+              <span>Search Approved Athletes</span>
+              <span>↗</span>
+            </SiteLink>
           </div>
         </div>
 
@@ -200,9 +204,13 @@ export default function SchoolDashboardPage() {
             </p>
           </div>
           <div className="pt-2">
-            <span className="text-xs font-bold text-slate-500 inline-flex items-center gap-1">
-              Milestone 4 (Data Isolated)
-            </span>
+            <SiteLink
+              href="/portal/prospects"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1d3d68] text-white text-xs font-bold transition-colors"
+            >
+              <span>Open Prospect Watchlist</span>
+              <span>↗</span>
+            </SiteLink>
           </div>
         </div>
       </div>

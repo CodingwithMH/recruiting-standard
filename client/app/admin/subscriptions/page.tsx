@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   CheckCircle2,
@@ -13,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
+import SiteLink from "@/components/ui/SiteLink";
 
 type SubscriptionPlan = "ANNUAL_1500" | "MONTHLY_250";
 type PaymentStatus = "PAID" | "PENDING" | "OVERDUE" | "WAIVED";
@@ -83,6 +85,7 @@ function formatDate(value: string | null): string {
 }
 
 export default function AdminSubscriptionsPage() {
+  const router = useRouter();
   const [subscriptions, setSubscriptions] = useState<SubscriptionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -318,14 +321,32 @@ export default function AdminSubscriptionsPage() {
                 subscriptions.map((subscription) => (
                   <tr
                     key={subscription.id}
-                    className="border-b border-slate-100 last:border-0"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() =>
+                      router.push(`/admin/schools/${subscription.schoolId}`)
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/admin/schools/${subscription.schoolId}`);
+                      }
+                    }}
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 transition-colors cursor-pointer focus:outline-none focus:bg-blue-50/50"
                   >
                     <td className="px-6 py-4">
-                      <span className="block font-bold text-[#102341]">
+                      <SiteLink
+                        href={`/admin/schools/${subscription.schoolId}`}
+                        onClick={(event) => event.stopPropagation()}
+                        className="block font-bold text-[#102341] hover:text-blue-700 hover:underline"
+                      >
                         {subscription.schoolName}
+                      </SiteLink>
+                      <span className="block text-[10px] font-semibold text-blue-700">
+                        View school profile →
                       </span>
                       <span className="block text-[11px] font-mono text-[#65748a]">
-                        {subscription.schoolCode || "Pending ID"} ·{" "}
+                        {subscription.schoolCode || "Pending ID"} A�{" "}
                         {subscription.contactEmail}
                       </span>
                     </td>
@@ -385,7 +406,11 @@ export default function AdminSubscriptionsPage() {
                         <span className="text-slate-400">No payments yet</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td
+                      className="px-6 py-4"
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         {subscription.effectiveState !== "ACTIVE" && (
                           <button

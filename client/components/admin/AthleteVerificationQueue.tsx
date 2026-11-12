@@ -286,8 +286,22 @@ export default function AthleteVerificationQueue() {
                         onClick={() =>
                           setNotesFor({ id: athlete.id, intent: "APPROVE" })
                         }
-                        disabled={busyId === athlete.id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold disabled:opacity-60 cursor-pointer"
+                        disabled={
+                          busyId === athlete.id ||
+                          athlete.documents.pending > 0 ||
+                          athlete.documents.rejected > 0 ||
+                          athlete.documents.approved === 0
+                        }
+                        title={
+                          athlete.documents.approved === 0
+                            ? "Cannot approve: athlete has no approved documents."
+                            : athlete.documents.pending > 0
+                            ? `Cannot approve: ${athlete.documents.pending} document(s) still pending review.`
+                            : athlete.documents.rejected > 0
+                            ? `Cannot approve: ${athlete.documents.rejected} document(s) have been rejected. All documents must be approved.`
+                            : "Approve this athlete profile"
+                        }
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                       >
                         <ShieldCheck className="w-3.5 h-3.5" />
                         Approve verification

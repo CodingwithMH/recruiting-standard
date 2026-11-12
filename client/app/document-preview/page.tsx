@@ -164,7 +164,7 @@ function DocumentPreviewContent() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-900 text-white overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-slate-900 text-white">
       {/* Top Header Bar */}
       <header className="h-14 bg-slate-800/95 backdrop-blur border-b border-slate-700/80 px-4 flex items-center justify-between shrink-0 z-10 shadow-sm">
         <div className="flex items-center gap-3 min-w-0">
@@ -208,9 +208,12 @@ function DocumentPreviewContent() {
       </header>
 
       {/* Main Content Area: fills exactly the remainder of 100vh */}
-      <main className="flex-1 w-full h-[calc(100vh-3.5rem)] relative overflow-hidden bg-slate-950 flex flex-col">
+      <main
+        className="w-full relative bg-slate-950"
+        style={{ height: "calc(100vh - 3.5rem)" }}
+      >
         {loading && (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
             <p className="text-xs font-medium">
               Verifying access and loading document...
@@ -219,7 +222,7 @@ function DocumentPreviewContent() {
         )}
 
         {!loading && errorType && (
-          <div className="flex-1 flex items-center justify-center p-4">
+          <div className="absolute inset-0 flex items-center justify-center p-4">
             <div className="max-w-md w-full rounded-2xl bg-slate-800 border border-slate-700 p-6 text-center shadow-xl space-y-4">
               <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center bg-red-950/60 border border-red-500/30 text-red-400">
                 {errorType === "AUTH" && <Lock className="w-6 h-6" />}
@@ -263,12 +266,15 @@ function DocumentPreviewContent() {
         )}
 
         {!loading && blobUrl && isImage && (
-          <div className="flex-1 w-full h-full p-4 sm:p-8 flex items-center justify-center overflow-auto bg-slate-950/90">
+          <div
+            className="absolute inset-0 flex items-center justify-center p-4 sm:p-8 overflow-auto bg-slate-950/90"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={blobUrl}
               alt={title}
-              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl border border-slate-800"
+              style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+              className="rounded-xl shadow-2xl border border-slate-800"
             />
           </div>
         )}
@@ -276,7 +282,7 @@ function DocumentPreviewContent() {
         {!loading && blobUrl && !isImage && (
           <iframe
             src={blobUrl}
-            className="w-full h-full border-0 block"
+            className="absolute inset-0 w-full h-full border-0 block"
             title={title}
           />
         )}

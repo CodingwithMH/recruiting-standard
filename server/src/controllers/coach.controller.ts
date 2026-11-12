@@ -43,8 +43,8 @@ function handleCoachError(
 
 /**
  * GET /api/v1/coach/athletes
- * Search approved athletes. All filters are optional query parameters:
- *   sport, graduationYear, state, position, minGpa, verificationStatus, search, page, limit
+ * Search APPROVED athletes only. All filters are optional query parameters:
+ *   sport, graduationYear, position, location, search, page, limit
  */
 export async function handleSearchAthletes(
   req: AuthenticatedRequest,

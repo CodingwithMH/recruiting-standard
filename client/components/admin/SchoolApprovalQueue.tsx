@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   PauseCircle,
@@ -39,6 +40,7 @@ const STATUS_STYLES: Record<SchoolStatus, string> = {
 };
 
 export default function SchoolApprovalQueue() {
+  const router = useRouter();
   const [schools, setSchools] = useState<SchoolRow[]>([]);
   const [filter, setFilter] = useState<Filter>("PENDING");
   const [loading, setLoading] = useState(true);
@@ -179,9 +181,24 @@ export default function SchoolApprovalQueue() {
                 const busy = busyId === school.id;
 
                 return (
-                  <tr key={school.id} className="border-b border-slate-100 last:border-0">
+                  <tr
+                    key={school.id}
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => router.push(`/admin/schools/${school.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/admin/schools/${school.id}`);
+                      }
+                    }}
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 transition-colors cursor-pointer focus:outline-none focus:bg-blue-50/50"
+                  >
                     <td className="px-6 py-4">
                       <span className="block font-bold text-[#102341]">{school.name}</span>
+                      <span className="block text-[10px] font-semibold text-blue-700">
+                        View school profile →
+                      </span>
                       <span className="block text-[11px] text-[#65748a]">{school.contactEmail}</span>
                       <span className="block text-[11px] text-[#65748a]">
                         {[school.city, school.provinceRegion, school.country]
@@ -202,7 +219,11 @@ export default function SchoolApprovalQueue() {
                     <td className="px-4 py-4 text-xs text-[#65748a]">
                       {new Date(school.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4">
+                    <td
+                      className="px-6 py-4"
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         {(school.status === "PENDING" ||
                           school.status === "REJECTED" ||

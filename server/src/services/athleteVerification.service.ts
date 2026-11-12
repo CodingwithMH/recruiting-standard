@@ -205,6 +205,38 @@ export async function reviewAthleteProfileVerification(
     );
   }
 
+  // When approving, ensure all submitted documents are reviewed and approved.
+  if (input.status === "APPROVED") {
+    const documentCounts = await prisma.document.groupBy({
+      by: ["status"],
+      where: { athleteProfileId },
+      _count: { _all: true },
+    });
+
+    const totalDocs = documentCounts.reduce(
+      (sum, g) => sum + (g._count?._all ?? 0),
+      0
+    );
+    const pendingDocs =
+      documentCounts.find((g) => g.status === "PENDING")?._count?._all ?? 0;
+    const rejectedDocs =
+      documentCounts.find((g) => g.status === "REJECTED")?._count?._all ?? 0;
+
+    if (totalDocs === 0) {
+      throw new AthleteVerificationError(
+        "Cannot approve: the athlete has not uploaded any documents yet.",
+        409
+      );
+    }
+
+    if (pendingDocs > 0 || rejectedDocs > 0) {
+      throw new AthleteVerificationError(
+        `Cannot approve: ${pendingDocs} document(s) are still pending review and ${rejectedDocs} document(s) have been rejected. All documents must be approved first.`,
+        409
+      );
+    }
+  }
+
   return prisma.athleteProfile.update({
     where: { id: athleteProfileId },
     data: {

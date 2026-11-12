@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   CheckCircle2,
@@ -64,6 +65,7 @@ const VERIFICATION_LABELS: Record<ProfileVerificationStatus, string> = {
 };
 
 export default function SchoolAthletesPage() {
+  const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [athletes, setAthletes] = useState<SchoolAthlete[]>([]);
   const [search, setSearch] = useState("");
@@ -352,13 +354,42 @@ export default function SchoolAthletesPage() {
                 filteredAthletes.map((athlete) => {
                   const busy = busyId === athlete.id;
                   const age = calculateAge(athlete.dateOfBirth);
+                  const profileHref = athlete.athleteProfile
+                    ? `/portal/athletes/${athlete.athleteProfile.id}`
+                    : null;
 
                   return (
-                    <tr key={athlete.id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr
+                      key={athlete.id}
+                      role={profileHref ? "link" : undefined}
+                      tabIndex={profileHref ? 0 : undefined}
+                      onClick={() => {
+                        if (profileHref) router.push(profileHref);
+                      }}
+                      onKeyDown={(event) => {
+                        if (
+                          profileHref &&
+                          (event.key === "Enter" || event.key === " ")
+                        ) {
+                          event.preventDefault();
+                          router.push(profileHref);
+                        }
+                      }}
+                      className={`hover:bg-slate-50/70 transition-colors focus:outline-none ${
+                        profileHref
+                          ? "cursor-pointer focus:bg-blue-50/50"
+                          : ""
+                      }`}
+                    >
                       <td className="px-4 py-4">
                         <span className="block font-bold text-[#102341]">
                           {athlete.firstName} {athlete.lastName}
                         </span>
+                        {profileHref && (
+                          <span className="block text-[10px] font-semibold text-blue-700">
+                            View profile →
+                          </span>
+                        )}
                         <span className="block text-[11px] text-[#65748a]">{athlete.email}</span>
                         {athlete.phone && (
                           <span className="block text-[10px] text-slate-400">{athlete.phone}</span>
@@ -422,7 +453,11 @@ export default function SchoolAthletesPage() {
                       <td className="px-4 py-4 text-xs text-[#65748a]">
                         {new Date(athlete.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4">
+                      <td
+                        className="px-6 py-4"
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}
+                      >
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           {athlete.status === "PENDING" ? (
                             <>

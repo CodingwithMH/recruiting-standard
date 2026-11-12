@@ -9,10 +9,12 @@ import coachRouter from "./coach.routes.js";
 import subscriptionRouter from "./subscription.routes.js";
 import documentRouter from "./document.routes.js";
 import adminRouter from "./admin.routes.js";
+import contactRouter from "./contact.routes.js";
 
 const apiRouter = Router();
 
 apiRouter.use("/health", healthRouter);
+apiRouter.use("/contact", contactRouter);
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/schools", schoolRouter);
 apiRouter.use("/users", userRouter);

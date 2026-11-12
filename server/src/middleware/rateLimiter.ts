@@ -25,3 +25,16 @@ export const authRateLimiter = rateLimit({
     timestamp: new Date().toISOString(),
   },
 });
+
+export const contactRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // Public contact form abuse protection
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+  message: {
+    success: false,
+    error: "Too many messages sent from this IP address. Please try again after 15 minutes.",
+    timestamp: new Date().toISOString(),
+  },
+});

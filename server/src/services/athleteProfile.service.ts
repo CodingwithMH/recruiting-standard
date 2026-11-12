@@ -264,7 +264,8 @@ export type VerificationSubmissionReason =
   | "ALREADY_PENDING"
   | "ALREADY_APPROVED"
   | "MUST_UPDATE_BEFORE_RESUBMIT"
-  | "PROFILE_INCOMPLETE";
+  | "PROFILE_INCOMPLETE"
+  | "NO_DOCUMENTS";
 
 export interface VerificationSubmissionDecision {
   allowed: boolean;
@@ -281,6 +282,7 @@ export function evaluateVerificationSubmission(input: {
   verificationStatus: VerificationStatus;
   completionPercentage: number;
   missingItemCount: number;
+  documentCount: number;
 }): VerificationSubmissionDecision {
   const decision = {
     missingItemCount: input.missingItemCount,
@@ -302,6 +304,10 @@ export function evaluateVerificationSubmission(input: {
     return { ...decision, allowed: false, reason: "PROFILE_INCOMPLETE" };
   }
 
+  if (input.documentCount === 0) {
+    return { ...decision, allowed: false, reason: "NO_DOCUMENTS" };
+  }
+
   return { ...decision, allowed: true, reason: "ALLOWED" };
 }
 
@@ -319,6 +325,8 @@ export function verificationSubmissionMessage(
       return `Complete at least ${MIN_SUBMISSION_COMPLETION}% of your profile before submitting it for verification. ${decision.missingItemCount} checklist item${
         decision.missingItemCount === 1 ? "" : "s"
       } still missing.`;
+    case "NO_DOCUMENTS":
+      return "Upload at least one official document (transcript, eligibility form, or combine report) before submitting your profile for verification.";
     default:
       return "";
   }
@@ -495,10 +503,16 @@ export async function submitAthleteProfileForVerification(userId: string) {
   }
 
   const breakdown = buildBreakdownFromProfile(profile);
+
+  const documentCount = await prisma.document.count({
+    where: { athleteProfileId: profile.id },
+  });
+
   const decision = evaluateVerificationSubmission({
     verificationStatus: profile.verificationStatus,
     completionPercentage: breakdown.percentage,
     missingItemCount: breakdown.items.filter((item) => !item.complete).length,
+    documentCount,
   });
 
   if (!decision.allowed) {

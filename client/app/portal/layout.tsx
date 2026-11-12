@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  BookmarkCheck,
   Building2,
   GraduationCap,
   LogOut,
+  Search,
   ShieldCheck,
   User,
 } from "lucide-react";
@@ -166,19 +168,37 @@ export default function PortalLayout({
           {primaryMembership && (
             <>
               <SiteLink
-                href="/portal/athletes"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-blue-900 transition-colors text-xs font-semibold"
+                href="/portal/search"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/70 text-emerald-900 transition-colors text-xs font-semibold"
               >
-                <GraduationCap className="w-3.5 h-3.5 text-blue-700" />
-                <span className="hidden sm:inline">Athlete Roster</span>
+                <Search className="w-3.5 h-3.5 text-emerald-700" />
+                <span className="hidden sm:inline">Talent Search</span>
               </SiteLink>
               <SiteLink
-                href="/portal/school"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-[#102341] transition-colors text-xs font-semibold"
+                href="/portal/prospects"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-amber-200 bg-amber-50/70 hover:bg-amber-100/70 text-amber-900 transition-colors text-xs font-semibold"
               >
-                <Building2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">School Settings</span>
+                <BookmarkCheck className="w-3.5 h-3.5 text-amber-700" />
+                <span className="hidden sm:inline">Prospects</span>
               </SiteLink>
+              {primaryMembership.role === "SCHOOL_ADMIN" && (
+                <>
+                  <SiteLink
+                    href="/portal/athletes"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-blue-900 transition-colors text-xs font-semibold"
+                  >
+                    <GraduationCap className="w-3.5 h-3.5 text-blue-700" />
+                    <span className="hidden sm:inline">Athlete Roster</span>
+                  </SiteLink>
+                  <SiteLink
+                    href="/portal/school"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-[#102341] transition-colors text-xs font-semibold"
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">School Settings</span>
+                  </SiteLink>
+                </>
+              )}
             </>
           )}
 

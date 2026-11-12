@@ -23,12 +23,10 @@ export class CoachError extends Error {
 export const athleteSearchQuerySchema = z.object({
   sport: z.string().trim().min(1).max(100).optional(),
   graduationYear: z.coerce.number().int().min(2020).max(2040).optional(),
-  state: z.string().trim().length(2).toUpperCase().optional(),
+  // Positions and events share the same profile field (e.g. "Point Guard", "100m").
   position: z.string().trim().min(1).max(100).optional(),
-  minGpa: z.coerce.number().min(0).max(4.0).optional(),
-  verificationStatus: z
-    .enum(["UNVERIFIED", "PENDING", "APPROVED", "REJECTED"])
-    .optional(),
+  // City, state, or "City, ST" — matched against the athlete's location fields.
+  location: z.string().trim().min(1).max(100).optional(),
   search: z.string().trim().max(100).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -134,58 +132,115 @@ const athletePublicSelect = {
   },
 } satisfies Prisma.AthleteProfileSelect;
 
-export async function searchAthletes(query: AthleteSearchQuery) {
-  const { sport, graduationYear, state, position, minGpa, verificationStatus, search, page, limit } = query;
-  const skip = (page - 1) * limit;
+/**
+ * Builds common casing variants so free-text sport/position matches work even
+ * when the stored value differs only by capitalization (e.g. "point guard").
+ */
+function caseVariants(value: string): string[] {
+  const trimmed = value.trim();
+  if (!trimmed) return [];
 
-  const where: Prisma.AthleteProfileWhereInput = {
-    // Only surface athletes whose account is active
-    user: { status: "ACTIVE" },
+  const titleCase = trimmed
+    .toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+
+  return Array.from(
+    new Set([trimmed, trimmed.toLowerCase(), trimmed.toUpperCase(), titleCase])
+  );
+}
+
+function buildLocationFilter(location: string): Prisma.AthleteProfileWhereInput {
+  const [cityPart, ...stateParts] = location.split(",");
+  const city = cityPart?.trim() ?? "";
+  const state = stateParts.join(",").trim();
+
+  if (state) {
+    return {
+      ...(city
+        ? { city: { contains: city, mode: "insensitive" as const } }
+        : {}),
+      state: { equals: state, mode: "insensitive" },
+    };
+  }
+
+  return {
+    OR: [
+      { city: { contains: location, mode: "insensitive" } },
+      { state: { contains: location, mode: "insensitive" } },
+    ],
+  };
+}
+
+/**
+ * Search is intentionally restricted to APPROVED athlete profiles. Filtering
+ * is limited to sport, graduation year, position/event, and location; `search`
+ * remains an optional name keyword.
+ */
+export function buildAthleteSearchWhere(
+  query: AthleteSearchQuery
+): Prisma.AthleteProfileWhereInput {
+  const { sport, graduationYear, position, location, search } = query;
+
+  const userWhere: Prisma.UserWhereInput = {
+    status: "ACTIVE",
+    globalRole: "ATHLETE",
   };
 
-  if (sport) {
-    where.OR = [
-      { primarySport: { contains: sport, mode: "insensitive" } },
-      { sports: { has: sport } },
+  if (search) {
+    userWhere.OR = [
+      { firstName: { contains: search, mode: "insensitive" } },
+      { lastName: { contains: search, mode: "insensitive" } },
     ];
   }
 
-  if (graduationYear) {
-    where.graduationYear = graduationYear;
-  }
+  const filters: Prisma.AthleteProfileWhereInput[] = [];
 
-  if (state) {
-    where.state = { equals: state, mode: "insensitive" };
+  if (sport) {
+    filters.push({
+      OR: [
+        { primarySport: { contains: sport, mode: "insensitive" } },
+        { sports: { hasSome: caseVariants(sport) } },
+      ],
+    });
   }
 
   if (position) {
-    where.positions = { has: position };
+    filters.push({
+      positions: { hasSome: caseVariants(position) },
+    });
   }
 
-  if (minGpa !== undefined) {
-    where.gpa = { gte: minGpa };
+  if (location) {
+    filters.push(buildLocationFilter(location));
   }
 
-  if (verificationStatus) {
-    where.verificationStatus = verificationStatus;
+  const where: Prisma.AthleteProfileWhereInput = {
+    verificationStatus: "APPROVED",
+    user: userWhere,
+  };
+
+  if (graduationYear !== undefined) {
+    where.graduationYear = graduationYear;
   }
 
-  if (search) {
-    where.user = {
-      status: "ACTIVE",
-      OR: [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-      ],
-    };
+  if (filters.length > 0) {
+    where.AND = filters;
   }
+
+  return where;
+}
+
+export async function searchAthletes(query: AthleteSearchQuery) {
+  const { page, limit } = query;
+  const skip = (page - 1) * limit;
+  const where = buildAthleteSearchWhere(query);
 
   const [total, athletes] = await Promise.all([
     prisma.athleteProfile.count({ where }),
     prisma.athleteProfile.findMany({
       where,
       select: athletePublicSelect,
-      orderBy: [{ verificationStatus: "asc" }, { graduationYear: "asc" }],
+      orderBy: [{ graduationYear: "asc" }, { updatedAt: "desc" }],
       skip,
       take: limit,
     }),
@@ -225,17 +280,19 @@ export async function saveProspect(
   coachUserId: string,
   input: SaveProspectInput
 ) {
-  // Verify the athlete profile exists and belongs to an active athlete
+  // Only approved, active athlete profiles can be saved as prospects. This
+  // keeps the watchlist consistent with approved-only talent search.
   const athleteProfile = await prisma.athleteProfile.findFirst({
     where: {
       id: input.athleteProfileId,
+      verificationStatus: "APPROVED",
       user: { status: "ACTIVE", globalRole: "ATHLETE" },
     },
     select: { id: true },
   });
 
   if (!athleteProfile) {
-    throw new CoachError("Athlete profile not found.", 404);
+    throw new CoachError("Approved athlete profile not found.", 404);
   }
 
   try {
@@ -259,7 +316,7 @@ export async function saveProspect(
       err.code === "P2002"
     ) {
       throw new CoachError(
-        "This athlete is already saved as a prospect by your school.",
+        "This athlete is already in your prospect watchlist.",
         409
       );
     }

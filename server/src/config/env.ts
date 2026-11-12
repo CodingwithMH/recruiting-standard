@@ -41,6 +41,11 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().email().default("notifications@therecruitingstandard.com"),
+  // Destination inbox for public contact-form inquiries.
+  CONTACT_INBOX_EMAIL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().email().default("mvp418.recruiting@gmail.com")
+  ),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
