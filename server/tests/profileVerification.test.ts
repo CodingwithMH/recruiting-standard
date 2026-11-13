@@ -17,6 +17,10 @@ import {
   athleteVerificationReviewSchema,
   evaluateVerificationReview,
 } from "../src/services/athleteVerification.service.js";
+import {
+  evaluateVerificationRequirements,
+  verificationRequirementsMessage,
+} from "../src/services/verificationRequirements.service.js";
 
 const fullSports = () =>
   normalizeSportEntries([
@@ -35,6 +39,12 @@ const completeAcademic = {
   highSchoolName: "Northside Prep",
   city: "Austin",
   state: "TX",
+};
+
+const yearsAgo = (years: number): Date => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - years);
+  return date;
 };
 
 test("completion breakdown reports every checklist item for a complete profile", () => {
@@ -118,6 +128,7 @@ test("an unverified profile at the completion threshold can be submitted", () =>
     verificationStatus: "UNVERIFIED",
     completionPercentage: breakdown.percentage,
     missingItemCount: 2,
+    enrollmentDocumentCount: 1,
   });
 
   assert.equal(decision.allowed, true);
@@ -129,6 +140,7 @@ test("an incomplete profile cannot be submitted for verification", () => {
     verificationStatus: "UNVERIFIED",
     completionPercentage: 70,
     missingItemCount: 3,
+    enrollmentDocumentCount: 1,
   });
 
   assert.equal(decision.allowed, false);
@@ -137,6 +149,22 @@ test("an incomplete profile cannot be submitted for verification", () => {
   const message = verificationSubmissionMessage(decision);
   assert.match(message, new RegExp(`${MIN_SUBMISSION_COMPLETION}%`));
   assert.match(message, /3 checklist items still missing/);
+});
+
+test("submission requires an enrollment document that is pending or approved", () => {
+  const decision = evaluateVerificationSubmission({
+    verificationStatus: "UNVERIFIED",
+    completionPercentage: 100,
+    missingItemCount: 0,
+    enrollmentDocumentCount: 0,
+  });
+
+  assert.equal(decision.allowed, false);
+  assert.equal(decision.reason, "NO_ENROLLMENT_PROOF");
+  assert.match(
+    verificationSubmissionMessage(decision),
+    /enrollment letter or current report card/i
+  );
 });
 
 test("profiles pending, approved, or rejected cannot be resubmitted directly", () => {
@@ -152,6 +180,7 @@ test("profiles pending, approved, or rejected cannot be resubmitted directly", (
       verificationStatus,
       completionPercentage: 100,
       missingItemCount: 0,
+      enrollmentDocumentCount: 1,
     });
 
     assert.equal(decision.allowed, false);
@@ -173,6 +202,97 @@ test("only pending profiles can be reviewed by a platform admin", () => {
       assert.equal(decision.reason, "NOT_PENDING");
     }
   );
+});
+
+test("under-18 athletes need approved enrollment proof and recorded guardian consent", () => {
+  const withoutConsent = evaluateVerificationRequirements({
+    dateOfBirth: yearsAgo(15),
+    documents: [{ type: "ENROLLMENT_LETTER", status: "APPROVED" }],
+    guardianConsentRecorded: false,
+  });
+
+  assert.equal(withoutConsent.isMinor, true);
+  assert.equal(withoutConsent.guardianConsentRequired, true);
+  assert.equal(withoutConsent.enrollmentProofApproved, true);
+  assert.equal(withoutConsent.eligibleForApproval, false);
+  assert.deepEqual(withoutConsent.missingRequirements, ["GUARDIAN_CONSENT"]);
+  assert.match(
+    verificationRequirementsMessage(withoutConsent),
+    /guardian consent/i
+  );
+
+  const withConsent = evaluateVerificationRequirements({
+    dateOfBirth: yearsAgo(15),
+    documents: [{ type: "REPORT_CARD", status: "APPROVED" }],
+    guardianConsentRecorded: true,
+  });
+
+  assert.equal(withConsent.eligibleForApproval, true);
+  assert.deepEqual(withConsent.missingRequirements, []);
+});
+
+test("adults need approved enrollment proof but not guardian consent", () => {
+  const requirements = evaluateVerificationRequirements({
+    dateOfBirth: yearsAgo(20),
+    documents: [{ type: "REPORT_CARD", status: "APPROVED" }],
+    guardianConsentRecorded: false,
+  });
+
+  assert.equal(requirements.isMinor, false);
+  assert.equal(requirements.guardianConsentRequired, false);
+  assert.equal(requirements.guardianConsentRecorded, false);
+  assert.equal(requirements.eligibleForApproval, true);
+});
+
+test("a missing date of birth conservatively requires guardian consent", () => {
+  const requirements = evaluateVerificationRequirements({
+    dateOfBirth: null,
+    documents: [{ type: "ENROLLMENT_LETTER", status: "APPROVED" }],
+    guardianConsentRecorded: false,
+  });
+
+  assert.equal(requirements.guardianConsentRequired, true);
+  assert.equal(requirements.eligibleForApproval, false);
+  assert.deepEqual(requirements.missingRequirements, ["GUARDIAN_CONSENT"]);
+});
+
+test("only an approved required document satisfies enrollment proof", () => {
+  const missingProof = evaluateVerificationRequirements({
+    dateOfBirth: yearsAgo(20),
+    documents: [
+      { type: "TRANSCRIPT", status: "APPROVED" },
+      { type: "PHYSICAL", status: "REJECTED" },
+    ],
+    guardianConsentRecorded: false,
+  });
+
+  assert.equal(missingProof.enrollmentProofStatus, "MISSING");
+  assert.equal(missingProof.eligibleForApproval, false);
+  assert.deepEqual(missingProof.missingRequirements, ["ENROLLMENT_PROOF"]);
+
+  const rejectedProof = evaluateVerificationRequirements({
+    dateOfBirth: yearsAgo(20),
+    documents: [
+      { type: "ENROLLMENT_LETTER", status: "REJECTED" },
+      { type: "TRANSCRIPT", status: "REJECTED" },
+    ],
+    guardianConsentRecorded: false,
+  });
+
+  assert.equal(rejectedProof.enrollmentProofStatus, "REJECTED");
+  assert.equal(rejectedProof.eligibleForApproval, false);
+
+  const approvedWithOptionalRejection = evaluateVerificationRequirements({
+    dateOfBirth: yearsAgo(20),
+    documents: [
+      { type: "REPORT_CARD", status: "APPROVED" },
+      { type: "TRANSCRIPT", status: "REJECTED" },
+    ],
+    guardianConsentRecorded: false,
+  });
+
+  assert.equal(approvedWithOptionalRejection.enrollmentProofStatus, "APPROVED");
+  assert.equal(approvedWithOptionalRejection.eligibleForApproval, true);
 });
 
 test("verification review schema only accepts approve or reject decisions", () => {

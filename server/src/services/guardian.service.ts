@@ -2,6 +2,11 @@ import { z } from "zod";
 import { prisma } from "../config/prisma.js";
 import { sendGuardianLinkRequestEmail } from "../utils/email.js";
 import { logger } from "../utils/logger.js";
+import {
+  GUARDIAN_CONSENT_VERSION,
+  athleteRequiresGuardianConsent,
+  invalidateVerificationForAthleteUser,
+} from "./verificationRequirements.service.js";
 
 export const requestGuardianLinkSchema = z.object({
   athleteEmail: z.string().email("A valid athlete email address is required"),
@@ -108,7 +113,13 @@ export async function requestGuardianLink(
   const link = existing
     ? await prisma.parentAthleteLink.update({
         where: { id: existing.id },
-        data: { status: "PENDING", respondedAt: null },
+        data: {
+          status: "PENDING",
+          respondedAt: null,
+          consentGrantedAt: null,
+          consentRevokedAt: null,
+          consentVersion: null,
+        },
         include: { athlete: { select: athleteSummary } },
       })
     : await prisma.parentAthleteLink.create({
@@ -152,7 +163,7 @@ export async function listGuardianLinks(parentUserId: string) {
     .map((link) => link.athleteUserId);
 
   const profiles = activeAthleteIds.length
-    ? await prisma.athleteProfile.findMany({
+      ? await prisma.athleteProfile.findMany({
         where: { userId: { in: activeAthleteIds } },
         select: {
           userId: true,
@@ -161,6 +172,7 @@ export async function listGuardianLinks(parentUserId: string) {
           completionPercentage: true,
           verificationStatus: true,
           verifiedAt: true,
+          user: { select: { dateOfBirth: true } },
         },
       })
     : [];
@@ -175,11 +187,20 @@ export async function listGuardianLinks(parentUserId: string) {
         ? profilesByUserId.get(link.athleteUserId)
         : undefined;
 
+    const consentRecorded =
+      link.status === "ACTIVE" &&
+      link.consentGrantedAt !== null &&
+      link.consentRevokedAt === null;
+
     return {
       id: link.id,
       status: link.status,
       respondedAt: link.respondedAt,
       createdAt: link.createdAt,
+      consentGrantedAt: link.consentGrantedAt,
+      consentRevokedAt: link.consentRevokedAt,
+      consentVersion: link.consentVersion,
+      consentRecorded,
       athlete: {
         ...link.athlete,
         athleteProfile: profile
@@ -189,6 +210,9 @@ export async function listGuardianLinks(parentUserId: string) {
               completionPercentage: profile.completionPercentage,
               verificationStatus: profile.verificationStatus,
               verifiedAt: profile.verifiedAt,
+              isMinor: athleteRequiresGuardianConsent(
+                profile.user.dateOfBirth
+              ),
             }
           : null,
       },
@@ -200,18 +224,31 @@ export async function revokeGuardianLink(
   parentUserId: string,
   linkId: string
 ) {
-  const result = await prisma.parentAthleteLink.updateMany({
+  const link = await prisma.parentAthleteLink.findFirst({
     where: {
       id: linkId,
       parentUserId,
       status: { in: ["PENDING", "ACTIVE"] },
     },
-    data: { status: "REVOKED", respondedAt: new Date() },
+    select: { id: true, athleteUserId: true, consentGrantedAt: true },
   });
 
-  if (result.count === 0) {
+  if (!link) {
     throw new GuardianLinkError("Guardian link not found.", 404);
   }
+
+  await prisma.parentAthleteLink.update({
+    where: { id: link.id },
+    data: {
+      status: "REVOKED",
+      respondedAt: new Date(),
+      ...(link.consentGrantedAt
+        ? { consentRevokedAt: new Date() }
+        : {}),
+    },
+  });
+
+  await invalidateVerificationForAthleteUser(link.athleteUserId);
 
   return { id: linkId, status: "REVOKED" as const };
 }
@@ -245,7 +282,13 @@ export async function respondToGuardianLink(
 
   const updated = await prisma.parentAthleteLink.update({
     where: { id: link.id },
-    data: { status, respondedAt: new Date() },
+    data: {
+      status,
+      respondedAt: new Date(),
+      consentGrantedAt: null,
+      consentRevokedAt: null,
+      consentVersion: null,
+    },
     include: { parent: { select: guardianSummary } },
   });
 
@@ -261,18 +304,115 @@ export async function revokeAthleteGuardianLink(
   athleteUserId: string,
   linkId: string
 ) {
-  const result = await prisma.parentAthleteLink.updateMany({
+  const link = await prisma.parentAthleteLink.findFirst({
     where: {
       id: linkId,
       athleteUserId,
       status: { in: ["PENDING", "ACTIVE"] },
     },
-    data: { status: "REVOKED", respondedAt: new Date() },
+    select: { id: true, consentGrantedAt: true },
   });
 
-  if (result.count === 0) {
+  if (!link) {
     throw new GuardianLinkError("Guardian link not found.", 404);
   }
 
+  await prisma.parentAthleteLink.update({
+    where: { id: link.id },
+    data: {
+      status: "REVOKED",
+      respondedAt: new Date(),
+      ...(link.consentGrantedAt
+        ? { consentRevokedAt: new Date() }
+        : {}),
+    },
+  });
+
+  await invalidateVerificationForAthleteUser(athleteUserId);
+
   return { id: linkId, status: "REVOKED" as const };
+}
+
+export async function grantGuardianConsent(
+  parentUserId: string,
+  linkId: string
+) {
+  const link = await prisma.parentAthleteLink.findFirst({
+    where: { id: linkId, parentUserId, status: "ACTIVE" },
+    select: {
+      id: true,
+      athleteUserId: true,
+      consentGrantedAt: true,
+      consentRevokedAt: true,
+    },
+  });
+
+  if (!link) {
+    throw new GuardianLinkError(
+      "Active guardian link not found. The athlete must approve the link before consent can be recorded.",
+      404
+    );
+  }
+
+  if (link.consentGrantedAt && !link.consentRevokedAt) {
+    throw new GuardianLinkError(
+      "Guardian consent is already recorded for this athlete.",
+      409
+    );
+  }
+
+  const updated = await prisma.parentAthleteLink.update({
+    where: { id: link.id },
+    data: {
+      consentGrantedAt: new Date(),
+      consentRevokedAt: null,
+      consentVersion: GUARDIAN_CONSENT_VERSION,
+    },
+    include: { athlete: { select: athleteSummary } },
+  });
+
+  logger.info(
+    "AUTH",
+    `Parent ${parentUserId} recorded guardian consent for athlete ${link.athleteUserId}`
+  );
+
+  return { ...updated, consentRecorded: true };
+}
+
+export async function withdrawGuardianConsent(
+  parentUserId: string,
+  linkId: string
+) {
+  const link = await prisma.parentAthleteLink.findFirst({
+    where: {
+      id: linkId,
+      parentUserId,
+      status: "ACTIVE",
+      consentGrantedAt: { not: null },
+      consentRevokedAt: null,
+    },
+    select: { id: true, athleteUserId: true },
+  });
+
+  if (!link) {
+    throw new GuardianLinkError(
+      "Recorded guardian consent was not found for this active link.",
+      404
+    );
+  }
+
+  const updated = await prisma.parentAthleteLink.update({
+    where: { id: link.id },
+    data: { consentRevokedAt: new Date() },
+    include: { athlete: { select: athleteSummary } },
+  });
+
+  await invalidateVerificationForAthleteUser(link.athleteUserId);
+
+  logger.info(
+    "AUTH",
+    `Parent ${parentUserId} withdrew guardian consent for athlete ${link.athleteUserId}`
+  );
+
+  return { ...updated, consentRecorded: false };
 }

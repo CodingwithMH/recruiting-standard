@@ -26,6 +26,9 @@ interface GuardianLink {
   status: LinkStatus;
   respondedAt: string | null;
   createdAt: string;
+  consentGrantedAt: string | null;
+  consentRevokedAt: string | null;
+  consentVersion: string | null;
   parent: {
     id: string;
     email: string;
@@ -253,6 +256,13 @@ export default function AthletePortalPage() {
                     Approved {new Date(link.respondedAt).toLocaleDateString()}
                   </span>
                 )}
+                <span className="block text-[10px] mt-1 text-[#65748a]">
+                  {link.consentGrantedAt && !link.consentRevokedAt
+                    ? `Guardian verification consent recorded ${new Date(
+                        link.consentGrantedAt
+                      ).toLocaleDateString()}.`
+                    : "Guardian verification consent not recorded. A parent or guardian can record it from their portal; it is required for athletes under 18."}
+                </span>
               </div>
               <button
                 type="button"

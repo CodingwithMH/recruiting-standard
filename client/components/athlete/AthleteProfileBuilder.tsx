@@ -43,6 +43,26 @@ interface SerializedSport {
   statistics: SportStatistic[];
 }
 
+type EnrollmentProofStatus =
+  | "MISSING"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED";
+
+type VerificationRequirement =
+  | "ENROLLMENT_PROOF"
+  | "GUARDIAN_CONSENT";
+
+interface VerificationRequirements {
+  isMinor: boolean;
+  guardianConsentRequired: boolean;
+  guardianConsentRecorded: boolean;
+  enrollmentProofStatus: EnrollmentProofStatus;
+  enrollmentProofApproved: boolean;
+  eligibleForApproval: boolean;
+  missingRequirements: VerificationRequirement[];
+}
+
 interface AthleteProfile {
   id: string;
   graduationYear: number;
@@ -65,6 +85,7 @@ interface AthleteProfile {
   submittedAt?: string | null;
   verifiedAt?: string | null;
   updatedAt: string;
+  verificationRequirements?: VerificationRequirements | null;
 }
 
 interface SportEntry {
@@ -222,6 +243,8 @@ export default function AthleteProfileBuilder() {
   const [submittedAt, setSubmittedAt] = useState<string | null>(null);
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [verificationRequirements, setVerificationRequirements] =
+    useState<VerificationRequirements | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -237,6 +260,7 @@ export default function AthleteProfileBuilder() {
     setSubmittedAt(profile.submittedAt ?? null);
     setVerifiedAt(profile.verifiedAt ?? null);
     setUpdatedAt(profile.updatedAt);
+    setVerificationRequirements(profile.verificationRequirements ?? null);
   }, []);
 
   const loadProfile = useCallback(async () => {
@@ -485,6 +509,11 @@ export default function AthleteProfileBuilder() {
     }
   };
 
+  const enrollmentProofStatus =
+    verificationRequirements?.enrollmentProofStatus ?? null;
+  const enrollmentProofBlocksSubmission =
+    enrollmentProofStatus === "MISSING" || enrollmentProofStatus === "REJECTED";
+
   return (
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
       <div className="p-6 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -610,7 +639,9 @@ export default function AthleteProfileBuilder() {
                     type="button"
                     onClick={() => void handleSubmitForVerification()}
                     disabled={
-                      submitting || completionPercentage < MIN_COMPLETION_TO_SUBMIT
+                      submitting ||
+                      completionPercentage < MIN_COMPLETION_TO_SUBMIT ||
+                      enrollmentProofBlocksSubmission
                     }
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1b355c] text-white text-[11px] font-bold disabled:opacity-60 cursor-pointer shrink-0"
                   >
@@ -626,12 +657,74 @@ export default function AthleteProfileBuilder() {
                 )}
               </div>
 
+              {verificationRequirements && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                  <div
+                    className={`rounded-lg border px-3 py-2 ${
+                      verificationRequirements.enrollmentProofApproved
+                        ? "border-emerald-200 bg-white/70 text-emerald-800"
+                        : "border-amber-200 bg-white/70 text-amber-900"
+                    }`}
+                  >
+                    <span className="block font-bold">
+                      Current enrollment proof
+                    </span>
+                    <span className="block mt-0.5">
+                      {verificationRequirements.enrollmentProofStatus ===
+                      "APPROVED"
+                        ? "Approved"
+                        : verificationRequirements.enrollmentProofStatus ===
+                            "PENDING"
+                          ? "Pending review"
+                          : verificationRequirements.enrollmentProofStatus ===
+                              "REJECTED"
+                            ? "Rejected — upload a replacement in Private documents"
+                            : "Not uploaded — upload an enrollment letter or report card"}
+                    </span>
+                  </div>
+                  <div
+                    className={`rounded-lg border px-3 py-2 ${
+                      !verificationRequirements.guardianConsentRequired ||
+                      verificationRequirements.guardianConsentRecorded
+                        ? "border-emerald-200 bg-white/70 text-emerald-800"
+                        : "border-amber-200 bg-white/70 text-amber-900"
+                    }`}
+                  >
+                    <span className="block font-bold">Parent/guardian consent</span>
+                    <span className="block mt-0.5">
+                      {!verificationRequirements.guardianConsentRequired
+                        ? "Not required for this athlete"
+                        : verificationRequirements.guardianConsentRecorded
+                          ? "Recorded"
+                          : "Required — a linked parent or guardian must record consent"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {verificationStatus === "UNVERIFIED" && (
-                <p className="text-[10px] leading-relaxed opacity-80">
-                  {completionPercentage < MIN_COMPLETION_TO_SUBMIT
-                    ? `Reach ${MIN_COMPLETION_TO_SUBMIT}% completion to submit your profile for verification (currently ${completionPercentage}%). Complete the missing checklist items above.`
-                    : "Submitting sends your profile to our review team. Verified athletes appear first in coach searches and can share approved documents with subscribed schools."}
-                </p>
+                <div className="space-y-2">
+                  <p className="text-[10px] leading-relaxed opacity-80">
+                    {completionPercentage < MIN_COMPLETION_TO_SUBMIT
+                      ? `Reach ${MIN_COMPLETION_TO_SUBMIT}% completion to submit your profile for verification (currently ${completionPercentage}%). Complete the missing checklist items above.`
+                      : enrollmentProofBlocksSubmission
+                        ? "Upload an enrollment letter or current report card in Private documents before submitting. The Verified badge is based on current school enrollment only; it does not confirm athletic eligibility or transfer approval."
+                        : verificationRequirements?.guardianConsentRequired &&
+                            !verificationRequirements.guardianConsentRecorded
+                          ? "Your profile is ready to submit. Because you are under 18, a linked parent or guardian must record consent before an admin can approve verification."
+                          : "Submitting sends your profile to our review team. Verified athletes appear first in coach searches and can share approved documents with subscribed schools."}
+                  </p>
+                  {verificationNotes && (
+                    <div className="rounded-lg border border-slate-200 bg-white/70 px-3 py-2">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                        Verification update
+                      </span>
+                      <span className="block text-[11px] text-slate-800 mt-0.5 whitespace-pre-line">
+                        {verificationNotes}
+                      </span>
+                    </div>
+                  )}
+                </div>
               )}
 
               {verificationStatus === "PENDING" && (
@@ -646,9 +739,11 @@ export default function AthleteProfileBuilder() {
                 <div className="space-y-2">
                   <p className="text-[10px] leading-relaxed opacity-80">
                     Verified profiles appear first in coach searches and unlock
-                    document access for subscribed school coaches. Saving changes
-                    to your profile will reset verification and require a new
-                    review.
+                    document access for subscribed school coaches. The badge
+                    confirms current school enrollment only, not athletic
+                    eligibility or transfer approval. Saving changes or losing an
+                    approved enrollment proof or required guardian consent can
+                    reset verification and require a new review.
                   </p>
                   {verificationNotes && (
                     <div className="rounded-lg border border-emerald-200 bg-white/70 px-3 py-2">
@@ -666,8 +761,10 @@ export default function AthleteProfileBuilder() {
               {verificationStatus === "REJECTED" && (
                 <div className="space-y-2">
                   <p className="text-[10px] leading-relaxed opacity-80">
-                    Update and save your profile to address the reviewer
-                    feedback, then submit it again for verification.
+                    Address the reviewer feedback and any rejected required
+                    enrollment proof in Private documents, then resubmit for
+                    verification. Rejected optional documents do not block
+                    verification.
                   </p>
                   {verificationNotes && (
                     <div className="rounded-lg border border-red-200 bg-white/70 px-3 py-2">

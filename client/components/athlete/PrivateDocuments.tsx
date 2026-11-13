@@ -15,6 +15,8 @@ import {
 import { apiRequest, openDocumentPreview } from "@/lib/api";
 
 type DocumentType =
+  | "ENROLLMENT_LETTER"
+  | "REPORT_CARD"
   | "TRANSCRIPT"
   | "ELIGIBILITY"
   | "COMBINE_REPORT"
@@ -22,6 +24,8 @@ type DocumentType =
   | "OTHER";
 
 type DocumentStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+type EnrollmentProofStatus = "MISSING" | "PENDING" | "APPROVED" | "REJECTED";
 
 interface AthleteDocument {
   id: string;
@@ -59,12 +63,19 @@ const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
 const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
-  TRANSCRIPT: "Official transcript",
-  ELIGIBILITY: "Eligibility document",
-  COMBINE_REPORT: "Combine report",
-  PHYSICAL: "Physical exam",
-  OTHER: "Other document",
+  ENROLLMENT_LETTER: "School enrollment letter (required)",
+  REPORT_CARD: "Current report card (required)",
+  TRANSCRIPT: "Official transcript (optional)",
+  ELIGIBILITY: "Eligibility document (optional)",
+  COMBINE_REPORT: "Combine report (optional)",
+  PHYSICAL: "Physical exam (optional)",
+  OTHER: "Other document (optional)",
 };
+
+const REQUIRED_ENROLLMENT_TYPES: ReadonlySet<DocumentType> = new Set([
+  "ENROLLMENT_LETTER",
+  "REPORT_CARD",
+]);
 
 const STATUS_STYLES: Record<DocumentStatus, string> = {
   PENDING: "bg-amber-50 text-amber-800 border-amber-200/80",
@@ -129,7 +140,7 @@ export default function PrivateDocuments() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] =
-    useState<DocumentType>("TRANSCRIPT");
+    useState<DocumentType>("ENROLLMENT_LETTER");
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -154,6 +165,48 @@ export default function PrivateDocuments() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadDocuments();
   }, [loadDocuments]);
+
+  const enrollmentDocuments = documents.filter((document) =>
+    REQUIRED_ENROLLMENT_TYPES.has(document.type)
+  );
+  const enrollmentProofStatus: EnrollmentProofStatus =
+    enrollmentDocuments.some((document) => document.status === "APPROVED")
+      ? "APPROVED"
+      : enrollmentDocuments.some((document) => document.status === "PENDING")
+        ? "PENDING"
+        : enrollmentDocuments.some((document) => document.status === "REJECTED")
+          ? "REJECTED"
+          : "MISSING";
+
+  const enrollmentStatusCopy: Record<
+    EnrollmentProofStatus,
+    { title: string; description: string; style: string }
+  > = {
+    MISSING: {
+      title: "Current enrollment proof required",
+      description:
+        "Upload one school-issued enrollment letter or current report card showing the athlete name, school name, and current term or school year. Grades and student ID numbers may be redacted.",
+      style: "border-amber-200 bg-amber-50 text-amber-900",
+    },
+    PENDING: {
+      title: "Enrollment proof pending review",
+      description:
+        "Your required enrollment proof was uploaded and is awaiting review. The Verified badge is granted only after it is approved.",
+      style: "border-amber-200 bg-amber-50 text-amber-900",
+    },
+    APPROVED: {
+      title: "Enrollment proof approved",
+      description:
+        "Your current enrollment proof is approved. Optional documents and any rejected optional documents do not affect the Verified badge.",
+      style: "border-emerald-200 bg-emerald-50 text-emerald-900",
+    },
+    REJECTED: {
+      title: "Enrollment proof rejected — upload a replacement",
+      description:
+        "Review the rejection reason below, then upload a replacement. Once a replacement is approved, the earlier rejection will not block verification.",
+      style: "border-red-200 bg-red-50 text-red-800",
+    },
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
@@ -189,7 +242,7 @@ export default function PrivateDocuments() {
   const resetForm = () => {
     setSelectedFile(null);
     setTitle("");
-    setDocumentType("TRANSCRIPT");
+    setDocumentType("ENROLLMENT_LETTER");
     setProgress(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -314,6 +367,20 @@ export default function PrivateDocuments() {
     }
   };
 
+  const beginReplacement = (document: AthleteDocument) => {
+    setDocumentType(document.type);
+    setTitle("");
+    setSelectedFile(null);
+    setError(null);
+    setNotice(
+      `Choose an approved-copy replacement for "${document.title}". Your earlier rejection will remain visible for the review history but will not block verification once the replacement is approved.`
+    );
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
       <div className="p-6 border-b border-slate-200/80 flex items-center justify-between gap-4">
@@ -339,10 +406,23 @@ export default function PrivateDocuments() {
 
       <div className="p-6 space-y-5">
         <p className="text-xs text-[#65748a] leading-relaxed">
-          Transcripts, eligibility forms, and combine reports are stored in a
-          private bucket. Files never receive public URLs; access is granted
-          through short-lived signed links.
+          Upload one current enrollment proof: a school-issued enrollment letter
+          or a current report card showing the athlete name, school name, and
+          current term or school year. Do not upload passports, birth
+          certificates, or government IDs. Files stay in a private bucket and
+          open only through short-lived authenticated links.
         </p>
+
+        <div
+          className={`rounded-xl border px-4 py-3 ${enrollmentStatusCopy[enrollmentProofStatus].style}`}
+        >
+          <span className="block text-[11px] font-bold">
+            {enrollmentStatusCopy[enrollmentProofStatus].title}
+          </span>
+          <span className="block text-[10px] leading-relaxed mt-1 opacity-90">
+            {enrollmentStatusCopy[enrollmentProofStatus].description}
+          </span>
+        </div>
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-800 flex items-start gap-2">
@@ -361,6 +441,12 @@ export default function PrivateDocuments() {
           onSubmit={(event) => void handleUpload(event)}
           className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3"
         >
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[10px] leading-relaxed text-blue-900">
+            The Verified badge requires one approved enrollment letter or report
+            card. Other document types are optional; rejected optional documents
+            do not affect verification.
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="space-y-1">
               <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -392,7 +478,7 @@ export default function PrivateDocuments() {
                 onChange={(event) => setTitle(event.target.value)}
                 maxLength={120}
                 disabled={uploading}
-                placeholder="e.g. Fall 2026 official transcript"
+                placeholder="e.g. Fall 2026 enrollment letter"
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#102341] focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
             </label>
@@ -477,14 +563,26 @@ export default function PrivateDocuments() {
                     {document.title}
                   </span>
                   <span className="block text-[11px] text-[#65748a]">
-                    {DOCUMENT_TYPE_LABELS[document.type]} ·{" "}
-                    {formatBytes(document.fileSizeBytes)} ·{" "}
+                    {DOCUMENT_TYPE_LABELS[document.type]} A�{" "}
+                    {formatBytes(document.fileSizeBytes)} A�{" "}
                     {new Date(document.createdAt).toLocaleDateString()}
                   </span>
+                  {REQUIRED_ENROLLMENT_TYPES.has(document.type) && (
+                    <span className="inline-flex mt-1 px-2 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-blue-800 text-[9px] font-bold uppercase tracking-wider">
+                      Required enrollment proof
+                    </span>
+                  )}
                   {document.status === "REJECTED" &&
                     document.reviewerNotes && (
                       <span className="block text-[10px] text-red-700 mt-1">
                         Reviewer notes: {document.reviewerNotes}
+                      </span>
+                    )}
+                  {document.status === "REJECTED" &&
+                    REQUIRED_ENROLLMENT_TYPES.has(document.type) && (
+                      <span className="block text-[10px] text-red-700 mt-1">
+                        Upload a replacement below. An approved replacement
+                        clears this rejection for verification.
                       </span>
                     )}
                 </div>
@@ -505,6 +603,18 @@ export default function PrivateDocuments() {
                   <Eye className="w-3.5 h-3.5" />
                   View
                 </button>
+                {document.status === "REJECTED" &&
+                  REQUIRED_ENROLLMENT_TYPES.has(document.type) && (
+                    <button
+                      type="button"
+                      onClick={() => beginReplacement(document)}
+                      disabled={busyId === document.id || uploading}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold disabled:opacity-60 cursor-pointer"
+                    >
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      Upload replacement
+                    </button>
+                  )}
                 {document.status !== "APPROVED" && (
                   <button
                     type="button"

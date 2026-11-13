@@ -10,6 +10,7 @@ import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 import { logger } from "../utils/logger.js";
 import { evaluateSubscriptionAccess } from "../utils/subscriptionAccess.js";
+import { invalidateVerificationIfUnmet } from "./verificationRequirements.service.js";
 import {
   PrivateStorageError,
   assertStorageKeyBelongsToProfile,
@@ -32,6 +33,8 @@ export const DOCUMENT_MIME_EXTENSIONS: Record<string, string[]> = {
 export const ALLOWED_DOCUMENT_MIME_TYPES = Object.keys(DOCUMENT_MIME_EXTENSIONS);
 
 const DOCUMENT_TYPES = [
+  "ENROLLMENT_LETTER",
+  "REPORT_CARD",
   "TRANSCRIPT",
   "ELIGIBILITY",
   "COMBINE_REPORT",
@@ -785,7 +788,7 @@ export async function reviewDocument(
     );
   }
 
-  return prisma.document.update({
+  const updated = await prisma.document.update({
     where: { id: documentId },
     data: {
       status: input.status,
@@ -795,6 +798,13 @@ export async function reviewDocument(
     },
     select: reviewResultSelect,
   });
+
+  // Re-evaluate the Verified badge after every review. Only the required
+  // enrollment proof and guardian consent can remove it; optional documents
+  // never affect verification.
+  await invalidateVerificationIfUnmet(updated.athleteProfileId);
+
+  return updated;
 }
 
 export async function listApprovedDocumentsForAthlete(

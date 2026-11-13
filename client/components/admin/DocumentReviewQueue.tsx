@@ -13,6 +13,8 @@ import { apiRequest, openDocumentPreview } from "@/lib/api";
 import ReviewNotesForm from "@/components/admin/ReviewNotesForm";
 
 type DocumentType =
+  | "ENROLLMENT_LETTER"
+  | "REPORT_CARD"
   | "TRANSCRIPT"
   | "ELIGIBILITY"
   | "COMBINE_REPORT"
@@ -69,12 +71,19 @@ interface DocumentAccess {
 }
 
 const TYPE_LABELS: Record<DocumentType, string> = {
+  ENROLLMENT_LETTER: "Enrollment letter",
+  REPORT_CARD: "Report card",
   TRANSCRIPT: "Transcript",
   ELIGIBILITY: "Eligibility",
   COMBINE_REPORT: "Combine report",
   PHYSICAL: "Physical",
   OTHER: "Other",
 };
+
+const REQUIRED_ENROLLMENT_TYPES: ReadonlySet<DocumentType> = new Set([
+  "ENROLLMENT_LETTER",
+  "REPORT_CARD",
+]);
 
 const STATUS_STYLES: Record<DocumentStatus, string> = {
   PENDING: "bg-amber-50 text-amber-800 border-amber-200/80",
@@ -246,6 +255,14 @@ export default function DocumentReviewQueue() {
         </div>
       </div>
 
+      <div className="px-6 pt-4 text-[10px] leading-relaxed text-[#65748a]">
+        Only an approved enrollment letter or current report card can satisfy
+        athlete verification. Required documents must show the athlete name,
+        school name, and current term or school year; grades and student ID
+        numbers may be redacted. Rejecting an optional document does not block
+        verification.
+      </div>
+
       <div className="p-6 space-y-4">
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-800 flex items-start gap-2">
@@ -298,6 +315,11 @@ export default function DocumentReviewQueue() {
                     {document.athleteProfile.primarySport} · Class of{" "}
                     {document.athleteProfile.graduationYear}
                   </span>
+                  {REQUIRED_ENROLLMENT_TYPES.has(document.type) && (
+                    <span className="inline-flex mt-1 px-2 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-blue-800 text-[9px] font-bold uppercase tracking-wider">
+                      Required enrollment proof
+                    </span>
+                  )}
                   {document.reviewer && document.reviewedAt && (
                     <span className="block text-[10px] text-slate-400">
                       Reviewed by {document.reviewer.firstName}{" "}

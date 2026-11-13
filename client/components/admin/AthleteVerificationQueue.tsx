@@ -15,6 +15,26 @@ import ReviewNotesForm from "@/components/admin/ReviewNotesForm";
 
 type VerificationStatus = "UNVERIFIED" | "PENDING" | "APPROVED" | "REJECTED";
 
+type EnrollmentProofStatus =
+  | "MISSING"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED";
+
+type VerificationRequirement =
+  | "ENROLLMENT_PROOF"
+  | "GUARDIAN_CONSENT";
+
+interface VerificationRequirements {
+  isMinor: boolean;
+  guardianConsentRequired: boolean;
+  guardianConsentRecorded: boolean;
+  enrollmentProofStatus: EnrollmentProofStatus;
+  enrollmentProofApproved: boolean;
+  eligibleForApproval: boolean;
+  missingRequirements: VerificationRequirement[];
+}
+
 interface VerificationQueueAthlete {
   id: string;
   primarySport: string;
@@ -38,6 +58,7 @@ interface VerificationQueueAthlete {
     pending: number;
     rejected: number;
   };
+  verificationRequirements: VerificationRequirements;
 }
 
 interface VerificationQueueResponse {
@@ -74,6 +95,29 @@ function formatDate(value: string | null): string {
         month: "short",
         day: "numeric",
       });
+}
+
+function getApprovalBlockReason(
+  athlete: VerificationQueueAthlete
+): string | null {
+  const requirements = athlete.verificationRequirements;
+
+  if (!requirements.enrollmentProofApproved) {
+    return requirements.enrollmentProofStatus === "PENDING"
+      ? "Cannot approve: the required enrollment proof is still pending review."
+      : requirements.enrollmentProofStatus === "REJECTED"
+        ? "Cannot approve: the required enrollment proof was rejected. Wait for an approved replacement."
+        : "Cannot approve: the athlete needs an approved enrollment letter or current report card.";
+  }
+
+  if (
+    requirements.guardianConsentRequired &&
+    !requirements.guardianConsentRecorded
+  ) {
+    return "Cannot approve: a linked parent or guardian must record consent for this athlete under 18.";
+  }
+
+  return null;
 }
 
 export default function AthleteVerificationQueue() {
@@ -245,7 +289,8 @@ export default function AthleteVerificationQueue() {
                     {athlete.graduationYear}
                   </span>
                   <span className="block text-[11px] text-[#65748a]">
-                    Submitted {formatDate(athlete.submittedAt)} · Documents:{" "}
+                    Submitted {formatDate(athlete.submittedAt)} · Documents (all
+                    types):{" "}
                     <span className="text-emerald-700 font-semibold">
                       {athlete.documents.approved} approved
                     </span>
@@ -258,6 +303,46 @@ export default function AthleteVerificationQueue() {
                       {athlete.documents.rejected} rejected
                     </span>
                   </span>
+
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    <span
+                      className={`inline-flex px-2 py-1 rounded-full border text-[9px] font-bold ${
+                        athlete.verificationRequirements
+                          .enrollmentProofApproved
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "border-amber-200 bg-amber-50 text-amber-900"
+                      }`}
+                    >
+                      Enrollment proof:{" "}
+                      {athlete.verificationRequirements.enrollmentProofStatus ===
+                      "APPROVED"
+                        ? "approved"
+                        : athlete.verificationRequirements
+                              .enrollmentProofStatus === "PENDING"
+                          ? "pending"
+                          : athlete.verificationRequirements
+                                .enrollmentProofStatus === "REJECTED"
+                            ? "rejected — replacement needed"
+                            : "missing"}
+                    </span>
+                    <span
+                      className={`inline-flex px-2 py-1 rounded-full border text-[9px] font-bold ${
+                        !athlete.verificationRequirements
+                          .guardianConsentRequired ||
+                        athlete.verificationRequirements.guardianConsentRecorded
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "border-amber-200 bg-amber-50 text-amber-900"
+                      }`}
+                    >
+                      Guardian consent:{" "}
+                      {!athlete.verificationRequirements.guardianConsentRequired
+                        ? "not required (18+)"
+                        : athlete.verificationRequirements
+                              .guardianConsentRecorded
+                          ? "recorded"
+                          : "not recorded"}
+                    </span>
+                  </div>
 
                   <div className="flex items-center gap-2 w-48">
                     <div className="h-1.5 flex-1 rounded-full bg-slate-200 overflow-hidden">
@@ -288,18 +373,11 @@ export default function AthleteVerificationQueue() {
                         }
                         disabled={
                           busyId === athlete.id ||
-                          athlete.documents.pending > 0 ||
-                          athlete.documents.rejected > 0 ||
-                          athlete.documents.approved === 0
+                          getApprovalBlockReason(athlete) !== null
                         }
                         title={
-                          athlete.documents.approved === 0
-                            ? "Cannot approve: athlete has no approved documents."
-                            : athlete.documents.pending > 0
-                            ? `Cannot approve: ${athlete.documents.pending} document(s) still pending review.`
-                            : athlete.documents.rejected > 0
-                            ? `Cannot approve: ${athlete.documents.rejected} document(s) have been rejected. All documents must be approved.`
-                            : "Approve this athlete profile"
+                          getApprovalBlockReason(athlete) ??
+                          "Approve this athlete profile"
                         }
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                       >

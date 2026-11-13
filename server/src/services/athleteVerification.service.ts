@@ -2,6 +2,11 @@ import { Prisma } from "@prisma/client";
 import type { VerificationStatus } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../config/prisma.js";
+import {
+  evaluateVerificationRequirements,
+  getVerificationRequirementsForProfile,
+  verificationRequirementsMessage,
+} from "./verificationRequirements.service.js";
 
 export class AthleteVerificationError extends Error {
   statusCode: number;
@@ -81,6 +86,12 @@ const verificationQueueSelect = {
   submittedForVerificationAt: true,
   verifiedAt: true,
   updatedAt: true,
+  documents: {
+    select: {
+      type: true,
+      status: true,
+    },
+  },
   user: {
     select: {
       id: true,
@@ -88,6 +99,16 @@ const verificationQueueSelect = {
       lastName: true,
       email: true,
       status: true,
+      dateOfBirth: true,
+      athleteLinks: {
+        where: {
+          status: "ACTIVE",
+          consentGrantedAt: { not: null },
+          consentRevokedAt: null,
+        },
+        select: { id: true },
+        take: 1,
+      },
     },
   },
 } satisfies Prisma.AthleteProfileSelect;
@@ -142,22 +163,37 @@ export async function listAthleteProfilesForReview(
   }
 
   return {
-    athletes: profiles.map((profile) => ({
-      id: profile.id,
-      primarySport: profile.primarySport,
-      sports: profile.sports,
-      graduationYear: profile.graduationYear,
-      completionPercentage: profile.completionPercentage,
-      verificationStatus: profile.verificationStatus,
-      verificationNotes: profile.verificationNotes,
-      submittedAt: profile.submittedForVerificationAt,
-      verifiedAt: profile.verifiedAt,
-      updatedAt: profile.updatedAt,
-      user: profile.user,
-      documents:
-        countsByProfile.get(profile.id) ??
-        { approved: 0, pending: 0, rejected: 0 },
-    })),
+    athletes: profiles.map((profile) => {
+      const requirements = evaluateVerificationRequirements({
+        dateOfBirth: profile.user.dateOfBirth,
+        documents: profile.documents,
+        guardianConsentRecorded: profile.user.athleteLinks.length > 0,
+      });
+
+      return {
+        id: profile.id,
+        primarySport: profile.primarySport,
+        sports: profile.sports,
+        graduationYear: profile.graduationYear,
+        completionPercentage: profile.completionPercentage,
+        verificationStatus: profile.verificationStatus,
+        verificationNotes: profile.verificationNotes,
+        submittedAt: profile.submittedForVerificationAt,
+        verifiedAt: profile.verifiedAt,
+        updatedAt: profile.updatedAt,
+        user: {
+          id: profile.user.id,
+          firstName: profile.user.firstName,
+          lastName: profile.user.lastName,
+          email: profile.user.email,
+          status: profile.user.status,
+        },
+        documents:
+          countsByProfile.get(profile.id) ??
+          { approved: 0, pending: 0, rejected: 0 },
+        verificationRequirements: requirements,
+      };
+    }),
     pagination: {
       total,
       page,
@@ -205,33 +241,19 @@ export async function reviewAthleteProfileVerification(
     );
   }
 
-  // When approving, ensure all submitted documents are reviewed and approved.
+  // The Verified badge requires one approved current enrollment proof. Athletes
+  // under 18 also need recorded guardian consent. Optional documents, including
+  // rejected optional records, do not affect this decision.
   if (input.status === "APPROVED") {
-    const documentCounts = await prisma.document.groupBy({
-      by: ["status"],
-      where: { athleteProfileId },
-      _count: { _all: true },
-    });
-
-    const totalDocs = documentCounts.reduce(
-      (sum, g) => sum + (g._count?._all ?? 0),
-      0
+    const requirements = await getVerificationRequirementsForProfile(
+      athleteProfileId
     );
-    const pendingDocs =
-      documentCounts.find((g) => g.status === "PENDING")?._count?._all ?? 0;
-    const rejectedDocs =
-      documentCounts.find((g) => g.status === "REJECTED")?._count?._all ?? 0;
 
-    if (totalDocs === 0) {
+    if (!requirements || !requirements.eligibleForApproval) {
       throw new AthleteVerificationError(
-        "Cannot approve: the athlete has not uploaded any documents yet.",
-        409
-      );
-    }
-
-    if (pendingDocs > 0 || rejectedDocs > 0) {
-      throw new AthleteVerificationError(
-        `Cannot approve: ${pendingDocs} document(s) are still pending review and ${rejectedDocs} document(s) have been rejected. All documents must be approved first.`,
+        requirements
+          ? verificationRequirementsMessage(requirements)
+          : "Cannot approve: the athlete profile could not be found.",
         409
       );
     }

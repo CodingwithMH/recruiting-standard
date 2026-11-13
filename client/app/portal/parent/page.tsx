@@ -29,6 +29,8 @@ type ProfileVerificationStatus =
   | "REJECTED";
 
 type DocumentType =
+  | "ENROLLMENT_LETTER"
+  | "REPORT_CARD"
   | "TRANSCRIPT"
   | "ELIGIBILITY"
   | "COMBINE_REPORT"
@@ -52,6 +54,10 @@ interface GuardianLink {
   status: LinkStatus;
   respondedAt: string | null;
   createdAt: string;
+  consentGrantedAt: string | null;
+  consentRevokedAt: string | null;
+  consentVersion: string | null;
+  consentRecorded: boolean;
   athlete: {
     id: string;
     email: string;
@@ -64,6 +70,7 @@ interface GuardianLink {
       completionPercentage: number;
       verificationStatus: ProfileVerificationStatus;
       verifiedAt: string | null;
+      isMinor: boolean;
     } | null;
   };
 }
@@ -94,6 +101,8 @@ const VERIFICATION_LABELS: Record<ProfileVerificationStatus, string> = {
 };
 
 const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  ENROLLMENT_LETTER: "Enrollment letter (required)",
+  REPORT_CARD: "Report card (required)",
   TRANSCRIPT: "Transcript",
   ELIGIBILITY: "Eligibility",
   COMBINE_REPORT: "Combine report",
@@ -255,6 +264,60 @@ export default function ParentPortalPage() {
     }
   };
 
+  const handleGrantConsent = async (link: GuardianLink) => {
+    if (
+      !window.confirm(
+        `Record your parent/guardian consent for ${link.athlete.firstName} ${link.athlete.lastName}? This confirms you are their parent or legal guardian and consent to their enrollment verification review.`
+      )
+    ) {
+      return;
+    }
+
+    setBusyId(link.id);
+    setError(null);
+    setNotice(null);
+
+    const res = await apiRequest(`/parent/links/${link.id}/consent`, {
+      method: "POST",
+    });
+
+    setBusyId(null);
+
+    if (res.success) {
+      setNotice(res.message || "Guardian consent recorded.");
+      await loadLinks();
+    } else {
+      setError(res.error || "Unable to record guardian consent.");
+    }
+  };
+
+  const handleWithdrawConsent = async (link: GuardianLink) => {
+    if (
+      !window.confirm(
+        `Withdraw your parent/guardian consent for ${link.athlete.firstName} ${link.athlete.lastName}? If they are under 18, this may remove their Verified badge until consent is recorded again.`
+      )
+    ) {
+      return;
+    }
+
+    setBusyId(link.id);
+    setError(null);
+    setNotice(null);
+
+    const res = await apiRequest(`/parent/links/${link.id}/consent`, {
+      method: "DELETE",
+    });
+
+    setBusyId(null);
+
+    if (res.success) {
+      setNotice(res.message || "Guardian consent withdrawn.");
+      await loadLinks();
+    } else {
+      setError(res.error || "Unable to withdraw guardian consent.");
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs">
@@ -354,6 +417,7 @@ export default function ParentPortalPage() {
             const profile = link.athlete.athleteProfile;
             const documents = documentsByLink[link.id];
             const expanded = expandedLinkId === link.id;
+            const consentRequired = profile?.isMinor !== false;
 
             return (
               <div key={link.id} className="px-6 py-4 space-y-3">
@@ -425,6 +489,60 @@ export default function ParentPortalPage() {
                       Remove Link
                     </button>
                   </div>
+                </div>
+
+                <div
+                  className={`rounded-xl border px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                    link.consentRecorded
+                      ? "border-emerald-200 bg-emerald-50/70"
+                      : consentRequired
+                        ? "border-amber-200 bg-amber-50/70"
+                        : "border-slate-200 bg-slate-50"
+                  }`}
+                >
+                  <div className="text-[10px] leading-relaxed">
+                    <span className="block font-bold text-[#102341]">
+                      {link.consentRecorded
+                        ? "Guardian consent recorded"
+                        : consentRequired
+                          ? "Guardian consent not recorded"
+                          : "Guardian consent not required (18+)"}
+                    </span>
+                    <span className="block text-[#65748a] mt-0.5">
+                      {link.consentRecorded
+                        ? `Recorded ${new Date(
+                            link.consentGrantedAt ??
+                              link.respondedAt ??
+                              link.createdAt
+                          ).toLocaleDateString()}. Required for under-18 verification; withdrawing it may remove the athlete's Verified badge.`
+                        : consentRequired
+                          ? "Athletes under 18 need a linked parent or guardian to record consent before an admin can approve verification."
+                          : "This athlete is 18 or older, so guardian consent is not required for enrollment verification."}
+                    </span>
+                  </div>
+                  {link.consentRecorded ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleWithdrawConsent(link)}
+                      disabled={busyId === link.id}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-bold disabled:opacity-60 cursor-pointer shrink-0"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Withdraw consent
+                    </button>
+                  ) : (
+                    consentRequired && (
+                      <button
+                        type="button"
+                        onClick={() => void handleGrantConsent(link)}
+                        disabled={busyId === link.id}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold disabled:opacity-60 cursor-pointer shrink-0"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        Record consent
+                      </button>
+                    )
+                  )}
                 </div>
 
                 {expanded && (

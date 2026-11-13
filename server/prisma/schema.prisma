@@ -53,6 +53,8 @@ enum VerificationStatus {
 }
 
 enum DocumentType {
+  ENROLLMENT_LETTER
+  REPORT_CARD
   TRANSCRIPT
   ELIGIBILITY
   COMBINE_REPORT
@@ -178,6 +180,9 @@ model ParentAthleteLink {
   athleteUserId String
   status        GuardianLinkStatus @default(PENDING)
   respondedAt   DateTime?
+  consentGrantedAt DateTime?
+  consentRevokedAt DateTime?
+  consentVersion   String?
 
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt

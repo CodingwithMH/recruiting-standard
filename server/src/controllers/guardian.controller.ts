@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import type { AuthenticatedRequest } from "../types/index.js";
 import {
   GuardianLinkError,
+  grantGuardianConsent,
   listAthleteGuardianLinks,
   listGuardianLinks,
   requestGuardianLink,
@@ -9,6 +10,7 @@ import {
   respondToGuardianLink,
   revokeAthleteGuardianLink,
   revokeGuardianLink,
+  withdrawGuardianConsent,
 } from "../services/guardian.service.js";
 
 function getParam(value: string | string[] | undefined): string {
@@ -217,6 +219,68 @@ export async function handleRevokeAthleteGuardianLink(
       success: true,
       message: "Guardian link revoked.",
       data: result,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    handleGuardianError(err, res, next);
+  }
+}
+
+export async function handleGrantGuardianConsent(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: "Authentication required.",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const link = await grantGuardianConsent(
+      req.user.userId,
+      getParam(req.params.linkId)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Guardian consent recorded.",
+      data: link,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    handleGuardianError(err, res, next);
+  }
+}
+
+export async function handleWithdrawGuardianConsent(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: "Authentication required.",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const link = await withdrawGuardianConsent(
+      req.user.userId,
+      getParam(req.params.linkId)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Guardian consent withdrawn.",
+      data: link,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

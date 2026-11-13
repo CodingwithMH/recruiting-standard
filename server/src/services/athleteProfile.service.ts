@@ -2,6 +2,10 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import type { AthleteProfile, VerificationStatus } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import {
+  ENROLLMENT_DOCUMENT_TYPES,
+  getVerificationRequirementsForProfile,
+} from "./verificationRequirements.service.js";
 
 export const MAX_SPORTS = 10;
 export const MAX_POSITIONS_PER_SPORT = 10;
@@ -265,7 +269,7 @@ export type VerificationSubmissionReason =
   | "ALREADY_APPROVED"
   | "MUST_UPDATE_BEFORE_RESUBMIT"
   | "PROFILE_INCOMPLETE"
-  | "NO_DOCUMENTS";
+  | "NO_ENROLLMENT_PROOF";
 
 export interface VerificationSubmissionDecision {
   allowed: boolean;
@@ -282,7 +286,7 @@ export function evaluateVerificationSubmission(input: {
   verificationStatus: VerificationStatus;
   completionPercentage: number;
   missingItemCount: number;
-  documentCount: number;
+  enrollmentDocumentCount: number;
 }): VerificationSubmissionDecision {
   const decision = {
     missingItemCount: input.missingItemCount,
@@ -304,8 +308,8 @@ export function evaluateVerificationSubmission(input: {
     return { ...decision, allowed: false, reason: "PROFILE_INCOMPLETE" };
   }
 
-  if (input.documentCount === 0) {
-    return { ...decision, allowed: false, reason: "NO_DOCUMENTS" };
+  if (input.enrollmentDocumentCount === 0) {
+    return { ...decision, allowed: false, reason: "NO_ENROLLMENT_PROOF" };
   }
 
   return { ...decision, allowed: true, reason: "ALLOWED" };
@@ -325,8 +329,8 @@ export function verificationSubmissionMessage(
       return `Complete at least ${MIN_SUBMISSION_COMPLETION}% of your profile before submitting it for verification. ${decision.missingItemCount} checklist item${
         decision.missingItemCount === 1 ? "" : "s"
       } still missing.`;
-    case "NO_DOCUMENTS":
-      return "Upload at least one official document (transcript, eligibility form, or combine report) before submitting your profile for verification.";
+    case "NO_ENROLLMENT_PROOF":
+      return "Upload a school-issued current enrollment letter or current report card before submitting your profile for verification.";
     default:
       return "";
   }
@@ -405,12 +409,22 @@ function serializeProfile(profile: AthleteProfile) {
   };
 }
 
+async function serializeProfileWithRequirements(profile: AthleteProfile) {
+  const verificationRequirements =
+    await getVerificationRequirementsForProfile(profile.id);
+
+  return {
+    ...serializeProfile(profile),
+    verificationRequirements,
+  };
+}
+
 export async function getAthleteProfile(userId: string) {
   const profile = await prisma.athleteProfile.findUnique({
     where: { userId },
   });
 
-  return profile ? serializeProfile(profile) : null;
+  return profile ? serializeProfileWithRequirements(profile) : null;
 }
 
 export async function updateAthleteProfile(
@@ -487,7 +501,7 @@ export async function updateAthleteProfile(
     update: { ...data, ...verificationReset },
   });
 
-  return serializeProfile(profile);
+  return serializeProfileWithRequirements(profile);
 }
 
 export async function submitAthleteProfileForVerification(userId: string) {
@@ -504,15 +518,19 @@ export async function submitAthleteProfileForVerification(userId: string) {
 
   const breakdown = buildBreakdownFromProfile(profile);
 
-  const documentCount = await prisma.document.count({
-    where: { athleteProfileId: profile.id },
+  const enrollmentDocumentCount = await prisma.document.count({
+    where: {
+      athleteProfileId: profile.id,
+      type: { in: [...ENROLLMENT_DOCUMENT_TYPES] },
+      status: { in: ["PENDING", "APPROVED"] },
+    },
   });
 
   const decision = evaluateVerificationSubmission({
     verificationStatus: profile.verificationStatus,
     completionPercentage: breakdown.percentage,
     missingItemCount: breakdown.items.filter((item) => !item.complete).length,
-    documentCount,
+    enrollmentDocumentCount,
   });
 
   if (!decision.allowed) {
@@ -533,7 +551,7 @@ export async function submitAthleteProfileForVerification(userId: string) {
     },
   });
 
-  return serializeProfile(submitted);
+  return serializeProfileWithRequirements(submitted);
 }
 
 export async function getAthleteProfileById(profileId: string) {

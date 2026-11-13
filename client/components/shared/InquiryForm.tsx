@@ -58,7 +58,11 @@ const validationSchema = (type: FormType) =>
   Yup.object({
     name:
       type !== "login"
-        ? Yup.string().trim().required("Name is required")
+        ? Yup.string()
+            .trim()
+            .min(2, "Please enter your full name")
+            .max(100, "Name cannot exceed 100 characters")
+            .required("Name is required")
         : Yup.string(),
     school:
       type === "school"
@@ -71,6 +75,7 @@ const validationSchema = (type: FormType) =>
     email: Yup.string()
       .trim()
       .email("Please enter a valid email address")
+      .max(254, "Email address is too long")
       .required("Email address is required"),
     inquiryType:
       type === "contact"
@@ -87,7 +92,11 @@ const validationSchema = (type: FormType) =>
         : Yup.string(),
     message:
       type === "contact"
-        ? Yup.string().trim().required("Message is required")
+        ? Yup.string()
+            .trim()
+            .min(10, "Message must be at least 10 characters")
+            .max(5000, "Message cannot exceed 5,000 characters")
+            .required("Message is required")
         : Yup.string(),
     terms:
       type === "school"
@@ -113,39 +122,62 @@ export default function InquiryForm({ type }: { type: FormType }) {
       terms: false,
     },
     validationSchema: validationSchema(type),
-    onSubmit: async (values, { resetForm, setSubmitting }) => {
+    onSubmit: async (values, { resetForm, setSubmitting, setErrors, setTouched }) => {
       setStatus(null);
 
       if (type === "contact") {
+        const payload = {
+          name: values.name.trim(),
+          email: values.email.trim(),
+          inquiryType: values.inquiryType,
+          message: values.message.trim(),
+        };
+
         const response = await apiRequest<{
           recipient: string;
           inquiryType: string;
         }>("/contact", {
           method: "POST",
-          body: JSON.stringify({
-            name: values.name,
-            email: values.email,
-            inquiryType: values.inquiryType,
-            message: values.message,
-          }),
+          body: JSON.stringify(payload),
         });
 
         setSubmitting(false);
 
         if (!response.success) {
+          const serverErrors: Record<string, string> = {};
+          const touchedFields: Record<string, boolean> = {};
+          const detailMessages: string[] = [];
+
+          if (response.details) {
+            for (const [field, messages] of Object.entries(response.details)) {
+              if (messages?.[0]) {
+                serverErrors[field] = messages[0];
+                touchedFields[field] = true;
+                detailMessages.push(messages[0]);
+              }
+            }
+          }
+
+          if (Object.keys(serverErrors).length > 0) {
+            setErrors(serverErrors);
+            setTouched(touchedFields, true);
+          }
+
           setStatus({
             tone: "error",
             message:
-              response.error ||
-              `We could not deliver your message. Please email ${CONTACT_EMAIL} directly.`,
+              detailMessages.length > 0
+                ? detailMessages.join(" ")
+                : response.error ||
+                  `We could not deliver your message. Please email ${CONTACT_EMAIL} directly.`,
           });
           return;
         }
 
         setConfirmation({
-          name: values.name,
-          email: values.email,
-          inquiryType: values.inquiryType,
+          name: payload.name,
+          email: payload.email,
+          inquiryType: payload.inquiryType,
           recipient: response.data?.recipient || CONTACT_EMAIL,
         });
         resetForm();
