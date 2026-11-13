@@ -6,6 +6,7 @@ import {
   BadgeCheck,
   BookmarkCheck,
   CheckCircle2,
+  ClipboardList,
   GraduationCap,
   MapPin,
   RefreshCw,
@@ -437,6 +438,13 @@ export default function SavedProspectsPage() {
                         className="text-[10px] font-bold text-blue-700 hover:text-blue-900"
                       >
                         View profile →
+                      </SiteLink>
+                      <SiteLink
+                        href={`/portal/records?athleteId=${athlete.id}`}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 hover:text-purple-900 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200"
+                      >
+                        <ClipboardList className="w-3 h-3 text-purple-600" />
+                        <span>Recruiting Record →</span>
                       </SiteLink>
                     </div>
                     <button

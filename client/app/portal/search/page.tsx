@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   GraduationCap,
   MapPin,
   RefreshCw,
@@ -538,26 +539,36 @@ export default function AthleteSearchPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        {isSaved ? (
-                          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">
-                            <BookmarkCheck className="w-3.5 h-3.5" />
-                            Saved
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleSaveProspect(athlete);
-                            }}
-                            onKeyDown={(event) => event.stopPropagation()}
-                            disabled={isSaving}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#102341] hover:bg-[#1d3d68] text-white text-[10px] font-bold disabled:opacity-60 cursor-pointer shadow-xs"
+                        <div className="flex items-center justify-end gap-2">
+                          <SiteLink
+                            href={`/portal/records?athleteId=${athlete.id}`}
+                            onClick={(event) => event.stopPropagation()}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900 text-[10px] font-bold transition-colors"
                           >
-                            <BookmarkPlus className="w-3.5 h-3.5" />
-                            {isSaving ? "Saving…" : "Save Prospect"}
-                          </button>
-                        )}
+                            <ClipboardList className="w-3 h-3 text-purple-700" />
+                            <span>Record</span>
+                          </SiteLink>
+                          {isSaved ? (
+                            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">
+                              <BookmarkCheck className="w-3.5 h-3.5" />
+                              Saved
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void handleSaveProspect(athlete);
+                              }}
+                              onKeyDown={(event) => event.stopPropagation()}
+                              disabled={isSaving}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#102341] hover:bg-[#1d3d68] text-white text-[10px] font-bold disabled:opacity-60 cursor-pointer shadow-xs"
+                            >
+                              <BookmarkPlus className="w-3.5 h-3.5" />
+                              {isSaving ? "Saving…" : "Save Prospect"}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

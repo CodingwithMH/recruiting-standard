@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   BookmarkCheck,
   Building2,
+  ClipboardList,
   GraduationCap,
   LogOut,
   Search,
@@ -180,6 +181,13 @@ export default function PortalLayout({
               >
                 <BookmarkCheck className="w-3.5 h-3.5 text-amber-700" />
                 <span className="hidden sm:inline">Prospects</span>
+              </SiteLink>
+              <SiteLink
+                href="/portal/records"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-purple-200 bg-purple-50/70 hover:bg-purple-100/70 text-purple-900 transition-colors text-xs font-semibold"
+              >
+                <ClipboardList className="w-3.5 h-3.5 text-purple-700" />
+                <span className="hidden sm:inline">Recruiting Records</span>
               </SiteLink>
               {primaryMembership.role === "SCHOOL_ADMIN" && (
                 <>

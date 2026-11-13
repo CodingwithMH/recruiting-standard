@@ -52,7 +52,7 @@ export const updateRecruitingRecordSchema = z.object({
     .enum(["EVALUATING", "CONTACTED", "OFFERED", "COMMITTED", "PASSED"])
     .optional(),
   privateNotes: z.string().trim().max(10000).nullable().optional(),
-  lastContactAt: z.coerce.date().optional(),
+  lastContactAt: z.coerce.date().nullable().optional(),
   contactLogs: z
     .array(
       z.object({
@@ -77,8 +77,10 @@ export const updateRecruitingRecordSchema = z.object({
     .optional(),
   commitments: z
     .object({
-      committedDate: z.string(),
+      committedDate: z.string().optional(),
       details: z.string().max(2000).optional(),
+      transferStatus: z.string().max(100).optional(),
+      transferDetails: z.string().max(2000).optional(),
     })
     .nullable()
     .optional(),
@@ -467,5 +469,25 @@ export async function updateRecruitingRecord(
     },
     select: recruitingRecordSelect,
   });
+}
+
+export async function deleteRecruitingRecord(
+  schoolId: string,
+  recordId: string
+) {
+  const existing = await prisma.recruitingRecord.findFirst({
+    where: { id: recordId, schoolId },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    throw new CoachError("Recruiting record not found.", 404);
+  }
+
+  await prisma.recruitingRecord.delete({
+    where: { id: recordId },
+  });
+
+  return { success: true };
 }
 

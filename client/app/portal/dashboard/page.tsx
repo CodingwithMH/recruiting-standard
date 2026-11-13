@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldCheck, Search, BookmarkCheck, Sparkles, GraduationCap, CreditCard } from "lucide-react";
+import { ShieldCheck, Search, BookmarkCheck, Sparkles, GraduationCap, CreditCard, ClipboardList } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import { getStoredUser } from "@/lib/auth";
 import { apiRequest } from "@/lib/api";
@@ -145,7 +145,7 @@ export default function SchoolDashboardPage() {
       </div>
 
       {/* Quick Action / Module Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Module 1: Institutional Athlete Roster */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
@@ -191,16 +191,15 @@ export default function SchoolDashboardPage() {
           </div>
         </div>
 
-        {/* Module 3: Private Recruiting Records */}
+        {/* Module 3: Private Prospects */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#102341]">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
               <BookmarkCheck className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-[#102341]">Private Watchlists & Notes</h3>
+            <h3 className="text-base font-bold text-[#102341]">Prospect Watchlist</h3>
             <p className="text-xs text-[#65748a] leading-relaxed">
-              Maintain school-isolated prospect shortlists, evaluations, and contact logs that are
-              never visible to rival institutions.
+              Curate custom watchlists and athlete bookmarks with staff notes, safe from competitor schools.
             </p>
           </div>
           <div className="pt-2">
@@ -208,7 +207,29 @@ export default function SchoolDashboardPage() {
               href="/portal/prospects"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1d3d68] text-white text-xs font-bold transition-colors"
             >
-              <span>Open Prospect Watchlist</span>
+              <span>Open Watchlist</span>
+              <span>↗</span>
+            </SiteLink>
+          </div>
+        </div>
+
+        {/* Module 4: Institutional Recruiting Records */}
+        <div className="bg-white rounded-2xl p-6 border border-purple-200/80 bg-purple-50/20 shadow-2xs space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700">
+              <ClipboardList className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-[#102341]">Recruiting Records</h3>
+            <p className="text-xs text-[#65748a] leading-relaxed">
+              Manage touchpoint logs, scholarship offers, verbal/NLI commitments, and private scouting notes.
+            </p>
+          </div>
+          <div className="pt-2">
+            <SiteLink
+              href="/portal/records"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-900 hover:bg-purple-950 text-white text-xs font-bold transition-colors"
+            >
+              <span>Manage Records</span>
               <span>↗</span>
             </SiteLink>
           </div>

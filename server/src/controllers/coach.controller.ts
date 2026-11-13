@@ -14,6 +14,7 @@ import {
   getOrCreateRecruitingRecord,
   listRecruitingRecords,
   updateRecruitingRecord,
+  deleteRecruitingRecord,
 } from "../services/coach.service.js";
 
 function getParam(value: string | string[] | undefined): string {
@@ -357,6 +358,37 @@ export async function handleUpdateRecruitingRecord(
       success: true,
       message: "Recruiting record updated.",
       data: record,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    handleCoachError(err, res, next);
+  }
+}
+
+/**
+ * DELETE /api/v1/coach/records/:recordId
+ * Remove an athlete from the school's recruiting records board.
+ */
+export async function handleDeleteRecruitingRecord(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user || !req.schoolId) {
+      res.status(401).json({
+        success: false,
+        error: "Authentication required.",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    await deleteRecruitingRecord(req.schoolId, getParam(req.params.recordId));
+
+    res.status(200).json({
+      success: true,
+      message: "Recruiting record removed.",
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

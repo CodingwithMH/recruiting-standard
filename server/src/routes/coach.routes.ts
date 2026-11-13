@@ -8,6 +8,7 @@ import {
   handleListRecruitingRecords,
   handleGetRecruitingRecord,
   handleUpdateRecruitingRecord,
+  handleDeleteRecruitingRecord,
 } from "../controllers/coach.controller.js";
 import { handleGetAthleteProfileDetail } from "../controllers/athleteProfile.controller.js";
 import { handleListCoachAthleteDocuments } from "../controllers/document.controller.js";
@@ -47,7 +48,9 @@ coachRouter.delete("/prospects/:prospectId", handleRemoveProspect);
 // Recruiting records — school-level records per athlete
 coachRouter.get("/records", handleListRecruitingRecords);
 coachRouter.get("/records/:athleteProfileId", handleGetRecruitingRecord);
+coachRouter.post("/records/:athleteProfileId", handleGetRecruitingRecord);
 coachRouter.patch("/records/:recordId", handleUpdateRecruitingRecord);
+coachRouter.delete("/records/:recordId", handleDeleteRecruitingRecord);
 
 export default coachRouter;
 
