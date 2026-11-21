@@ -22,6 +22,7 @@ import {
   resendSchoolMemberInvitation,
   SchoolRegistrationError,
 } from "../services/school.service.js";
+import { getSchoolDashboard } from "../services/schoolDashboard.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 
 function getParam(value: string | string[] | undefined): string {
@@ -409,6 +410,33 @@ export async function handleListSchoolAthletes(
     res.status(200).json({
       success: true,
       data: athletes,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function handleSchoolDashboard(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.schoolId) {
+      res.status(403).json({
+        success: false,
+        error: "A school context is required to view this dashboard.",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const dashboard = await getSchoolDashboard(req.schoolId);
+
+    res.status(200).json({
+      success: true,
+      data: dashboard,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

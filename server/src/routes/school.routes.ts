@@ -15,6 +15,7 @@ import {
   handleListSchoolAthletes,
   handleApproveSchoolAthlete,
   handleRejectSchoolAthlete,
+  handleSchoolDashboard,
 } from "../controllers/school.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole, requireSchoolRole } from "../middleware/roles.js";
@@ -113,6 +114,16 @@ schoolRouter.post(
   requireApprovedSchool,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleResendMemberInvitation
+);
+
+schoolRouter.get(
+  "/:id/dashboard",
+  authenticateToken,
+  requireGlobalRole("PLATFORM_ADMIN", "SCHOOL_STAFF"),
+  requireSchoolTenant,
+  requireApprovedSchool,
+  requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER"),
+  handleSchoolDashboard
 );
 
 // Student-athlete roster management and verification (School Admin or Coach)

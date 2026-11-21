@@ -8,12 +8,15 @@ import {
   handleReviewAthleteVerification,
 } from "../controllers/athleteVerification.controller.js";
 import { handleGetSchool } from "../controllers/school.controller.js";
+import { handlePlatformDashboard } from "../controllers/adminDashboard.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole } from "../middleware/roles.js";
 
 export const adminRouter = Router();
 
 adminRouter.use(authenticateToken, requireGlobalRole("PLATFORM_ADMIN"));
+
+adminRouter.get("/dashboard", handlePlatformDashboard);
 
 adminRouter.get("/schools/:id", handleGetSchool);
 
