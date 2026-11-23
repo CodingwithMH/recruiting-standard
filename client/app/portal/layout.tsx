@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   BookmarkCheck,
@@ -23,7 +23,7 @@ import {
 import { apiRequest } from "@/lib/api";
 import type { UserProfile } from "@/lib/api";
 
-export default function PortalLayout({
+function PortalShell({
   children,
 }: {
   children: React.ReactNode;
@@ -76,16 +76,7 @@ export default function PortalLayout({
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f4f7fc] flex items-center justify-center p-6">
-        <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-[#102341] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-semibold text-[#65748a] tracking-wide">
-            Loading Recruiting Portal...
-          </p>
-        </div>
-      </div>
-    );
+    return <PortalLoading />;
   }
 
   const primaryMembership = user?.memberships?.[0];
@@ -243,5 +234,30 @@ export default function PortalLayout({
         The Recruiting Standard MVP 4.18 · Institutional Data Isolation Enforced
       </footer>
     </div>
+  );
+}
+
+function PortalLoading() {
+  return (
+    <div className="min-h-screen bg-[#f4f7fc] flex items-center justify-center p-6">
+      <div className="text-center space-y-3">
+        <div className="w-8 h-8 border-2 border-[#102341] border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs font-semibold text-[#65748a] tracking-wide">
+          Loading Recruiting Portal...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function PortalLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<PortalLoading />}>
+      <PortalShell>{children}</PortalShell>
+    </Suspense>
   );
 }
