@@ -540,6 +540,9 @@ export default function RegistrationForm() {
             <span className="text-[10px] text-[#65748a] mt-1">Flexible month-to-month</span>
           </label>
         </div>
+        <p className="text-[10px] text-[#65748a] leading-relaxed">
+          Invoiced manually after approval. No automated payment processing.
+        </p>
       </div>
 
       {/* Submit Button */}

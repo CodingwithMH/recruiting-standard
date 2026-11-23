@@ -1,12 +1,21 @@
 import { Request, Response, NextFunction } from "express";
 import {
   listSubscriptions,
+  listOverdueSubscriptions,
+  listUpcomingRenewals,
   subscriptionListQuerySchema,
+  renewalDaysQuerySchema,
   recordSubscriptionPayment,
   recordSubscriptionPaymentSchema,
   subscriptionStateUpdateSchema,
   setSubscriptionState,
   getSchoolSubscription,
+  manualSubscriptionUpdateSchema,
+  updateSubscriptionRecord,
+  subscriptionRenewalSchema,
+  renewSubscription,
+  listPlanOptions,
+  listSubscriptionBillingEvents,
   SubscriptionNotFoundError,
 } from "../services/subscription.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
@@ -16,6 +25,22 @@ function getParam(value: string | string[] | undefined): string {
     return value[0] ?? "";
   }
   return value ?? "";
+}
+
+/**
+ * GET /api/v1/subscriptions/plans
+ * Public. Describes the manual per-school price options. No provider checkout
+ * or automated collection is exposed.
+ */
+export function handleListPlanOptions(
+  _req: Request,
+  res: Response
+): void {
+  res.status(200).json({
+    success: true,
+    data: listPlanOptions(),
+    timestamp: new Date().toISOString(),
+  });
 }
 
 /**
@@ -37,6 +62,19 @@ export async function handleListSubscriptions(
       state:
         typeof req.query.state === "string"
           ? req.query.state.toUpperCase()
+          : undefined,
+      paymentStatus:
+        typeof req.query.paymentStatus === "string"
+          ? req.query.paymentStatus.toUpperCase()
+          : undefined,
+      view:
+        typeof req.query.view === "string"
+          ? req.query.view.toUpperCase()
+          : undefined,
+      renewalDays: req.query.renewalDays,
+      schoolId:
+        typeof req.query.schoolId === "string"
+          ? req.query.schoolId.trim()
           : undefined,
     });
 
@@ -163,6 +201,186 @@ export async function handleUpdateSubscriptionState(
   }
 }
 
+
+export async function handleListUpcomingRenewals(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const days =
+      typeof req.query.days === "string"
+        ? req.query.days
+        : typeof req.query.renewalDays === "string"
+          ? req.query.renewalDays
+          : undefined;
+
+    const parsed = renewalDaysQuerySchema.safeParse({ days });
+
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: "Invalid renewal window.",
+        details: parsed.error.flatten().fieldErrors,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const subscriptions = await listUpcomingRenewals(parsed.data.days);
+
+    res.status(200).json({
+      success: true,
+      data: subscriptions,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function handleListOverdueSubscriptions(
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const subscriptions = await listOverdueSubscriptions();
+
+    res.status(200).json({
+      success: true,
+      data: subscriptions,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function handleUpdateSubscriptionRecord(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = manualSubscriptionUpdateSchema.safeParse(req.body ?? {});
+
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: "Invalid subscription details.",
+        details: parsed.error.flatten().fieldErrors,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const result = await updateSubscriptionRecord(
+      getParam(req.params.schoolId),
+      parsed.data
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Subscription record updated for ${result.subscription.school.name}.`,
+      data: result,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    if (err instanceof SubscriptionNotFoundError) {
+      res.status(err.statusCode).json({
+        success: false,
+        error: err.message,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+    next(err);
+  }
+}
+
+export async function handleRenewSubscription(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = subscriptionRenewalSchema.safeParse(req.body ?? {});
+
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: "Invalid renewal details.",
+        details: parsed.error.flatten().fieldErrors,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const result = await renewSubscription(
+      getParam(req.params.schoolId),
+      parsed.data
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Subscription renewed through ${new Date(
+        result.subscription.expirationDate as Date
+      ).toLocaleDateString("en-US")}.`,
+      data: result,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    if (err instanceof SubscriptionNotFoundError) {
+      res.status(err.statusCode).json({
+        success: false,
+        error: err.message,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+    next(err);
+  }
+}
+
+/**
+ * GET /api/v1/subscriptions/:schoolId/events
+ * Platform Admin only. Returns the provider-neutral billing event history.
+ */
+export async function handleListSubscriptionBillingEvents(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const rawLimit =
+      typeof req.query.limit === "string" ? Number(req.query.limit) : 50;
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(Math.trunc(rawLimit), 1), 100)
+      : 50;
+
+    const events = await listSubscriptionBillingEvents(
+      getParam(req.params.schoolId),
+      limit
+    );
+
+    res.status(200).json({
+      success: true,
+      data: events,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    if (err instanceof SubscriptionNotFoundError) {
+      res.status(err.statusCode).json({
+        success: false,
+        error: err.message,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+    next(err);
+  }
+}
 
 /**
  * GET /api/v1/subscriptions/my

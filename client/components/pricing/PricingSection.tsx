@@ -47,7 +47,7 @@ export default function PricingSection() {
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-10 max-w-xl mx-auto space-y-1.5">
         <p className="text-xs text-[#65748a] leading-relaxed">
-          All subscriptions are invoiced manually via institutional purchase order or ACH. No credit card required.
+          All subscriptions are invoiced manually via institutional purchase order or ACH. No credit card required and no automated payment processing.
         </p>
         <p className="text-[11px] text-[#65748a] leading-relaxed">
           MVP 4.18 features are enabled as their milestone is released. Search and document access

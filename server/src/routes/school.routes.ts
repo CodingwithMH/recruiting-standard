@@ -21,6 +21,7 @@ import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole, requireSchoolRole } from "../middleware/roles.js";
 import { requireSchoolTenant } from "../middleware/tenant.js";
 import { requireApprovedSchool } from "../middleware/schoolStatus.js";
+import { requireActiveSubscription } from "../middleware/subscriptionAccess.js";
 import { authRateLimiter } from "../middleware/rateLimiter.js";
 
 export const schoolRouter = Router();
@@ -63,6 +64,7 @@ schoolRouter.get(
   requireGlobalRole("PLATFORM_ADMIN", "SCHOOL_STAFF"),
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   handleGetSchool
 );
 schoolRouter.patch(
@@ -70,6 +72,7 @@ schoolRouter.patch(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleUpdateSchool
 );
@@ -80,6 +83,7 @@ schoolRouter.get(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleListMembers
 );
@@ -88,6 +92,7 @@ schoolRouter.post(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleAddMember
 );
@@ -96,6 +101,7 @@ schoolRouter.patch(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleUpdateMember
 );
@@ -104,6 +110,7 @@ schoolRouter.delete(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleRemoveMember
 );
@@ -112,6 +119,7 @@ schoolRouter.post(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN"),
   handleResendMemberInvitation
 );
@@ -122,6 +130,7 @@ schoolRouter.get(
   requireGlobalRole("PLATFORM_ADMIN", "SCHOOL_STAFF"),
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER"),
   handleSchoolDashboard
 );
@@ -132,6 +141,7 @@ schoolRouter.get(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER"),
   handleListSchoolAthletes
 );
@@ -140,6 +150,7 @@ schoolRouter.post(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER"),
   handleApproveSchoolAthlete
 );
@@ -148,6 +159,7 @@ schoolRouter.post(
   authenticateToken,
   requireSchoolTenant,
   requireApprovedSchool,
+  requireActiveSubscription,
   requireSchoolRole("SCHOOL_ADMIN", "COACH_RECRUITER"),
   handleRejectSchoolAthlete
 );

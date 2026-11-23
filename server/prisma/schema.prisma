@@ -96,6 +96,35 @@ enum SubscriptionState {
   PENDING
 }
 
+enum BillingProvider {
+  MANUAL
+  AUTOMATED
+}
+
+enum BillingInterval {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionBillingEventType {
+  CREATED
+  PAYMENT_RECORDED
+  RENEWED
+  ACTIVATED
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+  STATE_CHANGED
+  PLAN_CHANGED
+  PAYMENT_STATUS_CHANGED
+  TERM_UPDATED
+  INVOICE_CREATED
+  PAYMENT_SUCCEEDED
+  PAYMENT_FAILED
+  REFUNDED
+  WEBHOOK_RECEIVED
+}
+
 enum GuardianLinkStatus {
   PENDING
   ACTIVE
@@ -345,22 +374,95 @@ model RecruitingRecord {
   @@index([schoolId, status])
 }
 
+model SubscriptionPriceOption {
+  id               String             @id @default(uuid())
+  code             String             @unique
+  legacyPlan       SubscriptionPlan   @unique
+  name             String
+  amountCents      Int
+  currency         String             @default("USD")
+  billingInterval  BillingInterval
+  intervalCount    Int                @default(1)
+  lateFeeCents     Int                @default(0)
+  lateFeeTaxRate   Float              @default(0)
+  isActive         Boolean            @default(true)
+  effectiveFrom    DateTime           @default(now())
+  effectiveTo      DateTime?
+
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  subscriptions    Subscription[]
+
+  @@index([isActive, billingInterval])
+}
+
 model Subscription {
-  id                     String            @id @default(uuid())
-  schoolId               String            @unique
-  plan                   SubscriptionPlan
-  paymentStatus          PaymentStatus     @default(PENDING)
-  state                  SubscriptionState @default(PENDING)
-  startDate              DateTime?
-  expirationDate         DateTime?
-  lastPaymentAt          DateTime?
-  lastPaymentAmountCents Int?
-  notes                  String?           // Manual billing log entries from Platform Admin
+  id                        String                        @id @default(uuid())
+  schoolId                  String                        @unique
+  plan                      SubscriptionPlan
+  paymentStatus             PaymentStatus                 @default(PENDING)
+  state                     SubscriptionState             @default(PENDING)
+  startDate                 DateTime?
+  expirationDate            DateTime?
+  lastPaymentAt             DateTime?
+  lastPaymentAmountCents    Int?
+  notes                     String?                       // Manual billing log entries from Platform Admin
 
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @updatedAt
+  priceOptionId             String?
+  priceOptionCode           String?
+  billingProvider           BillingProvider               @default(MANUAL)
+  providerCustomerRef       String?
+  providerSubscriptionRef   String?
+  providerPriceRef          String?
+  billingStatus             String?
+  currency                  String                        @default("USD")
+  amountCents               Int                           @default(0)
+  billingInterval           BillingInterval?
+  intervalCount             Int                           @default(1)
+  currentPeriodStart        DateTime?
+  currentPeriodEnd          DateTime?
+  nextBillingDate           DateTime?
+  cancelAtPeriodEnd         Boolean                       @default(false)
+  canceledAt                DateTime?
+  autoCollectEnabled        Boolean                       @default(false)
+  billingMetadata           Json?
 
-  school         School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdAt                 DateTime                      @default(now())
+  updatedAt                 DateTime                      @updatedAt
+
+  school                    School                        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  priceOption               SubscriptionPriceOption?      @relation(fields: [priceOptionId], references: [id], onDelete: SetNull)
+  billingEvents             SubscriptionBillingEvent[]
 
   @@index([schoolId, state])
+  @@index([billingProvider])
+  @@index([nextBillingDate])
+  @@index([priceOptionId])
+}
+
+model SubscriptionBillingEvent {
+  id                String                        @id @default(uuid())
+  subscriptionId    String
+  schoolId          String
+  type              SubscriptionBillingEventType
+  provider          BillingProvider               @default(MANUAL)
+  providerEventRef  String?
+  idempotencyKey    String?                       @unique
+  amountCents       Int?
+  currency          String                        @default("USD")
+  periodStart       DateTime?
+  periodEnd         DateTime?
+  statusFrom        String?
+  statusTo          String?
+  description       String
+  metadata          Json?
+  occurredAt        DateTime                      @default(now())
+  createdAt         DateTime                      @default(now())
+
+  subscription      Subscription                  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, occurredAt])
+  @@index([schoolId, occurredAt])
+  @@index([type])
 }

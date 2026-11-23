@@ -7,6 +7,7 @@ import { hashPassword } from "../utils/password.js";
 import { sendSchoolMemberInvitation } from "./auth.service.js";
 import { sendSchoolRegistrationEmail } from "../utils/email.js";
 import { logger } from "../utils/logger.js";
+import { getPlanOption } from "./billingCatalog.js";
 
 const MAX_SCHOOL_ID_ATTEMPTS = 25;
 
@@ -129,6 +130,7 @@ export class SchoolManagementError extends Error {
  */
 export async function registerSchool(input: SchoolRegistrationInput) {
   const normalizedEmail = input.contactEmail.toLowerCase().trim();
+  const planOption = getPlanOption(input.plan);
 
   // Check for existing user or school with this email
   const existingUser = await prisma.user.findUnique({
@@ -211,6 +213,23 @@ export async function registerSchool(input: SchoolRegistrationInput) {
         paymentStatus: "PENDING",
         state: "PENDING",
         notes: "Awaiting platform approval and initial payment confirmation",
+        priceOptionId: planOption.id,
+        priceOptionCode: planOption.code,
+        providerPriceRef: planOption.code,
+        billingProvider: "MANUAL",
+        billingInterval: planOption.billingInterval,
+        intervalCount: planOption.intervalCount,
+        currency: planOption.currency,
+        amountCents: planOption.amountCents,
+        billingStatus: "PENDING",
+        autoCollectEnabled: false,
+        billingMetadata: {
+          source: "SCHOOL_REGISTRATION",
+          priceOptionCode: planOption.code,
+          amountCents: planOption.amountCents,
+          currency: planOption.currency,
+          automatedProcessing: false,
+        },
       },
     });
 
