@@ -18,8 +18,7 @@ export default function Navigation() {
   const path = usePathname();
 
   return (
-    <header className="h-20 sm:h-24 px-[6%] flex items-center justify-between border-b border-slate-200/80 bg-white sticky top-0 z-50">
-      {/* Brand */}
+    <header className="h-20 lg:h-24 px-[6%] flex items-center justify-between border-b border-slate-200/80 bg-white sticky top-0 z-50">
       <SiteLink
         href="/"
         className="flex items-center gap-2.5 text-[#102341]"
@@ -38,18 +37,21 @@ export default function Navigation() {
         </span>
       </SiteLink>
 
-      {/* Mobile toggle button */}
       <button
-        className="sm:hidden p-2 rounded-lg border border-slate-200 text-[#102341] hover:bg-slate-50 transition-colors"
-        onClick={() => setOpen(!open)}
+        type="button"
+        className="lg:hidden p-2 rounded-lg border border-slate-200 text-[#102341] hover:bg-slate-50 transition-colors"
+        onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
-        aria-label="Toggle navigation"
+        aria-controls="mobile-navigation"
+        aria-label={open ? "Close navigation menu" : "Open navigation menu"}
       >
         {open ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Desktop Navigation */}
-      <nav className="hidden sm:flex items-center gap-7 text-xs sm:text-sm font-semibold text-[#102341]" aria-label="Main navigation">
+      <nav
+        className="hidden lg:flex items-center gap-6 xl:gap-7 text-xs xl:text-sm font-semibold text-[#102341]"
+        aria-label="Main navigation"
+      >
         {navLinks.map(([href, label]) => {
           const isActive = path === href;
           return (
@@ -69,7 +71,7 @@ export default function Navigation() {
         })}
         <SiteLink
           href="/signup"
-          className="text-slate-600 hover:text-[#102341] transition-colors ml-2"
+          className="text-slate-600 hover:text-[#102341] transition-colors ml-1"
         >
           Sign up
         </SiteLink>
@@ -88,14 +90,18 @@ export default function Navigation() {
         </SiteLink>
       </nav>
 
-      {/* Mobile drawer */}
       {open && (
-        <div className="sm:hidden absolute top-20 left-0 right-0 bg-white border-b border-slate-200 p-6 flex flex-col gap-4 shadow-xl z-50">
+        <nav
+          id="mobile-navigation"
+          aria-label="Mobile navigation"
+          className="lg:hidden absolute top-20 left-0 right-0 bg-white border-b border-slate-200 p-6 flex flex-col gap-4 shadow-xl z-50 max-h-[calc(100vh-5rem)] overflow-y-auto"
+        >
           {navLinks.map(([href, label]) => (
             <SiteLink
               key={href}
               href={href}
               onClick={() => setOpen(false)}
+              aria-current={path === href ? "page" : undefined}
               className={`text-sm font-semibold py-1.5 ${
                 path === href ? "text-blue-700" : "text-slate-700"
               }`}
@@ -127,7 +133,7 @@ export default function Navigation() {
               <ArrowUpRight className="w-3.5 h-3.5 text-[#bed8ff]" />
             </SiteLink>
           </div>
-        </div>
+        </nav>
       )}
     </header>
   );

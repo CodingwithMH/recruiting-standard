@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { AlertCircle, CheckCircle2, Shield, Lock, FileText, ArrowRight, ArrowLeft } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import AboutStory from "@/components/about/AboutStory";
 import AboutValues from "@/components/about/AboutValues";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "About Our Platform",
   description:
     "Learn about MVP 4.18's mission, verification standards, and institutional commitment.",
-};
+  path: "/about",
+});
 
 const governanceCards = [
   {

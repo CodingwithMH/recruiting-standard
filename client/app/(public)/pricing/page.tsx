@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { ArrowUpRight, ArrowLeft } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import PricingSection from "@/components/pricing/PricingSection";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "School Pricing & Plans",
   description:
     "Institutional access for athletic departments and coaching staffs. Annual access for $1,500/year or monthly access for $250/month with manual billing administration.",
-};
+  path: "/pricing",
+});
 
 const comparisonFeatures = [
   { feature: "Approved Athlete Search Access", monthly: "Full Access", annual: "Full Access" },

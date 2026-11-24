@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { GraduationCap, ShieldCheck, Search, FileText, Check, ArrowUpRight, ArrowLeft, Users } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import HowItWorks from "@/components/features/HowItWorks";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Features & Architecture",
   description:
     "See what is live now and what is planned for Milestones 3 and 4 in MVP 4.18: guardian linking, athlete profiles, document verification, approved-athlete search, and recruiting records.",
-};
+  path: "/features",
+});
 
 const featureDeepDives = [
   {

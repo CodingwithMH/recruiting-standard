@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import {
   Building2,
   CreditCard,
@@ -16,11 +17,12 @@ import {
   CONTACT_RESPONSE_TIME,
 } from "@/lib/contact";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Contact MVP 4.18",
   description:
     "Contact MVP 4.18 about school registration, pricing, or a demo. Athletic directors can also email the team directly for a backup contact option.",
-};
+  path: "/contact",
+});
 
 const helpTopics = [
   {

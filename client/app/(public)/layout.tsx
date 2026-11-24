@@ -1,13 +1,17 @@
 import Navigation from "@/components/shared/Navigation";
 import Footer from "@/components/shared/Footer";
 
-// All public marketing pages share this layout (nav + footer).
-// Portal/auth routes live outside this group and get their own layout.
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-[#102341] focus:px-5 focus:py-3 focus:text-sm focus:font-bold focus:text-white"
+      >
+        Skip to content
+      </a>
       <Navigation />
-      <main>{children}</main>
+      <main id="main-content">{children}</main>
       <Footer />
     </>
   );

@@ -1,13 +1,16 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Reset Password",
   description: "Set a new password for your MVP 4.18 account.",
-};
+  path: "/reset-password",
+  index: false,
+});
 
 async function ResetPasswordFormSection({
   searchParams,

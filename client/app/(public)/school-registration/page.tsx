@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { FileSpreadsheet, ShieldAlert, Award, CheckCircle2, ArrowLeft } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import RegistrationForm from "@/components/school-registration/RegistrationForm";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Register Your School Program",
   description:
     "Request verified institutional access for your school athletic program. Learn about the Pending to Approved review process and permanent School ID issuance.",
-};
+  path: "/school-registration",
+});
 
 const registrationSteps = [
   {

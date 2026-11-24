@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { Building2, GraduationCap, Users } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import LoginForm from "@/components/auth/LoginForm";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Portal Login",
   description:
     "One secure login for schools, student-athletes, and families. Sign in to access your personalized dashboard.",
-};
+  path: "/login",
+  index: false,
+});
 
 const portalRoles = [
   {

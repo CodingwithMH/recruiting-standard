@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { GraduationCap, ShieldCheck, Users, School } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import SignupForm from "@/components/auth/SignupForm";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Create an Athlete or Parent Account",
   description:
     "Create a student-athlete or parent/guardian account on the MVP 4.18 portal. Student-athletes (ages 14–20) must enter their approved School ID.",
-};
+  path: "/signup",
+  index: false,
+});
 
 const accountBenefits = [
   {

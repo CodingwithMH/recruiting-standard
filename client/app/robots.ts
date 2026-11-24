@@ -1,17 +1,23 @@
-import { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
+import { SITE_URL, siteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://therecruitingstandard.com";
-
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/portal/", "/admin/", "/api/"],
+        disallow: [
+          "/portal/",
+          "/admin/",
+          "/api/",
+          "/document-preview",
+          "/forgot-password",
+          "/reset-password",
+        ],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    host: SITE_URL,
+    sitemap: siteUrl("sitemap.xml"),
   };
 }
-

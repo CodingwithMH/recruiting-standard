@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { ArrowLeft, KeyRound } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Forgot Password",
   description: "Request a password reset link for your MVP 4.18 account.",
-};
+  path: "/forgot-password",
+  index: false,
+});
 
 export default function ForgotPasswordPage() {
   return (
