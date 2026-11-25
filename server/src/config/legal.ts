@@ -1,0 +1,10 @@
+export const LEGAL_VERSIONS = {
+  TERMS_OF_USE: "2026-11-25",
+  PRIVACY_POLICY: "2026-11-25",
+  GUARDIAN_AUTHORIZATION: "2026-11-25",
+} as const;
+
+export const LEGAL_DOCUMENT_KEYS = [
+  "TERMS_OF_USE",
+  "PRIVACY_POLICY",
+] as const;

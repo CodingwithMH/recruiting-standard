@@ -80,6 +80,7 @@ const validationSchema = Yup.object({
   plan: Yup.string()
     .oneOf(["ANNUAL_1500", "MONTHLY_250"])
     .required("Please select a subscription plan"),
+  acceptTerms: Yup.bool().oneOf([true], "Please agree to the Terms of Use"),
 });
 
 export default function RegistrationForm() {
@@ -100,6 +101,7 @@ export default function RegistrationForm() {
       postalCode: "",
       password: "",
       plan: "ANNUAL_1500" as "ANNUAL_1500" | "MONTHLY_250",
+      acceptTerms: false,
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting, setErrors }) => {
@@ -543,6 +545,42 @@ export default function RegistrationForm() {
         <p className="text-[10px] text-[#65748a] leading-relaxed">
           Invoiced manually after approval. No automated payment processing.
         </p>
+      </div>
+
+      <div className="space-y-1.5 pt-1">
+        <label htmlFor="school-acceptTerms" className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            id="school-acceptTerms"
+            name="acceptTerms"
+            type="checkbox"
+            checked={formik.values.acceptTerms}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-[#102341] focus:ring-[#102341] cursor-pointer"
+          />
+          <span className="text-[11px] text-[#65748a] leading-relaxed">
+            I agree to the{" "}
+            <SiteLink
+              href="/terms"
+              onClick={(event) => event.stopPropagation()}
+              className="font-semibold text-[#102341] hover:underline"
+            >
+              Terms of Use
+            </SiteLink>
+            , effective November 25, 2026, and acknowledge the{" "}
+            <SiteLink
+              href="/privacy-policy"
+              onClick={(event) => event.stopPropagation()}
+              className="font-semibold text-[#102341] hover:underline"
+            >
+              Privacy Policy
+            </SiteLink>
+            . I confirm I have authority to register this school.
+          </span>
+        </label>
+        {isInvalid("acceptTerms") && (
+          <p className="text-[11px] text-red-600 font-medium">{formik.errors.acceptTerms}</p>
+        )}
       </div>
 
       {/* Submit Button */}

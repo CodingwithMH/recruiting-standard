@@ -1,5 +1,6 @@
 import type { DocumentStatus, DocumentType } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import { hasAuthorizedGuardianAuthorization } from "./guardianAuthorization.service.js";
 
 export const ENROLLMENT_DOCUMENT_TYPES = [
   "ENROLLMENT_LETTER",
@@ -145,7 +146,7 @@ export function verificationRequirementsMessage(
     requirements.guardianConsentRequired &&
     !requirements.guardianConsentRecorded
   ) {
-    problems.push("recorded parent or guardian consent");
+    problems.push("recorded parent or guardian consent or authorization");
   }
 
   return `Cannot approve: the athlete needs ${problems.join(" and ")}.`;
@@ -189,10 +190,15 @@ export async function getVerificationRequirementsForProfile(
     select: { consentGrantedAt: true, consentRevokedAt: true },
   });
 
+  const signupAuthorizationRecorded = await hasAuthorizedGuardianAuthorization(
+    profile.userId
+  );
+
   return evaluateVerificationRequirements({
     dateOfBirth: profile.user.dateOfBirth,
     documents: profile.documents,
-    guardianConsentRecorded: hasActiveGuardianConsent(consentLinks),
+    guardianConsentRecorded:
+      hasActiveGuardianConsent(consentLinks) || signupAuthorizationRecorded,
   });
 }
 
@@ -204,7 +210,7 @@ function verificationRemovedNote(
     requirements.guardianConsentRequired &&
     !requirements.guardianConsentRecorded
   ) {
-    return "Verification was removed because the athlete no longer has an approved current enrollment proof and guardian consent is no longer recorded. Upload an approved enrollment letter or report card and have a parent or guardian record consent, then resubmit for verification.";
+    return "Verification was removed because the athlete no longer has an approved current enrollment proof and guardian consent is no longer recorded. Upload an approved enrollment letter or report card and have a parent or guardian record consent or authorization, then resubmit for verification.";
   }
 
   if (!requirements.enrollmentProofApproved) {

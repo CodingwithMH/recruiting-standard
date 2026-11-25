@@ -150,7 +150,12 @@ test("admin can find a subscription by the permanent School ID", async () => {
 
     assert.equal(calls.findFirst.length, 1);
     assert.deepEqual(calls.findFirst[0], {
-      where: { school: { schoolId: "SCH-10001" } },
+      where: {
+        OR: [
+          { schoolCode: "SCH-10001" },
+          { school: { schoolId: "SCH-10001" } },
+        ],
+      },
       include: {
         school: {
           select: {
@@ -295,6 +300,18 @@ test("renewal and overdue views classify accounts and expose the permanent Schoo
     const byPermanentId = await listSubscriptions({ schoolId: "SCH-10002" });
     assert.equal(byPermanentId.length, 1);
     assert.equal(byPermanentId[0]?.schoolId, "school-upcoming");
+
+    const active = await listSubscriptions({ state: "ACTIVE" });
+    assert.deepEqual(
+      active.map((item) => item.schoolCode),
+      ["SCH-10002", "SCH-10004"]
+    );
+
+    const expired = await listSubscriptions({ state: "EXPIRED" });
+    assert.deepEqual(
+      expired.map((item) => item.schoolCode),
+      ["SCH-10003"]
+    );
   } finally {
     prisma.subscription.findMany = originalFindMany;
   }

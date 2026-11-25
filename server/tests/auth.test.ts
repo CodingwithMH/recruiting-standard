@@ -9,6 +9,8 @@ process.env.JWT_SECRET = "test-only-secret-value-not-used-in-production-min-32-c
 import { hashPassword, comparePassword } from "../src/utils/password.js";
 import { signToken, verifyToken } from "../src/utils/jwt.js";
 import { registerSchema, loginSchema } from "../src/services/auth.service.js";
+import { LEGAL_VERSIONS } from "../src/config/legal.js";
+import { guardianAuthorizationConfirmSchema } from "../src/services/guardianAuthorization.service.js";
 
 test("Password utility hashes passwords with unique salts", async () => {
   const plainPassword = "SecurePassword2026!";
@@ -26,8 +28,8 @@ test("Password utility hashes passwords with unique salts", async () => {
 
 test("Password comparison strictly rejects incorrect passwords", async () => {
   const hash = await hashPassword("CorrectPassword123!");
-  const isMatch = await comparePassword("WrongPassword123!", hash);
-  assert.equal(isMatch, false, "Mismatched password must evaluate to false");
+  const match = await comparePassword("WrongPassword123!", hash);
+  assert.equal(match, false, "Mismatched password must evaluate to false");
 });
 
 test("JWT utility signs valid token with user claims and verifies payload", () => {
@@ -53,51 +55,85 @@ test("JWT verifier rejects forged, invalid, or corrupted tokens", () => {
   assert.equal(verifyToken("Bearer some-token"), null);
 });
 
-test("Auth validation schemas enforce proper email and password constraints", () => {
-  // Valid register input
-  const validRegister = registerSchema.safeParse({
+test("Auth validation schemas enforce proper email, password, and terms constraints", () => {
+  const base = {
     email: "athleticdirector@school.org",
     password: "StrongPassword123!",
     firstName: "Sarah",
     lastName: "Jenkins",
-    globalRole: "SCHOOL_STAFF",
-  });
-  assert.equal(validRegister.success, true);
+    globalRole: "SCHOOL_STAFF" as const,
+    acceptTerms: true,
+  };
 
-  // Invalid email
-  const invalidEmail = registerSchema.safeParse({
-    email: "not-an-email",
-    password: "StrongPassword123!",
-    firstName: "Sarah",
-    lastName: "Jenkins",
-  });
+  assert.equal(registerSchema.safeParse(base).success, true);
+
+  const invalidEmail = registerSchema.safeParse({ ...base, email: "not-an-email" });
   assert.equal(invalidEmail.success, false);
 
-  // Short password (< 8 chars)
-  const shortPassword = registerSchema.safeParse({
-    email: "coach@school.org",
-    password: "short",
-    firstName: "Sarah",
-    lastName: "Jenkins",
-  });
+  const shortPassword = registerSchema.safeParse({ ...base, password: "short" });
   assert.equal(shortPassword.success, false);
 
-  // Valid athlete registration with School ID and DOB
+  const withoutTerms = registerSchema.safeParse({
+    ...base,
+    acceptTerms: false,
+  });
+  assert.equal(withoutTerms.success, false);
+
   const validAthlete = registerSchema.safeParse({
+    ...base,
     email: "athlete@school.org",
-    password: "StrongPassword123!",
-    firstName: "Marcus",
-    lastName: "Johnson",
-    globalRole: "ATHLETE",
+    globalRole: "ATHLETE" as const,
     schoolId: "SCH-10492",
     dateOfBirth: "2008-05-15",
+    termsVersion: LEGAL_VERSIONS.TERMS_OF_USE,
+    privacyPolicyVersion: LEGAL_VERSIONS.PRIVACY_POLICY,
+    guardianAuthorization: {
+      guardianName: "Parent One",
+      guardianEmail: "parent@example.com",
+      authorizationAccepted: true,
+      version: LEGAL_VERSIONS.GUARDIAN_AUTHORIZATION,
+    },
   });
   assert.equal(validAthlete.success, true);
 
-  // Valid login input
+  const missingGuardianAttestation = registerSchema.safeParse({
+    ...base,
+    email: "athlete@school.org",
+    globalRole: "ATHLETE" as const,
+    schoolId: "SCH-10492",
+    dateOfBirth: "2008-05-15",
+    guardianAuthorization: {
+      guardianName: "Parent One",
+      guardianEmail: "parent@example.com",
+      authorizationAccepted: false,
+    },
+  });
+  assert.equal(missingGuardianAttestation.success, false);
+
   const validLogin = loginSchema.safeParse({
     email: "coach@school.org",
     password: "AnyPassword123!",
   });
   assert.equal(validLogin.success, true);
+});
+
+test("Guardian authorization confirmation requires explicit acceptance", () => {
+  const token = "a".repeat(64);
+
+  assert.equal(
+    guardianAuthorizationConfirmSchema.safeParse({
+      token,
+      authorizationAccepted: true,
+      version: LEGAL_VERSIONS.GUARDIAN_AUTHORIZATION,
+    }).success,
+    true
+  );
+
+  assert.equal(
+    guardianAuthorizationConfirmSchema.safeParse({
+      token,
+      authorizationAccepted: false,
+    }).success,
+    false
+  );
 });

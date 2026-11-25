@@ -92,9 +92,8 @@ export default function PricingPage() {
               Everything your coaching staff needs to recruit.
             </h2>
             <p className="text-sm text-[#65748a]">
-              Subscriptions cover the full MVP 4.18 platform. Athlete profiles and document
-              verification are enabled in Milestone 3; approved-athlete search and recruiting
-              records are enabled in Milestone 4.
+              Subscriptions cover the full live MVP 4.18 platform: athlete profiles, document
+              verification, approved-athlete search, and recruiting records.
             </p>
           </div>
 

@@ -9,10 +9,15 @@ import {
 import { handleListParentAthleteDocuments } from "../controllers/document.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole } from "../middleware/roles.js";
+import { requireActiveSubscription } from "../middleware/subscriptionAccess.js";
 
 export const parentRouter = Router();
 
-parentRouter.use(authenticateToken, requireGlobalRole("PARENT"));
+parentRouter.use(
+  authenticateToken,
+  requireGlobalRole("PARENT"),
+  requireActiveSubscription
+);
 
 parentRouter.get("/links", handleListGuardianLinks);
 parentRouter.post("/links", handleRequestGuardianLink);

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import type { VerificationStatus } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../config/prisma.js";
+import { LEGAL_VERSIONS } from "../config/legal.js";
 import {
   evaluateVerificationRequirements,
   getVerificationRequirementsForProfile,
@@ -100,18 +101,21 @@ const verificationQueueSelect = {
       email: true,
       status: true,
       dateOfBirth: true,
-      athleteLinks: {
-        where: {
-          status: "ACTIVE",
-          consentGrantedAt: { not: null },
-          consentRevokedAt: null,
+        athleteLinks: {
+          where: {
+            status: "ACTIVE",
+            consentGrantedAt: { not: null },
+            consentRevokedAt: null,
+          },
+          select: { id: true },
+          take: 1,
         },
-        select: { id: true },
-        take: 1,
+        guardianAuthorization: {
+          select: { status: true, authorizationVersion: true },
+        },
       },
     },
-  },
-} satisfies Prisma.AthleteProfileSelect;
+  } satisfies Prisma.AthleteProfileSelect;
 
 export async function listAthleteProfilesForReview(
   query: AthleteVerificationQuery
@@ -167,7 +171,11 @@ export async function listAthleteProfilesForReview(
       const requirements = evaluateVerificationRequirements({
         dateOfBirth: profile.user.dateOfBirth,
         documents: profile.documents,
-        guardianConsentRecorded: profile.user.athleteLinks.length > 0,
+        guardianConsentRecorded:
+          profile.user.athleteLinks.length > 0 ||
+          (profile.user.guardianAuthorization?.status === "AUTHORIZED" &&
+            profile.user.guardianAuthorization.authorizationVersion ===
+              LEGAL_VERSIONS.GUARDIAN_AUTHORIZATION),
       });
 
       return {

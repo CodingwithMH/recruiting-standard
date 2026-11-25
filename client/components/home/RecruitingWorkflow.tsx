@@ -72,8 +72,7 @@ export default function RecruitingWorkflow() {
           })}
         </div>
         <p className="mt-8 text-center text-xs text-[#65748a] leading-relaxed">
-          The recruiting pipeline, including prospect boards and contact logs, is planned for
-          Milestone 4.
+          The recruiting pipeline, including prospect boards and contact logs, is live now.
         </p>
       </div>
     </section>

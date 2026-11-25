@@ -4,6 +4,10 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   details?: Record<string, string[]>;
+  status?: number;
+  code?: string;
+  subscriptionState?: string;
+  expirationDate?: string;
   timestamp: string;
 }
 
@@ -34,7 +38,35 @@ export interface AuthResponse {
   user: UserProfile;
   token: string | null;
   isPendingVerification?: boolean;
+  guardianAuthorization?: {
+    guardianEmail: string;
+    status: "PENDING" | "AUTHORIZED";
+    expiresAt: string;
+  };
   message?: string;
+}
+
+export interface GuardianAuthorizationDetails {
+  id: string;
+  status: "PENDING" | "AUTHORIZED" | "EXPIRED" | "REVOKED";
+  version: string;
+  expiresAt: string;
+  authorizedAt: string | null;
+  guardianName: string;
+  guardianEmail: string;
+  user: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    schoolId: string | null;
+  };
+}
+
+export interface GuardianAuthorizationConfirmation {
+  id: string;
+  status: "AUTHORIZED";
+  authorizedAt: string;
+  authorizationVersion: string;
 }
 
 const API_BASE_URL =
@@ -88,6 +120,10 @@ export async function apiRequest<T>(
         success: false,
         error: data.error || `HTTP Error ${response.status}`,
         details: data.details,
+        status: response.status,
+        code: data.code,
+        subscriptionState: data.subscriptionState,
+        expirationDate: data.expirationDate,
         timestamp: data.timestamp || new Date().toISOString(),
       };
     }

@@ -24,5 +24,8 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   details?: Record<string, string[]>;
+  code?: string;
+  subscriptionState?: string;
+  expirationDate?: string;
   timestamp: string;
 }

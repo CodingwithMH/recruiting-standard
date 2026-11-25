@@ -7,7 +7,7 @@ import HowItWorks from "@/components/features/HowItWorks";
 export const metadata: Metadata = createPageMetadata({
   title: "Features & Architecture",
   description:
-    "See what is live now and what is planned for Milestones 3 and 4 in MVP 4.18: guardian linking, athlete profiles, document verification, approved-athlete search, and recruiting records.",
+    "Explore the live MVP 4.18 platform: guardian linking, athlete profiles, document verification, approved-athlete search, and recruiting records.",
   path: "/features",
 });
 
@@ -28,7 +28,7 @@ const featureDeepDives = [
   {
     icon: GraduationCap,
     tag: "ATHLETE PROFILES",
-    status: "Milestone 3",
+    status: "Live now",
     title: "Multi-Sport Profiles Built for Real Evaluation",
     desc: "Record statistics across multiple varsity sports, combine testing metrics, academic standings, and video links in one place.",
     bullets: [
@@ -41,7 +41,7 @@ const featureDeepDives = [
   {
     icon: ShieldCheck,
     tag: "DOCUMENT INTEGRITY",
-    status: "Milestone 3",
+    status: "Live now",
     title: "Admin Review & Signed Document Storage",
     desc: "Official transcripts and eligibility forms undergo platform administrator review. Documents are stored in secure private storage.",
     bullets: [
@@ -54,7 +54,7 @@ const featureDeepDives = [
   {
     icon: Search,
     tag: "DISCOVERY & SEARCH",
-    status: "Milestone 4",
+    status: "Live now",
     title: "Approved-Athlete Search & Filter Engine",
     desc: "Coaches never sift through unvetted accounts. Our discovery engine restricts search exclusively to verified athletes.",
     bullets: [
@@ -67,7 +67,7 @@ const featureDeepDives = [
   {
     icon: FileText,
     tag: "RECRUITING RECORDS",
-    status: "Milestone 4",
+    status: "Live now",
     title: "Private Activity Logs & Offer Management",
     desc: "Maintain institutional logs of calls, campus visits, scholarship offers, and student commitments with strict school-level data isolation.",
     bullets: [
@@ -102,8 +102,7 @@ export default function FeaturesPage() {
           </h1>
           <p className="text-base sm:text-lg text-[#65748a] leading-relaxed max-w-2xl">
             MVP 4.18 brings athlete profiles, credential review, and private recruiting records into
-            one focused place. Capabilities roll out in milestone order, and each card below shows
-            what is live today versus what is planned.
+            one focused place. Every capability below is live in this build.
           </p>
         </div>
       </section>
@@ -129,9 +128,8 @@ export default function FeaturesPage() {
                 Tools designed specifically for coaching staffs.
               </h2>
               <p className="text-sm sm:text-base text-slate-200 leading-relaxed m-0">
-                MVP 4.18 is built to replace administrative chaos with dedicated prospect boards,
-                private evaluation notes, and verified student documentation under your permanent
-                School ID as those milestones roll out.
+                MVP 4.18 replaces administrative chaos with dedicated prospect boards, private
+                evaluation notes, and verified student documentation under your permanent School ID.
               </p>
             </div>
           </div>
@@ -150,8 +148,7 @@ export default function FeaturesPage() {
             </h2>
             <p className="text-sm sm:text-base text-[#65748a] leading-relaxed">
               Every capability in MVP 4.18 addresses a specific pain point in the athletic
-              recruitment lifecycle. Status labels show what is live in this build and what arrives
-              in Milestones 3 and 4.
+              recruitment lifecycle. All core capabilities are live in this build.
             </p>
           </div>
 

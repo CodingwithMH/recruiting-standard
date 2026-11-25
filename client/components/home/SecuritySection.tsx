@@ -16,8 +16,8 @@ export default function SecuritySection() {
             <span className="text-[#65748a] font-normal">Zero compromise.</span>
           </h2>
           <p className="text-sm sm:text-base text-[#65748a] leading-relaxed">
-            Approved schools get role-gated access and strict school isolation today. Private
-            document storage and recruiting records are rolling out in Milestones 3 and 4.
+            Approved schools get role-gated access, strict school isolation, private document
+            storage, and recruiting records today.
           </p>
         </div>
 
@@ -45,13 +45,13 @@ export default function SecuritySection() {
             </div>
             <div className="flex items-center justify-between gap-2 mb-2">
               <h3 className="text-base font-semibold text-[#102341]">Private Signed Documents</h3>
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
-                Milestone 3
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                Live now
               </span>
             </div>
             <p className="text-xs sm:text-sm text-[#65748a] leading-relaxed">
-              Official transcripts and eligibility forms will use private storage with no public
-              URLs. Authorized access will be issued through short-lived signed links.
+              Official transcripts and eligibility forms use private storage with no public URLs.
+              Authorized access is issued through short-lived signed links.
             </p>
           </div>
 

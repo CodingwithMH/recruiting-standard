@@ -23,10 +23,15 @@ import {
 } from "../controllers/document.controller.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireGlobalRole } from "../middleware/roles.js";
+import { requireActiveSubscription } from "../middleware/subscriptionAccess.js";
 
 export const athleteRouter = Router();
 
-athleteRouter.use(authenticateToken, requireGlobalRole("ATHLETE"));
+athleteRouter.use(
+  authenticateToken,
+  requireGlobalRole("ATHLETE"),
+  requireActiveSubscription
+);
 
 athleteRouter.get("/profile", handleGetAthleteProfile);
 athleteRouter.put("/profile", handleUpdateAthleteProfile);

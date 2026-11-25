@@ -175,6 +175,65 @@ export async function sendGuardianLinkRequestEmail(
   return true;
 }
 
+/**
+ * Sends the separate guardian authorization link generated during minor
+ * athlete signup. The guardian must confirm before verification can complete.
+ */
+export async function sendGuardianAuthorizationRequestEmail(
+  to: string,
+  guardianName: string,
+  athleteName: string,
+  authorizationUrl: string
+): Promise<boolean> {
+  const client = getTransporter();
+
+  if (!client) {
+    logger.warn(
+      "AUTH",
+      "SMTP is not configured. Guardian authorization email was not sent."
+    );
+    if (env.NODE_ENV === "development") {
+      logger.info("AUTH", `Guardian authorization link for ${to}: ${authorizationUrl}`);
+    }
+    return false;
+  }
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  const safeGuardianName = escapeHtml(guardianName);
+  const safeAthleteName = escapeHtml(athleteName);
+
+  await client.sendMail({
+    from: env.EMAIL_FROM,
+    to,
+    subject: "Guardian authorization required for MVP 4.18",
+    text: [
+      `Hi ${guardianName},`,
+      "",
+      `${athleteName} registered as a student-athlete on MVP 4.18 and identified you as their parent or legal guardian.`,
+      "",
+      "Review and authorize the registration using this link (valid for 7 days):",
+      authorizationUrl,
+      "",
+      "No account is created for you and no access is granted until you confirm. If you did not expect this request, contact mvp418.recruiting@gmail.com.",
+    ].join("\n"),
+    html: `
+      <p>Hi ${safeGuardianName},</p>
+      <p><strong>${safeAthleteName}</strong> registered as a student-athlete on MVP 4.18 and identified you as their parent or legal guardian.</p>
+      <p><a href="${authorizationUrl}">Review and authorize the registration</a> (valid for 7 days).</p>
+      <p>No account is created for you and no access is granted until you confirm. If you did not expect this request, contact mvp418.recruiting@gmail.com.</p>
+    `,
+  });
+
+  return true;
+}
+
 export interface ContactInquiryEmailInput {
   name: string;
   email: string;

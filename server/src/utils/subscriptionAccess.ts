@@ -40,7 +40,7 @@ export function effectiveSubscriptionState(
 }
 
 /**
- * Recruiting access requires an explicit ACTIVE subscription that has not
+ * Portal access requires an explicit ACTIVE subscription that has not
  * passed its expiration date. School approval alone is not sufficient.
  */
 export function evaluateSubscriptionAccess(
@@ -74,14 +74,14 @@ export function subscriptionAccessMessage(
     case "MISSING":
       return "An active school subscription is required to access recruiting features.";
     case "PENDING":
-      return "Your school subscription is pending activation. Recruiting access will unlock after Platform Admin activation.";
+      return "Your school subscription is pending activation. Portal access will unlock after Platform Admin activation.";
     case "SUSPENDED":
-      return "Your school subscription has been suspended. Recruiting access is unavailable until it is reactivated.";
+      return "Your school subscription has been suspended. Portal access is unavailable until it is reactivated.";
     case "CANCELLED":
-      return "Your school subscription has been cancelled. Recruiting access is unavailable.";
+      return "Your school subscription has been cancelled. Portal access is unavailable.";
     case "EXPIRED":
-      return "Your school subscription has expired. Recruiting access will unlock after renewal.";
+      return "Your school subscription has expired. Portal access will unlock after renewal.";
     default:
-      return "Recruiting access is available.";
+      return "Portal access is available.";
   }
 }

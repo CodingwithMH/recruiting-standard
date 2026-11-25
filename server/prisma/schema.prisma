@@ -132,6 +132,18 @@ enum GuardianLinkStatus {
   REVOKED
 }
 
+enum LegalDocumentKey {
+  TERMS_OF_USE
+  PRIVACY_POLICY
+}
+
+enum GuardianAuthorizationStatus {
+  PENDING
+  AUTHORIZED
+  EXPIRED
+  REVOKED
+}
+
 enum HighlightProvider {
   CLOUDINARY
   HUDL
@@ -194,6 +206,8 @@ model User {
   passwordResetTokens PasswordResetToken[]
   guardianLinks     ParentAthleteLink[] @relation("GuardianLinks")
   athleteLinks      ParentAthleteLink[] @relation("AthleteLinks")
+  guardianAuthorization GuardianAuthorization?
+  legalAcceptances  LegalAcceptance[]
   highlightVideos   HighlightVideo[]
 
   @@index([email])
@@ -222,6 +236,39 @@ model ParentAthleteLink {
   @@unique([parentUserId, athleteUserId])
   @@index([parentUserId, status])
   @@index([athleteUserId, status])
+}
+
+model GuardianAuthorization {
+  id                    String                       @id @default(uuid())
+  userId                String                       @unique
+  guardianName          String
+  guardianEmail         String
+  status                GuardianAuthorizationStatus  @default(PENDING)
+  tokenHash             String                       @unique
+  version               String
+  expiresAt             DateTime
+  requestedAt           DateTime                     @default(now())
+  respondedAt           DateTime?
+  authorizedAt          DateTime?
+  authorizationVersion  String?
+
+  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model LegalAcceptance {
+  id           String           @id @default(uuid())
+  userId       String
+  documentKey  LegalDocumentKey
+  version      String
+  acceptedAt   DateTime         @default(now())
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentKey, version])
+  @@index([userId, acceptedAt])
 }
 
 model PasswordResetToken {
@@ -400,6 +447,7 @@ model SubscriptionPriceOption {
 model Subscription {
   id                        String                        @id @default(uuid())
   schoolId                  String                        @unique
+  schoolCode                String?
   plan                      SubscriptionPlan
   paymentStatus             PaymentStatus                 @default(PENDING)
   state                     SubscriptionState             @default(PENDING)
@@ -436,6 +484,7 @@ model Subscription {
   billingEvents             SubscriptionBillingEvent[]
 
   @@index([schoolId, state])
+  @@index([schoolCode])
   @@index([billingProvider])
   @@index([nextBillingDate])
   @@index([priceOptionId])

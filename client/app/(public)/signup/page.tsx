@@ -7,7 +7,7 @@ import SignupForm from "@/components/auth/SignupForm";
 export const metadata: Metadata = createPageMetadata({
   title: "Create an Athlete or Parent Account",
   description:
-    "Create a student-athlete or parent/guardian account on the MVP 4.18 portal. Student-athletes (ages 14–20) must enter their approved School ID.",
+    "Create a student-athlete or parent/guardian account on the MVP 4.18 portal. Student-athletes (ages 14–19) must enter their approved School ID.",
   path: "/signup",
   index: false,
 });
@@ -15,7 +15,7 @@ export const metadata: Metadata = createPageMetadata({
 const accountBenefits = [
   {
     icon: GraduationCap,
-    title: "Student-Athletes (Ages 14–20)",
+    title: "Student-Athletes (Ages 14–19)",
     description:
       "Enter your approved School ID and date of birth to build your verified profile, publish highlights, and link a guardian.",
   },
@@ -46,7 +46,7 @@ export default function SignupPage() {
             Start your recruiting journey.
           </h1>
           <p className="text-sm sm:text-base text-[#65748a] leading-relaxed mb-5">
-            Student-athletes (ages 14–20, including re-classified prospects) enrolled at an approved,
+            Student-athletes (ages 14–19, including re-classified prospects) enrolled at an approved,
             participating school—and their parents or guardians—can register here. Access is funded
             institutionally by your school with zero individual athlete fees.
           </p>
@@ -73,7 +73,7 @@ export default function SignupPage() {
               <div>
                 <p className="text-[11px] text-[#65748a] leading-relaxed">
                   <strong className="text-[#102341]">Who can register?</strong>{" "}
-                  Prep, private, and high school student-athletes between 14 and 20 years old who
+                  Prep, private, and high school student-athletes between 14 and 19 years old who
                   attend an approved, participating school (including domestic and international
                   academies), along with their parents or guardians.
                 </p>
@@ -91,9 +91,8 @@ export default function SignupPage() {
               <div>
                 <p className="text-[11px] text-[#65748a] leading-relaxed">
                   <strong className="text-[#102341]">Re-Classification & Age Eligibility:</strong>{" "}
-                  Athletes ages 14 to 20 are supported, accommodating re-classed student-athletes
-                  who take an additional year or prep school post-grad season for physical and
-                  athletic development.
+                  Only athletes ages 14 to 19 are eligible. Athletes under 18 must have a parent
+                  or legal guardian authorize participation before verification can be completed.
                 </p>
               </div>
 

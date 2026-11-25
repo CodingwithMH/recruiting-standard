@@ -21,6 +21,7 @@ test("schoolRegistrationSchema enforces all required institutional fields", () =
     postalCode: "68508",
     password: "AthleticDirector2026!",
     plan: "ANNUAL_1500" as const,
+    acceptTerms: true,
   };
 
   const result = schoolRegistrationSchema.safeParse(validData);
@@ -43,6 +44,7 @@ test("schoolRegistrationSchema rejects invalid emails and short passwords", () =
     provinceRegion: "Nebraska",
     postalCode: "68102",
     password: "ValidPassword123!",
+    acceptTerms: true,
   };
   const res1 = schoolRegistrationSchema.safeParse(invalidEmail);
   assert.equal(res1.success, false);
@@ -58,6 +60,7 @@ test("schoolRegistrationSchema rejects invalid emails and short passwords", () =
     provinceRegion: "Nebraska",
     postalCode: "68102",
     password: "short",
+    acceptTerms: true,
   };
   const res2 = schoolRegistrationSchema.safeParse(shortPassword);
   assert.equal(res2.success, false);
@@ -76,6 +79,7 @@ test("schoolRegistrationSchema accepts international province and postal code fo
     postalCode: "M5V 2T6",
     password: "International2026!",
     plan: "ANNUAL_1500",
+    acceptTerms: true,
   });
 
   assert.equal(result.success, true);
@@ -99,6 +103,7 @@ test("schoolRegistrationSchema defaults country and requires province/region and
     postalCode: "V6B 1A1",
     password: "NorthShore2026!",
     plan: "ANNUAL_1500" as const,
+    acceptTerms: true,
   };
 
   assert.equal(schoolRegistrationSchema.safeParse(base).success, true);
@@ -125,6 +130,7 @@ test("schoolRegistrationSchema supports both ANNUAL_1500 and MONTHLY_250 subscri
     provinceRegion: "Texas",
     postalCode: "78701",
     password: "OakCreekPassword2026!",
+    acceptTerms: true,
   };
 
   const annual = schoolRegistrationSchema.safeParse({ ...base, plan: "ANNUAL_1500" });

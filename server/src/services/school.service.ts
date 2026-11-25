@@ -8,10 +8,11 @@ import { sendSchoolMemberInvitation } from "./auth.service.js";
 import { sendSchoolRegistrationEmail } from "../utils/email.js";
 import { logger } from "../utils/logger.js";
 import { getPlanOption } from "./billingCatalog.js";
+import { recordLegalAcceptances } from "./legal.service.js";
 
 const MAX_SCHOOL_ID_ATTEMPTS = 25;
 
-type SchoolClient = Pick<typeof prisma, "school">;
+type SchoolClient = Pick<typeof prisma, "school" | "subscription">;
 
 // ----------------------------------------------------
 // Validation Schemas
@@ -32,6 +33,9 @@ export const schoolRegistrationSchema = z.object({
   postalCode: z.string().min(2, "Postal code is required").max(20),
   password: z.string().min(8, "Password must be at least 8 characters").max(128),
   plan: z.enum(["ANNUAL_1500", "MONTHLY_250"]).default("ANNUAL_1500"),
+  acceptTerms: z
+    .boolean()
+    .refine((value) => value === true, "You must agree to the Terms of Use"),
 });
 
 export const schoolProfileUpdateSchema = z
@@ -194,6 +198,8 @@ export async function registerSchool(input: SchoolRegistrationInput) {
       },
     });
 
+    await recordLegalAcceptances(tx, user.id);
+
     // 3. Create SchoolMembership with SCHOOL_ADMIN role
     await tx.schoolMembership.create({
       data: {
@@ -303,7 +309,7 @@ export async function approveSchool(
       return school;
     }
 
-    return db.school.update({
+    const approved = await db.school.update({
       where: { id: schoolId },
       data: {
         status: "APPROVED",
@@ -311,13 +317,20 @@ export async function approveSchool(
         approvedById,
       },
     });
+
+    await db.subscription.updateMany({
+      where: { schoolId },
+      data: { schoolCode: approved.schoolId },
+    });
+
+    return approved;
   }
 
   for (let attempt = 0; attempt < MAX_SCHOOL_ID_ATTEMPTS; attempt++) {
     const candidate = generateCandidateSchoolId();
 
     try {
-      return await db.school.update({
+      const approved = await db.school.update({
         where: { id: schoolId },
         data: {
           schoolId: candidate,
@@ -326,6 +339,13 @@ export async function approveSchool(
           approvedById,
         },
       });
+
+      await db.subscription.updateMany({
+        where: { schoolId },
+        data: { schoolCode: approved.schoolId },
+      });
+
+      return approved;
     } catch (error) {
       const isCollision =
         error instanceof Prisma.PrismaClientKnownRequestError &&

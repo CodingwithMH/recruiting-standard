@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft, List } from "lucide-react";
+import { ArrowLeft, List } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import type { LegalDocument } from "@/lib/legal-content";
 
@@ -24,8 +24,8 @@ export default function LegalPage({
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[#102341] text-xs font-semibold uppercase tracking-wider">
               <span>{legalDocument.eyebrow}</span>
             </div>
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold uppercase tracking-wider">
-              {legalDocument.status}
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold uppercase tracking-wider">
+              Effective {legalDocument.effectiveDate}
             </span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-semibold text-[#102341] tracking-tight leading-tight mb-3">
@@ -34,20 +34,11 @@ export default function LegalPage({
           <p className="text-sm sm:text-base text-[#65748a] leading-relaxed mb-3 max-w-2xl">
             {legalDocument.intro}
           </p>
-          <p className="text-xs text-slate-500 font-mono">{legalDocument.lastUpdated}</p>
         </div>
       </section>
 
       <section className="py-16 px-[6%] bg-white">
         <div className="max-w-5xl mx-auto">
-          <div className="p-5 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex items-start gap-3 mb-12">
-            <AlertCircle className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
-            <div className="text-xs sm:text-sm text-blue-900 leading-relaxed">
-              <strong>{legalDocument.draftNotice.split(".")[0]}.</strong>
-              {legalDocument.draftNotice.slice(legalDocument.draftNotice.indexOf(".") + 1)}
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <nav
               aria-label={`${legalDocument.eyebrow} sections`}
@@ -87,7 +78,23 @@ export default function LegalPage({
                   >
                     {section.title}
                   </h2>
-                  <p className="text-sm text-[#65748a] leading-relaxed m-0">{section.body}</p>
+                  <div className="space-y-3">
+                    {section.paragraphs.map((paragraph) => (
+                      <p
+                        key={paragraph}
+                        className="text-sm text-[#65748a] leading-relaxed m-0"
+                      >
+                        {paragraph}
+                      </p>
+                    ))}
+                    {section.bullets && (
+                      <ul className="list-disc pl-5 space-y-2 text-sm text-[#65748a] leading-relaxed">
+                        {section.bullets.map((bullet) => (
+                          <li key={bullet}>{bullet}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </section>
               ))}
             </article>

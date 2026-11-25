@@ -6,12 +6,6 @@ import {
   subscriptionAccessMessage,
 } from "../utils/subscriptionAccess.js";
 
-/**
- * Blocks recruiting features when the school's subscription is not active.
- * Subscription status is intentionally independent from school approval:
- * an APPROVED school can still be denied with HTTP 402 until it pays or is
- * explicitly activated by a Platform Admin.
- */
 export async function requireActiveSubscription(
   req: AuthenticatedRequest,
   res: Response,
@@ -26,13 +20,35 @@ export async function requireActiveSubscription(
     return;
   }
 
-  // Platform Admins have whole-platform oversight and bypass billing gates.
   if (req.user.globalRole === "PLATFORM_ADMIN") {
     next();
     return;
   }
 
-  const schoolId = req.user.schoolId || req.schoolId;
+  let schoolId = req.user.schoolId || req.schoolId;
+
+  if (!schoolId && req.user.globalRole === "PARENT") {
+    const link = await prisma.parentAthleteLink.findFirst({
+      where: { parentUserId: req.user.userId, status: "ACTIVE" },
+      select: {
+        athlete: {
+          select: {
+            schoolId: true,
+            memberships: {
+              where: { status: "ACTIVE" },
+              select: { schoolId: true },
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+
+    schoolId =
+      link?.athlete.schoolId ||
+      link?.athlete.memberships[0]?.schoolId ||
+      undefined;
+  }
 
   if (!schoolId) {
     res.status(403).json({
@@ -44,10 +60,20 @@ export async function requireActiveSubscription(
   }
 
   try {
-    const subscription = await prisma.subscription.findUnique({
+    let subscription = await prisma.subscription.findUnique({
       where: { schoolId },
       select: { state: true, expirationDate: true },
     });
+
+    if (!subscription) {
+      const school = await prisma.school.findUnique({
+        where: { schoolId },
+        select: {
+          subscription: { select: { state: true, expirationDate: true } },
+        },
+      });
+      subscription = school?.subscription ?? null;
+    }
 
     const decision = evaluateSubscriptionAccess(subscription);
 

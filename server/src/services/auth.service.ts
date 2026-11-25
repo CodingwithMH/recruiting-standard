@@ -9,6 +9,13 @@ import {
   sendSchoolMemberInvitationEmail,
 } from "../utils/email.js";
 import { logger } from "../utils/logger.js";
+import { LEGAL_VERSIONS } from "../config/legal.js";
+import { recordLegalAcceptances } from "./legal.service.js";
+import { athleteRequiresGuardianConsent } from "./verificationRequirements.service.js";
+import {
+  createGuardianAuthorization,
+  sendGuardianAuthorizationEmail,
+} from "./guardianAuthorization.service.js";
 
 // ----------------------------------------------------
 // Validation Schemas
@@ -28,6 +35,19 @@ export const registerSchema = z.object({
     .default("SCHOOL_STAFF"),
   schoolId: z.string().trim().optional(),
   dateOfBirth: z.string().trim().optional(),
+  acceptTerms: z
+    .boolean()
+    .refine((value) => value === true, "You must agree to the Terms of Use"),
+  termsVersion: z.string().trim().optional(),
+  privacyPolicyVersion: z.string().trim().optional(),
+  guardianAuthorization: z
+    .object({
+      guardianName: z.string().trim().min(2).max(100),
+      guardianEmail: z.string().trim().email(),
+      authorizationAccepted: z.literal(true),
+      version: z.string().trim().optional(),
+    })
+    .optional(),
 });
 
 export const loginSchema = z.object({
@@ -77,6 +97,41 @@ export class AuthError extends Error {
  * Returns a signed JWT token and the created user profile.
  */
 export async function registerUser(input: RegisterInput) {
+  if (input.acceptTerms !== true) {
+    throw new AuthError("You must agree to the Terms of Use.", 400);
+  }
+
+  if (
+    input.termsVersion &&
+    input.termsVersion !== LEGAL_VERSIONS.TERMS_OF_USE
+  ) {
+    throw new AuthError(
+      "The Terms of Use have changed. Please refresh the signup page and agree to the current version.",
+      409
+    );
+  }
+
+  if (
+    input.privacyPolicyVersion &&
+    input.privacyPolicyVersion !== LEGAL_VERSIONS.PRIVACY_POLICY
+  ) {
+    throw new AuthError(
+      "The Privacy Policy has changed. Please refresh the signup page and review the current version.",
+      409
+    );
+  }
+
+  if (
+    input.guardianAuthorization?.version &&
+    input.guardianAuthorization.version !==
+      LEGAL_VERSIONS.GUARDIAN_AUTHORIZATION
+  ) {
+    throw new AuthError(
+      "The guardian authorization version has changed. Please refresh the signup page.",
+      409
+    );
+  }
+
   const existing = await prisma.user.findUnique({
     where: { email: input.email.toLowerCase() },
   });
@@ -92,7 +147,7 @@ export async function registerUser(input: RegisterInput) {
   let parsedDob: Date | undefined = undefined;
 
   if (input.globalRole === "ATHLETE") {
-    // 1. Validate Date of Birth (Ages 14 - 20)
+    // 1. Validate Date of Birth (Ages 14 - 19)
     if (!input.dateOfBirth) {
       throw new AuthError(
         "Date of birth is required for student-athlete registration.",
@@ -121,9 +176,9 @@ export async function registerUser(input: RegisterInput) {
         400
       );
     }
-    if (age > 20) {
+    if (age > 19) {
       throw new AuthError(
-        "Student-athletes must be 20 years of age or younger to register (including re-classified athletes).",
+        "Student-athletes must be 19 years of age or younger to register.",
         400
       );
     }
@@ -168,32 +223,67 @@ export async function registerUser(input: RegisterInput) {
   }
 
   const isAthlete = input.globalRole === "ATHLETE";
+  const guardianRequired =
+    isAthlete && athleteRequiresGuardianConsent(parsedDob ?? null);
+
+  if (guardianRequired && !input.guardianAuthorization) {
+    throw new AuthError(
+      "A parent or legal guardian must be identified and authorize participation for athletes under 18.",
+      400
+    );
+  }
+
   const passwordHash = await hashPassword(input.password);
 
-  const user = await prisma.user.create({
-    data: {
-      email: input.email.toLowerCase(),
-      passwordHash,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      phone: input.phone || null,
-      globalRole: input.globalRole,
-      dateOfBirth: parsedDob,
-      schoolId: verifiedSchoolId,
-      status: isAthlete ? "PENDING" : "ACTIVE",
-    },
-    select: {
-      id: true,
-      email: true,
-      firstName: true,
-      lastName: true,
-      globalRole: true,
-      schoolId: true,
-      status: true,
-      tokenVersion: true,
-      createdAt: true,
-    },
+  const registration = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        email: input.email.toLowerCase(),
+        passwordHash,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone || null,
+        globalRole: input.globalRole,
+        dateOfBirth: parsedDob,
+        schoolId: verifiedSchoolId,
+        status: isAthlete ? "PENDING" : "ACTIVE",
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        globalRole: true,
+        schoolId: true,
+        status: true,
+        tokenVersion: true,
+        createdAt: true,
+      },
+    });
+
+    await recordLegalAcceptances(tx, user.id);
+
+    const guardianAuthorization =
+      guardianRequired && input.guardianAuthorization
+        ? await createGuardianAuthorization(
+            user.id,
+            {
+              guardianName: input.guardianAuthorization.guardianName,
+              guardianEmail: input.guardianAuthorization.guardianEmail,
+              athleteName: `${input.firstName.trim()} ${input.lastName.trim()}`,
+            },
+            tx
+          )
+        : undefined;
+
+    return { user, guardianAuthorization };
   });
+
+  const { user, guardianAuthorization } = registration;
+
+  if (guardianAuthorization) {
+    await sendGuardianAuthorizationEmail(user.id, guardianAuthorization);
+  }
 
   let token: string | null = null;
 
@@ -219,6 +309,13 @@ export async function registerUser(input: RegisterInput) {
     user,
     token,
     isPendingVerification: isAthlete,
+    guardianAuthorization: guardianAuthorization
+      ? {
+          guardianEmail: guardianAuthorization.guardianEmail,
+          status: guardianAuthorization.status,
+          expiresAt: guardianAuthorization.expiresAt.toISOString(),
+        }
+      : undefined,
     message: isAthlete
       ? "Registration submitted successfully. Your student-athlete account is pending verification by your school and Platform Administration."
       : undefined,

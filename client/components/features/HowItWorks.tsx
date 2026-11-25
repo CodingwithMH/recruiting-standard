@@ -53,10 +53,9 @@ export default function HowItWorks() {
         </div>
 
         <p className="mt-8 text-center text-xs text-[#65748a] leading-relaxed max-w-2xl mx-auto">
-          <strong className="text-[#102341]">Delivery status:</strong> account creation and
-          consent-based guardian linking are live now. Athlete profiles and document verification
-          arrive in Milestone 3. Approved-athlete search and recruiting records arrive in Milestone
-          4.
+          <strong className="text-[#102341]">Delivery status:</strong> account creation,
+          consent-based guardian linking, athlete profiles, document verification,
+          approved-athlete search, and recruiting records are all live now.
         </p>
 
         <div className="mt-10 text-center">

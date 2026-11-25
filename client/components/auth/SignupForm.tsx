@@ -19,8 +19,28 @@ import {
 import SiteLink from "@/components/ui/SiteLink";
 import { apiRequest, AuthResponse } from "@/lib/api";
 import { saveSession } from "@/lib/auth";
+import { LEGAL_VERSIONS } from "@/lib/legal-content";
 
 type SignupRole = "ATHLETE" | "PARENT";
+
+function calculateAge(value: string): number | null {
+  if (!value) return null;
+  const dob = new Date(value);
+  if (isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+function requiresGuardianAuthorization(role: string, dateOfBirth: unknown) {
+  if (role !== "ATHLETE" || typeof dateOfBirth !== "string") return false;
+  const age = calculateAge(dateOfBirth);
+  return age !== null && age < 18;
+}
 
 const signupSchema = Yup.object({
   globalRole: Yup.string().oneOf(["ATHLETE", "PARENT"]).required(),
@@ -56,18 +76,38 @@ const signupSchema = Yup.object({
     then: (schema) =>
       schema
         .required("Date of birth is required")
-        .test("age-range", "Athlete must be between 14 and 20 years of age", (value) => {
-          if (!value) return false;
-          const dob = new Date(value);
-          if (isNaN(dob.getTime())) return false;
-          const today = new Date();
-          let age = today.getFullYear() - dob.getFullYear();
-          const monthDiff = today.getMonth() - dob.getMonth();
-          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            age--;
-          }
-          return age >= 14 && age <= 20;
+        .test("age-range", "Athlete must be between 14 and 19 years of age", (value) => {
+          const age = calculateAge(value || "");
+          return age !== null && age >= 14 && age <= 19;
         }),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  guardianName: Yup.string().when(["globalRole", "dateOfBirth"], {
+    is: (role: string, dateOfBirth: unknown) =>
+      requiresGuardianAuthorization(role, dateOfBirth),
+    then: (schema) =>
+      schema
+        .trim()
+        .min(2, "Guardian name is required")
+        .max(100)
+        .required("Guardian name is required"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  guardianEmail: Yup.string().when(["globalRole", "dateOfBirth"], {
+    is: (role: string, dateOfBirth: unknown) =>
+      requiresGuardianAuthorization(role, dateOfBirth),
+    then: (schema) =>
+      schema
+        .trim()
+        .email("Please enter a valid guardian email address")
+        .required("Guardian email is required"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  guardianAuthorizationAccepted: Yup.bool().when(["globalRole", "dateOfBirth"], {
+    is: (role: string, dateOfBirth: unknown) =>
+      requiresGuardianAuthorization(role, dateOfBirth),
+    then: (schema) =>
+      schema.oneOf([true], "Guardian authorization is required for athletes under 18"),
     otherwise: (schema) => schema.notRequired(),
   }),
   password: Yup.string()
@@ -77,10 +117,7 @@ const signupSchema = Yup.object({
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Please confirm your password"),
-  agreeToTerms: Yup.bool().oneOf(
-    [true],
-    "Please confirm the Terms of Use and Privacy Policy"
-  ),
+  agreeToTerms: Yup.bool().oneOf([true], "Please agree to the Terms of Use"),
 });
 
 const roleOptions: Array<{
@@ -92,7 +129,7 @@ const roleOptions: Array<{
   {
     value: "ATHLETE",
     label: "Student-Athlete",
-    description: "Ages 14–20. Must be enrolled at an approved participating school.",
+    description: "Ages 14–19. Must be enrolled at an approved participating school.",
     icon: GraduationCap,
   },
   {
@@ -110,6 +147,11 @@ export default function SignupForm() {
   const [pendingAthlete, setPendingAthlete] = useState<{
     email: string;
     schoolId: string;
+    guardianAuthorization?: {
+      guardianEmail: string;
+      status: "PENDING" | "AUTHORIZED";
+      expiresAt: string;
+    };
   } | null>(null);
 
   const formik = useFormik({
@@ -121,6 +163,9 @@ export default function SignupForm() {
       phone: "",
       schoolId: "",
       dateOfBirth: "",
+      guardianName: "",
+      guardianEmail: "",
+      guardianAuthorizationAccepted: false,
       password: "",
       confirmPassword: "",
       agreeToTerms: false,
@@ -144,6 +189,20 @@ export default function SignupForm() {
           dateOfBirth:
             values.globalRole === "ATHLETE" ? values.dateOfBirth : undefined,
           password: values.password,
+          acceptTerms: values.agreeToTerms,
+          termsVersion: LEGAL_VERSIONS.TERMS_OF_USE,
+          privacyPolicyVersion: LEGAL_VERSIONS.PRIVACY_POLICY,
+          guardianAuthorization: requiresGuardianAuthorization(
+            values.globalRole,
+            values.dateOfBirth
+          )
+            ? {
+                guardianName: values.guardianName,
+                guardianEmail: values.guardianEmail,
+                authorizationAccepted: values.guardianAuthorizationAccepted,
+                version: LEGAL_VERSIONS.GUARDIAN_AUTHORIZATION,
+              }
+            : undefined,
         }),
       });
 
@@ -164,6 +223,7 @@ export default function SignupForm() {
         setPendingAthlete({
           email: values.email,
           schoolId: values.schoolId.toUpperCase().trim(),
+          guardianAuthorization: response.data.guardianAuthorization,
         });
         resetForm();
         return;
@@ -191,6 +251,10 @@ export default function SignupForm() {
     }`;
 
   const isAthlete = formik.values.globalRole === "ATHLETE";
+  const needsGuardian = requiresGuardianAuthorization(
+    formik.values.globalRole,
+    formik.values.dateOfBirth
+  );
 
   if (pendingAthlete) {
     return (
@@ -206,7 +270,7 @@ export default function SignupForm() {
               Account Submitted for Approval
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-slate-300">
-              Your student-athlete registration has been received and must be verified before login.
+              Your registration has been received and must be verified before login.
             </p>
           </div>
         </div>
@@ -237,11 +301,33 @@ export default function SignupForm() {
             </div>
           </div>
 
+          {pendingAthlete.guardianAuthorization && (
+            <div className="p-4 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-950 text-xs leading-relaxed space-y-1.5">
+              <span className="font-semibold block text-blue-900">
+                Guardian Authorization Sent
+              </span>
+              <p>
+                We emailed an authorization link to{" "}
+                <span className="font-semibold">
+                  {pendingAthlete.guardianAuthorization.guardianEmail}
+                </span>
+                . Your athlete profile cannot be approved until a parent or legal guardian
+                confirms that authorization.
+              </p>
+            </div>
+          )}
+
           <div className="text-xs text-slate-600 leading-relaxed space-y-2">
             <p>
               <strong className="text-[#102341]">What happens next?</strong>
             </p>
             <ul className="list-disc pl-5 space-y-1 text-slate-500">
+              {pendingAthlete.guardianAuthorization && (
+                <li>
+                  Your parent or legal guardian opens the emailed link and authorizes your
+                  participation.
+                </li>
+              )}
               <li>
                 Your school&apos;s athletic department and Platform Administration will verify your enrollment and eligibility.
               </li>
@@ -291,8 +377,7 @@ export default function SignupForm() {
             Join the recruiting standard.
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-slate-300">
-            Student-athletes must enter their approved School ID and be between 14–20 years of age
-            (including re-classified athletes).
+            Student-athletes must enter their approved School ID and be between 14–19 years of age.
           </p>
         </div>
       </div>
@@ -389,7 +474,7 @@ export default function SignupForm() {
                   htmlFor="signup-dateOfBirth"
                   className="block text-xs font-semibold text-[#102341]"
                 >
-                  Date of Birth (Ages 14–20) *
+                  Date of Birth (Ages 14–19) *
                 </label>
                 <div className="relative">
                   <input
@@ -408,10 +493,94 @@ export default function SignupForm() {
                   </p>
                 ) : (
                   <p className="text-[10px] text-[#65748a]">
-                    Must be 14–20 years old (supports re-classing).
+                    Athletes must be 14–19 years old.
                   </p>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {needsGuardian && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+              <ShieldAlert className="h-4 w-4 text-amber-700" />
+              <span>Parent / Legal Guardian Authorization</span>
+            </div>
+            <p className="text-[11px] text-amber-950/80 leading-relaxed">
+              Athletes under 18 must have a parent or legal guardian authorize participation.
+              We will email the guardian a separate confirmation link after this account is submitted.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="signup-guardianName"
+                  className="block text-xs font-semibold text-[#102341]"
+                >
+                  Guardian full name *
+                </label>
+                <input
+                  id="signup-guardianName"
+                  name="guardianName"
+                  value={formik.values.guardianName}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className={inputClass("guardianName")}
+                />
+                {isInvalid("guardianName") && (
+                  <p className="text-[11px] text-red-600 font-medium">
+                    {formik.errors.guardianName}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="signup-guardianEmail"
+                  className="block text-xs font-semibold text-[#102341]"
+                >
+                  Guardian email address *
+                </label>
+                <input
+                  id="signup-guardianEmail"
+                  name="guardianEmail"
+                  type="email"
+                  autoComplete="email"
+                  value={formik.values.guardianEmail}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className={inputClass("guardianEmail")}
+                />
+                {isInvalid("guardianEmail") && (
+                  <p className="text-[11px] text-red-600 font-medium">
+                    {formik.errors.guardianEmail}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="signup-guardianAuthorizationAccepted"
+                className="flex items-start gap-2.5 cursor-pointer"
+              >
+                <input
+                  id="signup-guardianAuthorizationAccepted"
+                  name="guardianAuthorizationAccepted"
+                  type="checkbox"
+                  checked={formik.values.guardianAuthorizationAccepted}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-[#102341] focus:ring-[#102341] cursor-pointer"
+                />
+                <span className="text-[11px] text-amber-950/80 leading-relaxed">
+                  I confirm this parent or legal guardian has reviewed and authorizes this
+                  registration. A separate confirmation email will be sent to them.
+                </span>
+              </label>
+              {isInvalid("guardianAuthorizationAccepted") && (
+                <p className="text-[11px] text-red-600 font-medium">
+                  {formik.errors.guardianAuthorizationAccepted}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -552,16 +721,15 @@ export default function SignupForm() {
               className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-[#102341] focus:ring-[#102341] cursor-pointer"
             />
             <span className="text-[11px] text-[#65748a] leading-relaxed">
-              I confirm I am between 14 and 20 years old (or a parent/guardian registering on behalf
-              of an athlete), and I agree to the{" "}
+              I agree to the{" "}
               <SiteLink
                 href="/terms"
                 onClick={(event) => event.stopPropagation()}
                 className="font-semibold text-[#102341] hover:underline"
               >
                 Terms of Use
-              </SiteLink>{" "}
-              and{" "}
+              </SiteLink>
+              , effective November 25, 2026, and acknowledge the{" "}
               <SiteLink
                 href="/privacy-policy"
                 onClick={(event) => event.stopPropagation()}

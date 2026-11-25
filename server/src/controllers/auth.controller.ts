@@ -13,6 +13,13 @@ import {
   AuthError,
 } from "../services/auth.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
+import {
+  guardianAuthorizationLookupSchema,
+  guardianAuthorizationConfirmSchema,
+  confirmGuardianAuthorization,
+  getGuardianAuthorizationForToken,
+  GuardianAuthorizationError,
+} from "../services/guardianAuthorization.service.js";
 
 /**
  * POST /api/v1/auth/register
@@ -232,6 +239,91 @@ export async function me(
     });
   } catch (err) {
     if (err instanceof AuthError) {
+      res.status(err.statusCode).json({
+        success: false,
+        error: err.message,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+    next(err);
+  }
+}
+
+/**
+ * GET /api/v1/auth/guardian-authorization/:token
+ * Returns the pending guardian authorization details for a token link.
+ */
+export async function getGuardianAuthorization(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = guardianAuthorizationLookupSchema.safeParse({
+      token: req.params.token,
+    });
+
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: "A valid guardian authorization link is required.",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const authorization = await getGuardianAuthorizationForToken(parsed.data.token);
+
+    res.status(200).json({
+      success: true,
+      data: authorization,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    if (err instanceof GuardianAuthorizationError) {
+      res.status(err.statusCode).json({
+        success: false,
+        error: err.message,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+    next(err);
+  }
+}
+
+/**
+ * POST /api/v1/auth/guardian-authorization/confirm
+ * Records a parent or legal guardian's separate authorization decision.
+ */
+export async function confirmGuardianAuthorizationHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = guardianAuthorizationConfirmSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: "Validation failed",
+        details: parsed.error.flatten().fieldErrors,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const authorization = await confirmGuardianAuthorization(parsed.data);
+
+    res.status(200).json({
+      success: true,
+      data: authorization,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    if (err instanceof GuardianAuthorizationError) {
       res.status(err.statusCode).json({
         success: false,
         error: err.message,

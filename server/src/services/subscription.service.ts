@@ -298,7 +298,12 @@ async function findSubscription(
 ): Promise<SubscriptionWithSchool | null> {
   if (isValidSchoolId(identifier)) {
     return prisma.subscription.findFirst({
-      where: { school: { schoolId: identifier } },
+      where: {
+        OR: [
+          { schoolCode: identifier },
+          { school: { schoolId: identifier } },
+        ],
+      },
       include: subscriptionInclude,
     });
   }
@@ -480,7 +485,7 @@ export async function getSchoolSubscription(schoolId: string) {
     id: subscription.id,
     schoolId: subscription.schoolId,
     schoolName: subscription.school.name,
-    schoolCode: subscription.school.schoolId,
+    schoolCode: subscription.schoolCode || subscription.school.schoolId,
     plan: subscription.plan,
     planPriceCents: bill.basePriceCents,
     priceOptionId: subscription.priceOptionId,
@@ -521,13 +526,13 @@ export async function listSubscriptions(query: SubscriptionListQuery = {}) {
   const subscriptions = await prisma.subscription.findMany({
     where: {
       ...(query.plan ? { plan: query.plan } : {}),
-      ...(query.state ? { state: query.state } : {}),
       ...(query.paymentStatus ? { paymentStatus: query.paymentStatus } : {}),
     },
     orderBy: { updatedAt: "desc" },
     select: {
       id: true,
       schoolId: true,
+      schoolCode: true,
       plan: true,
       paymentStatus: true,
       state: true,
@@ -568,7 +573,7 @@ export async function listSubscriptions(query: SubscriptionListQuery = {}) {
         id: subscription.id,
         schoolId: subscription.schoolId,
         schoolName: subscription.school.name,
-        schoolCode: subscription.school.schoolId,
+        schoolCode: subscription.schoolCode || subscription.school.schoolId,
         schoolStatus: subscription.school.status,
         contactEmail: subscription.school.contactEmail,
         plan: subscription.plan,
@@ -612,6 +617,10 @@ export async function listSubscriptions(query: SubscriptionListQuery = {}) {
         subscription.schoolId !== query.schoolId &&
         subscription.schoolCode !== query.schoolId
       ) {
+        return false;
+      }
+
+      if (query.state && subscription.effectiveState !== query.state) {
         return false;
       }
 

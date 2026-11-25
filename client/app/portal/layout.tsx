@@ -32,6 +32,7 @@ function PortalShell({
   const pathname = usePathname();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +54,14 @@ function PortalShell({
       if (cancelled) return;
 
       if (!res.success || !res.data) {
+        if (res.code === "SUBSCRIPTION_INACTIVE") {
+          setSubscriptionMessage(
+            res.error || "Your school subscription is not active."
+          );
+          setLoading(false);
+          return;
+        }
+
         endSession();
         router.replace("/login");
         return;
@@ -77,6 +86,31 @@ function PortalShell({
 
   if (loading) {
     return <PortalLoading />;
+  }
+
+  if (subscriptionMessage) {
+    return (
+      <div className="min-h-screen bg-[#f4f7fc] flex items-center justify-center p-6">
+        <div className="bg-white max-w-md w-full rounded-2xl border border-amber-200 p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold text-[#102341]">
+            Portal Access Unavailable
+          </h1>
+          <p className="text-xs text-[#65748a] leading-relaxed">
+            {subscriptionMessage}
+          </p>
+          <button
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1b3556] text-white text-xs font-bold cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const primaryMembership = user?.memberships?.[0];
