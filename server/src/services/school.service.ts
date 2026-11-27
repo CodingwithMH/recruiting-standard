@@ -700,15 +700,27 @@ export async function resendSchoolMemberInvitation(
 export async function updateSchoolMember(
   schoolId: string,
   membershipId: string,
-  input: UpdateSchoolMemberInput
+  input: UpdateSchoolMemberInput,
+  actorUserId: string
 ) {
   const membership = await prisma.schoolMembership.findFirst({
     where: { id: membershipId, schoolId, status: "ACTIVE" },
-    select: { id: true, role: true },
+    select: { id: true, userId: true, role: true },
   });
 
   if (!membership) {
     throw new SchoolManagementError("Active membership not found.", 404);
+  }
+
+  if (
+    membership.userId === actorUserId &&
+    input.role !== undefined &&
+    input.role !== "SCHOOL_ADMIN"
+  ) {
+    throw new SchoolManagementError(
+      "You cannot demote your own school admin role. Ask another School Admin to change your access.",
+      400
+    );
   }
 
   if (
@@ -758,11 +770,12 @@ export async function updateSchoolMember(
  */
 export async function removeSchoolMember(
   schoolId: string,
-  membershipId: string
+  membershipId: string,
+  actorUserId: string
 ) {
   const membership = await prisma.schoolMembership.findFirst({
     where: { id: membershipId, schoolId },
-    select: { id: true, role: true, status: true },
+    select: { id: true, userId: true, role: true, status: true },
   });
 
   if (!membership) {
@@ -771,6 +784,13 @@ export async function removeSchoolMember(
 
   if (membership.status === "REVOKED") {
     return { id: membership.id, status: "REVOKED" as const };
+  }
+
+  if (membership.userId === actorUserId) {
+    throw new SchoolManagementError(
+      "You cannot remove your own school membership. Ask another School Admin to manage your access.",
+      400
+    );
   }
 
   if (membership.role === "SCHOOL_ADMIN") {

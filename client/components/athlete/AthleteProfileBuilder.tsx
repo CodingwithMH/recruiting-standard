@@ -479,7 +479,7 @@ export default function AthleteProfileBuilder() {
         priorVerificationStatus === "APPROVED" ||
           priorVerificationStatus === "REJECTED"
           ? "Athlete profile saved. Because your profile changed, submit it again for verification."
-          : "Athlete profile saved. Your profile is now visible to coaches."
+          : "Athlete profile saved. Submit it for verification before it can be visible to coaches."
       );
     } else {
       setError(res.error || "Unable to save your athlete profile.");

@@ -657,12 +657,18 @@ export default function SchoolSettingsPage() {
 
                   {members.map((member) => {
                     const busy = busyMemberId === member.id;
+                    const isSelf = member.user.id === user?.id;
 
                     return (
                       <tr key={member.id} className="border-b border-slate-100 last:border-0">
                         <td className="px-6 py-4">
                           <span className="block font-bold text-[#102341]">
                             {member.user.firstName} {member.user.lastName}
+                            {isSelf && (
+                              <span className="ml-2 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                                You
+                              </span>
+                            )}
                           </span>
                           <span className="block text-[11px] text-[#65748a]">
                             {member.user.email}
@@ -677,7 +683,8 @@ export default function SchoolSettingsPage() {
                                 event.target.value as MemberRole
                               )
                             }
-                            disabled={busy}
+                            disabled={busy || isSelf}
+                            title={isSelf ? "You cannot change your own role." : undefined}
                             className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#102341] disabled:opacity-60"
                           >
                             <option value="SCHOOL_ADMIN">School Admin</option>
@@ -698,6 +705,16 @@ export default function SchoolSettingsPage() {
                             >
                               <Mail className="w-3.5 h-3.5" />
                               Resend Invite
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleRemove(member)}
+                              disabled={busy || isSelf}
+                              title={isSelf ? "You cannot remove your own membership." : undefined}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 text-red-800 text-[11px] font-bold disabled:opacity-60 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Remove
                             </button>
                             <button
                               type="button"

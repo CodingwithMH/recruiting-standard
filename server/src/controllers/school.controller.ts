@@ -312,11 +312,16 @@ export async function handleAddMember(
  * Updates a membership's role or title.
  */
 export async function handleUpdateMember(
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
+    if (!req.user?.userId) {
+      res.status(401).json({ success: false, error: "Authentication required.", timestamp: new Date().toISOString() });
+      return;
+    }
+
     const parsed = updateSchoolMemberSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -327,7 +332,8 @@ export async function handleUpdateMember(
     const member = await updateSchoolMember(
       getParam(req.params.id),
       getParam(req.params.membershipId),
-      parsed.data
+      parsed.data,
+      req.user.userId
     );
 
     res.status(200).json({
@@ -346,14 +352,19 @@ export async function handleUpdateMember(
  * Revokes a membership.
  */
 export async function handleRemoveMember(
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
+    if (!req.user?.userId) {
+      res.status(401).json({ success: false, error: "Authentication required.", timestamp: new Date().toISOString() });
+      return;
+    }
     const membership = await removeSchoolMember(
       getParam(req.params.id),
-      getParam(req.params.membershipId)
+      getParam(req.params.membershipId),
+      req.user.userId
     );
 
     res.status(200).json({
