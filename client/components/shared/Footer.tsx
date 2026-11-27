@@ -1,7 +1,38 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
+import type { UserProfile } from "@/lib/api";
+import { getRoleHomePath, getStoredUser, isAuthenticated } from "@/lib/auth";
 
 export default function Footer() {
+  const [session, setSession] = useState<{
+    ready: boolean;
+    authenticated: boolean;
+    user: UserProfile | null;
+  }>({ ready: false, authenticated: false, user: null });
+
+  useEffect(() => {
+    const syncSession = () => {
+      const authenticated = isAuthenticated();
+      setSession({
+        ready: true,
+        authenticated,
+        user: authenticated ? getStoredUser() : null,
+      });
+    };
+
+    syncSession();
+    window.addEventListener("storage", syncSession);
+    window.addEventListener("focus", syncSession);
+
+    return () => {
+      window.removeEventListener("storage", syncSession);
+      window.removeEventListener("focus", syncSession);
+    };
+  }, []);
+
   return (
     <footer className="bg-[#102341] text-white py-16 px-[6%]">
       <div className="max-w-7xl mx-auto">
@@ -29,13 +60,23 @@ export default function Footer() {
             <span className="text-white font-medium">Let&apos;s build yours.</span>
           </p>
 
-          <SiteLink
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#bed8ff] text-[#102341] font-bold text-xs sm:text-sm hover:bg-white transition-all shrink-0"
-            href="/school-registration"
-          >
-            <span>Register your school</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </SiteLink>
+          {session.ready && (
+            <SiteLink
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#bed8ff] text-[#102341] font-bold text-xs sm:text-sm hover:bg-white transition-all shrink-0"
+              href={
+                session.authenticated
+                  ? getRoleHomePath(session.user?.globalRole)
+                  : "/school-registration"
+              }
+            >
+              <span>
+                {session.authenticated
+                  ? "Go to Dashboard"
+                  : "Register your school"}
+              </span>
+              <ArrowUpRight className="w-4 h-4" />
+            </SiteLink>
+          )}
         </div>
 
         <div className="pt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 text-xs text-slate-400">

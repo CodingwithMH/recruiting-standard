@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import { apiRequest, AuthResponse } from "@/lib/api";
-import { saveSession } from "@/lib/auth";
+import { saveSession, getRoleHomePath } from "@/lib/auth";
 import { LEGAL_VERSIONS } from "@/lib/legal-content";
 
 type SignupRole = "ATHLETE" | "PARENT";
@@ -232,11 +232,7 @@ export default function SignupForm() {
       saveSession(response.data.token, response.data.user);
       resetForm();
 
-      router.replace(
-        response.data.user.globalRole === "PARENT"
-          ? "/portal/parent"
-          : "/portal/athlete"
-      );
+      router.replace(getRoleHomePath(response.data.user.globalRole));
     },
   });
 

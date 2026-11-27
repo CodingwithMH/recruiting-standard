@@ -58,6 +58,22 @@ export function isAuthenticated(): boolean {
   return !!getStoredToken();
 }
 
+export function getRoleHomePath(
+  role?: UserProfile["globalRole"] | null
+): string {
+  switch (role) {
+    case "PLATFORM_ADMIN":
+      return "/admin/dashboard";
+    case "ATHLETE":
+      return "/portal/athlete";
+    case "PARENT":
+      return "/portal/parent";
+    case "SCHOOL_STAFF":
+    default:
+      return "/portal/dashboard";
+  }
+}
+
 export function isSchoolPending(): boolean {
   const user = getStoredUser();
   if (!user || !user.memberships || user.memberships.length === 0) return false;

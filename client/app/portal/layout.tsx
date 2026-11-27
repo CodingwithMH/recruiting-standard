@@ -19,6 +19,7 @@ import {
   setStoredUser,
   signOut,
   isAuthenticated,
+  getRoleHomePath,
 } from "@/lib/auth";
 import { apiRequest } from "@/lib/api";
 import type { UserProfile } from "@/lib/api";
@@ -33,6 +34,8 @@ function PortalShell({
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [verificationAttempt, setVerificationAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +48,8 @@ function PortalShell({
     const cached = getStoredUser();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setUser(cached);
+    setVerificationError(null);
+    setLoading(true);
 
     const verifySession = async () => {
       // Re-validate against the server on every portal entry so direct links
@@ -62,13 +67,25 @@ function PortalShell({
           return;
         }
 
-        endSession();
-        router.replace("/login");
+        // Only an explicit rejection of the token means the session is gone.
+        // Network failures and temporary server/database errors must not log
+        // a valid user out or they bounce back to /login after the spinner.
+        if (res.status === 401) {
+          endSession();
+          router.replace("/login");
+          return;
+        }
+
+        setVerificationError(
+          res.error || "Unable to verify your session. Please try again."
+        );
+        setLoading(false);
         return;
       }
 
       setStoredUser(res.data);
       setUser(res.data);
+      setVerificationError(null);
       setLoading(false);
     };
 
@@ -77,15 +94,102 @@ function PortalShell({
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, verificationAttempt]);
 
   const handleSignOut = async () => {
     await signOut();
     window.location.replace("/login");
   };
 
+  const primaryMembership = user?.memberships?.[0];
+  const schoolName = primaryMembership?.school.name || "School Portal";
+  const schoolId = primaryMembership?.school.schoolId;
+  const schoolStatus = primaryMembership?.school.status;
+  const isUserBlocked = !!user && user.status !== "ACTIVE";
+  const isSchoolBlocked =
+    user?.globalRole === "SCHOOL_STAFF" &&
+    !!schoolStatus &&
+    schoolStatus !== "APPROVED";
+  const roleHome = getRoleHomePath(user?.globalRole);
+
+  useEffect(() => {
+    if (
+      loading ||
+      verificationError ||
+      subscriptionMessage ||
+      !user ||
+      isUserBlocked ||
+      isSchoolBlocked ||
+      !pathname
+    ) {
+      return;
+    }
+
+    const allowedPaths =
+      user.globalRole === "SCHOOL_STAFF"
+        ? [
+            "/portal/dashboard",
+            "/portal/search",
+            "/portal/prospects",
+            "/portal/records",
+            "/portal/athletes",
+            "/portal/school",
+          ]
+        : [roleHome];
+    const isAllowed = allowedPaths.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`)
+    );
+
+    if (!isAllowed) {
+      router.replace(roleHome);
+    }
+  }, [
+    loading,
+    verificationError,
+    subscriptionMessage,
+    user,
+    pathname,
+    router,
+    isUserBlocked,
+    isSchoolBlocked,
+    roleHome,
+  ]);
+
   if (loading) {
     return <PortalLoading />;
+  }
+
+  if (verificationError) {
+    return (
+      <div className="min-h-screen bg-[#f4f7fc] flex items-center justify-center p-6">
+        <div className="bg-white max-w-md w-full rounded-2xl border border-amber-200 p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold text-[#102341]">
+            Could Not Verify Your Session
+          </h1>
+          <p className="text-xs text-[#65748a] leading-relaxed">
+            {verificationError}
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => setVerificationAttempt((attempt) => attempt + 1)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#102341] hover:bg-[#1b3556] text-white text-xs font-bold cursor-pointer"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 bg-white text-[#102341] text-xs font-bold cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (subscriptionMessage) {
@@ -112,16 +216,6 @@ function PortalShell({
       </div>
     );
   }
-
-  const primaryMembership = user?.memberships?.[0];
-  const schoolName = primaryMembership?.school.name || "School Portal";
-  const schoolId = primaryMembership?.school.schoolId;
-  const schoolStatus = primaryMembership?.school.status;
-  const isUserBlocked = !!user && user.status !== "ACTIVE";
-  const isSchoolBlocked =
-    user?.globalRole === "SCHOOL_STAFF" &&
-    !!schoolStatus &&
-    schoolStatus !== "APPROVED";
 
   if (isUserBlocked || isSchoolBlocked) {
     return (
@@ -159,44 +253,48 @@ function PortalShell({
     );
   }
 
-  const isSchoolAdmin = primaryMembership?.role === "SCHOOL_ADMIN";
+  const isSchoolStaff = user?.globalRole === "SCHOOL_STAFF";
+  const isSchoolAdmin =
+    isSchoolStaff && primaryMembership?.role === "SCHOOL_ADMIN";
 
-  const navLinks = [
-    {
-      href: "/portal/search",
-      label: "Talent Search",
-      icon: Search,
-    },
-    {
-      href: "/portal/prospects",
-      label: "Prospects",
-      icon: BookmarkCheck,
-    },
-    {
-      href: "/portal/records",
-      label: "Recruiting Records",
-      icon: ClipboardList,
-    },
-    ...(isSchoolAdmin
-      ? [
-          {
-            href: "/portal/athletes",
-            label: "Athlete Roster",
-            icon: GraduationCap,
-          },
-          {
-            href: "/portal/school",
-            label: "School Settings",
-            icon: Building2,
-          },
-        ]
-      : []),
-  ];
+  const navLinks = isSchoolStaff
+    ? [
+        {
+          href: "/portal/search",
+          label: "Talent Search",
+          icon: Search,
+        },
+        {
+          href: "/portal/prospects",
+          label: "Prospects",
+          icon: BookmarkCheck,
+        },
+        {
+          href: "/portal/records",
+          label: "Recruiting Records",
+          icon: ClipboardList,
+        },
+        ...(isSchoolAdmin
+          ? [
+              {
+                href: "/portal/athletes",
+                label: "Athlete Roster",
+                icon: GraduationCap,
+              },
+              {
+                href: "/portal/school",
+                label: "School Settings",
+                icon: Building2,
+              },
+            ]
+          : []),
+      ]
+    : [];
 
   return (
     <div className="min-h-screen bg-[#f4f7fc] flex flex-col">
       <header className="h-16 sm:h-20 px-[5%] bg-white border-b border-slate-200/90 flex items-center justify-between sticky top-0 z-40">
-        <SiteLink href="/portal/dashboard" className="flex items-center gap-2 sm:gap-4 shrink-0">
+        <SiteLink href={roleHome} className="flex items-center gap-2 sm:gap-4 shrink-0">
           <span className="text-xl sm:text-2xl font-black tracking-tighter text-[#102341]">
             MVP<span className="text-blue-600 text-sm">↗</span>
           </span>

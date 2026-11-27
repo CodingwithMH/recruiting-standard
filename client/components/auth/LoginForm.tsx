@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import SiteLink from "@/components/ui/SiteLink";
 import { apiRequest, AuthResponse } from "@/lib/api";
-import { saveSession, endSession } from "@/lib/auth";
+import { saveSession, endSession, getRoleHomePath } from "@/lib/auth";
 
 const loginSchema = Yup.object({
   email: Yup.string()
@@ -108,17 +108,7 @@ export default function LoginForm() {
 
       // Replace the login page in history so browser Back cannot restore the
       // submitted credentials.
-      if (user.globalRole === "PLATFORM_ADMIN") {
-        router.replace("/admin/dashboard");
-      } else if (user.globalRole === "SCHOOL_STAFF") {
-        router.replace("/portal/dashboard");
-      } else if (user.globalRole === "ATHLETE") {
-        router.replace("/portal/athlete");
-      } else if (user.globalRole === "PARENT") {
-        router.replace("/portal/parent");
-      } else {
-        router.replace("/portal/dashboard");
-      }
+      router.replace(getRoleHomePath(user.globalRole));
     },
   });
 
