@@ -60,6 +60,7 @@ export async function authenticateToken(
               globalRole: true,
               tokenVersion: true,
               status: true,
+              schoolId: true,
               memberships: {
                 where: { status: "ACTIVE" },
                 orderBy: { createdAt: "asc" },
@@ -105,12 +106,14 @@ export async function authenticateToken(
       const primaryMembership =
         user.memberships.find((m) => m.schoolId === payload.schoolId) ||
         user.memberships[0];
+      const athleteSchoolId =
+        user.globalRole === "ATHLETE" ? user.schoolId || undefined : undefined;
 
       req.user = {
         userId: user.id,
         email: user.email,
         globalRole: user.globalRole as typeof payload.globalRole,
-        schoolId: primaryMembership?.schoolId,
+        schoolId: primaryMembership?.schoolId || athleteSchoolId,
         schoolRole: primaryMembership?.role,
         schoolStatus: primaryMembership?.school.status,
       };

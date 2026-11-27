@@ -66,8 +66,13 @@ export async function requireActiveSubscription(
     });
 
     if (!subscription) {
-      const school = await prisma.school.findUnique({
-        where: { schoolId },
+      const school = await prisma.school.findFirst({
+        where: {
+          OR: [
+            { id: schoolId },
+            { schoolId: { equals: schoolId, mode: "insensitive" } },
+          ],
+        },
         select: {
           subscription: { select: { state: true, expirationDate: true } },
         },

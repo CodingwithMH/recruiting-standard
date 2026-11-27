@@ -38,8 +38,13 @@ export async function requireApprovedSchool(
   }
 
   try {
-    const school = await prisma.school.findUnique({
-      where: { id: schoolId },
+    const school = await prisma.school.findFirst({
+      where: {
+        OR: [
+          { id: schoolId },
+          { schoolId: { equals: schoolId, mode: "insensitive" } },
+        ],
+      },
       select: { id: true, status: true, schoolId: true, name: true },
     });
 
